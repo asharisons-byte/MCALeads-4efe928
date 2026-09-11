@@ -3343,4 +3343,9 @@ async function startServer() {
   });
 }
 
-startServer();
+// Only start the server when this file is executed directly, not when imported
+if (process.env.VERCEL !== '1') {
+  startServer();
+}
+
+export { app };
