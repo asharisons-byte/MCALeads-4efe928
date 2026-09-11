@@ -3,36 +3,42 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
+// Prefer Vercel PostgreSQL connection string, fallback to legacy Cloud SQL variables
+const postgresUrl = process.env.POSTGRES_URL;
 const sqlHost = process.env.SQL_HOST;
 const sqlDbName = process.env.SQL_DB_NAME;
-const user = process.env.SQL_ADMIN_USER;
-const password = process.env.SQL_ADMIN_PASSWORD;
+const user = process.env.SQL_ADMIN_USER || process.env.SQL_USER;
+const password = process.env.SQL_ADMIN_PASSWORD || process.env.SQL_PASSWORD;
 
-if (!sqlHost) {
-  throw new Error("SQL_HOST must be set in environment variables.");
+let dbCredentialsConfig: any;
+
+if (postgresUrl) {
+  // Vercel/Neon PostgreSQL mode using connection string
+  console.log("Using Vercel PostgreSQL connection string for Drizzle Kit.");
+  dbCredentialsConfig = {
+    url: postgresUrl,
+  };
+} else if (sqlHost && sqlDbName && user && password) {
+  // Legacy Cloud SQL mode
+  console.log(`Using legacy Cloud SQL credentials (user: ${user}) for Drizzle Kit.`);
+  dbCredentialsConfig = {
+    host: sqlHost,
+    user: user,
+    password: password,
+    database: sqlDbName,
+    ssl: false,
+  };
+} else {
+  throw new Error(
+    "Either POSTGRES_URL (Vercel) or SQL_HOST/SQL_DB_NAME/SQL_USER/SQL_PASSWORD (Cloud SQL) must be set in environment variables."
+  );
 }
-if (!sqlDbName) {
-  throw new Error("SQL_DB_NAME must be set in environment variables.");
-}
-if (!user) {
-  throw new Error("SQL_ADMIN_USER must be set in environment variables.");
-}
-if (!password) {
-  throw new Error("SQL_ADMIN_PASSWORD must be set in environment variables.");
-}
-console.log(`Using user: ${user} to connect to database.`);
 
 export default defineConfig({
   schema: "./src/db/schema.ts",
   out: "./drizzle",
   dialect: "postgresql",
   schemaFilter: ["public"],
-  dbCredentials: {
-    host: sqlHost,
-    user: user,
-    password: password,
-    database: sqlDbName,
-    ssl: false,
-  },
+  dbCredentials: dbCredentialsConfig,
   verbose: true,
 });
