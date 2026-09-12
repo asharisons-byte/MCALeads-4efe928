@@ -22,7 +22,7 @@ import {
   updateDbAgencySettings,
   getDbSystemHealth,
   batchImportDbLeads,
-} from '../db/repository.ts';
+} from '../db/repository.js';
 
 const router = express.Router();
 
