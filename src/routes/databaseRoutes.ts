@@ -76,11 +76,13 @@ router.post('/leads/batch-import', async (req: Request, res: Response) => {
     }
     const result = await batchImportDbLeads(rows, meta || { fileName: 'upload.csv' });
     return res.json({
-      success: true,
+      success: result.success,
       validCount: result.validCount,
       duplicatesCount: result.duplicatesCount,
+      failedCount: result.failedCount || 0,
       insertedCount: result.insertedCount,
       leads: result.leads || [],
+      failures: result.failures || [],
     });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
