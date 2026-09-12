@@ -11,7 +11,7 @@ import { calculateLeadScore } from './scoringService';
 import { calculateMultiDimensionalScores } from './leadIntelligenceService';
 import { OREGON_CCB_LEADS } from '../data/ccbLeadsData';
 
-const STORAGE_KEY = 'mca_leads_v2';
+const STORAGE_KEY = 'mca_leads_v3';
 const ACTIVITIES_KEY = 'mca_activities_v2';
 const IMPORT_HISTORY_KEY = 'mca_import_history_v2';
 
@@ -125,13 +125,11 @@ export async function syncWithDatabase(): Promise<Lead[]> {
   dbSyncStatus = 'syncing';
 
   try {
-    const data = await bgApiCall('/api/leads?limit=300');
-    if (data && Array.isArray(data.leads) && data.leads.length > 0) {
-      const mapped = data.leads.map((dbLead: any) => mapDbLeadToModel(dbLead));
-      saveLeads(mapped);
+    // Probe database connectivity to verify live connection without automatically pulling 202 records into the Leads page
+    const health = await bgApiCall('/api/health');
+    if (health) {
       lastDbSyncTime = new Date().toISOString();
       dbSyncStatus = 'connected';
-      return mapped;
     }
   } catch (err) {
     dbSyncStatus = 'offline';
@@ -190,10 +188,32 @@ export function loadCCBLeads(): Lead[] {
 
 export function getLeads(): Lead[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    let raw = localStorage.getItem(STORAGE_KEY);
+    if (raw === null) {
+      // Check legacy storage key but exclude the 202 CCB contractor records
+      const legacyRaw = localStorage.getItem('mca_leads_v2');
+      if (legacyRaw) {
+        try {
+          const legacyParsed = JSON.parse(legacyRaw);
+          if (Array.isArray(legacyParsed)) {
+            const userImported = legacyParsed.filter(
+              (l: Lead) => !l.lead_id?.startsWith('CCB-') && !l.tags?.some((t) => t.includes('CCB'))
+            );
+            if (userImported.length > 0) {
+              saveLeads(userImported);
+              raw = JSON.stringify(userImported);
+            }
+          }
+        } catch (_) {}
+      }
+    }
+
     if (raw !== null) {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed)) {
+        if (parsed.length === 0) {
+          return [];
+        }
         const seenIds = new Set<string>();
         let hadDuplicates = false;
 
@@ -241,8 +261,8 @@ export function getLeads(): Lead[] {
     console.error('Error reading leads from localStorage', e);
   }
 
-  // Auto-initialize with Oregon CCB leads (202 verified contractor records)
-  return loadCCBLeads();
+  // Do not auto-populate with initial 202 records on load
+  return [];
 }
 
 export function saveLeads(leads: Lead[]): void {
