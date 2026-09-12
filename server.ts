@@ -5,7 +5,7 @@ import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
 import dotenv from 'dotenv';
 import { telephonyManager } from './telephony-server.js';
 import { databaseRoutes } from './src/routes/databaseRoutes.js';
-import { integrationRoutes } from './src/routes/integrationRoutes.ts';
+import { integrationRoutes } from './src/routes/integrationRoutes.js';
 import { initDatabaseDefaults, saveDbAiContent, addDbLeadSms } from './src/db/repository.ts';
 
 dotenv.config();
