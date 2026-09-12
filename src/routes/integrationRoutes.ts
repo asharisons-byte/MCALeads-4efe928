@@ -1,6 +1,6 @@
 import express, { Request, Response } from 'express';
 import { db } from '../db/index.js';
-import * as schema from '../db/schema.ts';
+import * as schema from '../db/schema.js';
 import { eq, desc, sql } from 'drizzle-orm';
 import {
   saveDbAiContent,
