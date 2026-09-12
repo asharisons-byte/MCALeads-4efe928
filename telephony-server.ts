@@ -1,6 +1,6 @@
 // Secure Telephony Architecture & Telnyx Provider Preparation
 // Backend-only implementation - credentials never exposed to client
-import { addDbLeadCall } from './src/db/repository.ts';
+import { addDbLeadCall } from './src/db/repository.js';
 
 export interface VoiceProvider {
   id: string;
