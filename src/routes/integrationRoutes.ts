@@ -20,7 +20,7 @@ import {
   addDbLeadEmail,
   addDbLeadSms,
   addDbLeadCall,
-} from '../db/repository.ts';
+} from '../db/repository.js';
 import { GoogleGenAI } from '@google/genai';
 
 const router = express.Router();
