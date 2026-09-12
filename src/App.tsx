@@ -54,6 +54,7 @@ import {
   getActivities,
   addImportHistory,
   syncWithDatabase,
+  mapDbLeadToModel,
 } from './services/leadService';
 import { analyzeLeadWithAI, batchAnalyzeLeads } from './services/geminiService';
 import { Lead, ActivityEvent, PipelineStage, CallRecord } from './types';
@@ -216,43 +217,80 @@ export function App() {
   };
 
   // Handle successful import
-  const handleImportComplete = (
+  const handleImportComplete = async (
     newLeads: Lead[],
     fileName: string,
     totalCount: number
   ) => {
-    const current = getLeads();
-    const combined = [...newLeads, ...current];
-    saveLeads(combined);
-    setLeads(combined);
+    try {
+      // Persist batch import to Neon / Cloud SQL PostgreSQL
+      const response = await fetch('/api/leads/batch-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rows: newLeads,
+          meta: {
+            fileName,
+            rowsCount: totalCount,
+            source: 'Excel / CSV Import Engine',
+          },
+        }),
+      });
 
-    // Persist batch import to Cloud SQL PostgreSQL
-    fetch('/api/leads/batch-import', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        rows: newLeads,
-        meta: {
-          fileName,
-          rowsCount: totalCount,
-          source: 'Excel / CSV Import Engine',
-        },
-      }),
-    }).catch((err) => {
-      console.warn('[Cloud SQL Batch Import Sync Notice]:', err);
-    });
+      if (!response.ok) {
+        throw new Error(`Batch import failed with HTTP status ${response.status}`);
+      }
 
-    addImportHistory({
-      id: `imp-${Date.now()}`,
-      file_name: fileName,
-      imported_date: new Date().toLocaleDateString(),
-      rows_count: totalCount,
-      valid_count: newLeads.length,
-      duplicates_count: 0,
-      rejected_count: 0,
-      imported_by: 'Sophia (AI Sales Rep)',
-      status: 'Completed',
-    });
+      const result = await response.json();
+
+      // Read confirmed inserted records returned by the server
+      let confirmedLeads: Lead[] = [];
+      if (result && Array.isArray(result.leads) && result.leads.length > 0) {
+        confirmedLeads = result.leads.map((record: any) => mapDbLeadToModel(record));
+      } else {
+        confirmedLeads = newLeads;
+      }
+
+      const current = getLeads();
+      const existingIds = new Set(current.map((l) => l.lead_id));
+      const newConfirmed = confirmedLeads.filter((l) => !existingIds.has(l.lead_id));
+      const combined = [...newConfirmed, ...current];
+
+      saveLeads(combined);
+      setLeads(combined);
+
+      addImportHistory({
+        id: `imp-${Date.now()}`,
+        file_name: fileName,
+        imported_date: new Date().toLocaleDateString(),
+        rows_count: totalCount,
+        valid_count: result.validCount !== undefined ? result.validCount : newConfirmed.length,
+        duplicates_count: result.duplicatesCount !== undefined ? result.duplicatesCount : 0,
+        rejected_count: totalCount - (result.validCount !== undefined ? result.validCount : newConfirmed.length),
+        imported_by: 'Sophia (AI Sales Rep)',
+        status: 'Completed',
+      });
+    } catch (err) {
+      console.warn('[Batch Import Sync Fallback Notice]:', err);
+      const current = getLeads();
+      const existingIds = new Set(current.map((l) => l.lead_id));
+      const newOnly = newLeads.filter((l) => !existingIds.has(l.lead_id));
+      const combined = [...newOnly, ...current];
+      saveLeads(combined);
+      setLeads(combined);
+
+      addImportHistory({
+        id: `imp-${Date.now()}`,
+        file_name: fileName,
+        imported_date: new Date().toLocaleDateString(),
+        rows_count: totalCount,
+        valid_count: newOnly.length,
+        duplicates_count: 0,
+        rejected_count: 0,
+        imported_by: 'Sophia (AI Sales Rep)',
+        status: 'Completed',
+      });
+    }
 
     setActivities(getActivities());
     setCurrentTab('leads');

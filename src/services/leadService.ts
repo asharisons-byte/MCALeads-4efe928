@@ -52,30 +52,32 @@ async function bgApiCall(endpoint: string, method = 'GET', data?: any): Promise<
 }
 
 export function mapDbLeadToModel(dbLead: any): Lead {
+  const raw = dbLead.rawPayload || dbLead.original_data || {};
   return {
-    lead_id: dbLead.leadId || dbLead.lead_id,
-    business_name: dbLead.businessName || dbLead.business_name,
-    contact_name: dbLead.contactName || dbLead.contact_name || dbLead.businessName,
-    phone: dbLead.phone || '',
-    phone_e164: dbLead.phoneE164 || dbLead.phone_e164 || dbLead.phone || '',
-    email: dbLead.email || 'Not provided',
-    website: dbLead.website || 'Not provided',
-    address: dbLead.address || '',
-    city: dbLead.city || 'Portland',
-    county: dbLead.county || 'Multnomah',
-    state: dbLead.stateRegion || dbLead.state || 'OR',
-    country: dbLead.country || 'USA',
-    postal_code: dbLead.postalCode || dbLead.postal_code || '',
-    niche: dbLead.niche || 'General Contractor',
-    gmb_status: dbLead.gmbStatus || dbLead.gmb_status || 'Established',
-    gmb_rating: dbLead.googleRating ? Number(dbLead.googleRating) : (dbLead.gmb_rating || 4.5),
-    gmb_review_count: dbLead.reviewCount || dbLead.gmb_review_count || 12,
-    google_maps_url: dbLead.googleMapsUrl || dbLead.google_maps_url || '',
-    website_status: dbLead.websiteStatus || dbLead.website_status || 'Active',
-    google_ads_status: dbLead.googleAdsDetected ? 'Active' : 'No Ads',
-    meta_pixel_status: dbLead.metaPixelDetected ? 'Installed' : 'No Pixel',
-    seo_status: (dbLead.seo_status as any) || 'Needs Technical SEO',
-    lead_score: dbLead.leadScore || dbLead.lead_score || 70,
+    ...raw,
+    lead_id: dbLead.leadId || dbLead.lead_id || raw.lead_id,
+    business_name: dbLead.businessName || dbLead.business_name || raw.business_name,
+    contact_name: dbLead.contactName || dbLead.contact_name || raw.contact_name || dbLead.businessName || raw.business_name,
+    phone: dbLead.phone || raw.phone || '',
+    phone_e164: dbLead.phoneE164 || dbLead.phone_e164 || raw.phone_e164 || dbLead.phone || raw.phone || '',
+    email: dbLead.email || raw.email || 'Not provided',
+    website: dbLead.website || raw.website || 'Not provided',
+    address: dbLead.address || raw.address || '',
+    city: dbLead.city || raw.city || 'Portland',
+    county: dbLead.county || raw.county || 'Multnomah',
+    state: dbLead.stateRegion || dbLead.state || raw.state || 'OR',
+    country: dbLead.country || raw.country || 'USA',
+    postal_code: dbLead.postalCode || dbLead.postal_code || raw.postal_code || '',
+    niche: dbLead.niche || raw.niche || 'General Contractor',
+    gmb_status: dbLead.gmbStatus || dbLead.gmb_status || raw.gmb_status || 'Established',
+    gmb_rating: dbLead.googleRating ? Number(dbLead.googleRating) : (dbLead.gmb_rating || raw.gmb_rating || 4.5),
+    gmb_review_count: dbLead.reviewCount || dbLead.gmb_review_count || raw.gmb_review_count || 12,
+    google_maps_url: dbLead.googleMapsUrl || dbLead.google_maps_url || raw.google_maps_url || '',
+    website_status: dbLead.websiteStatus || dbLead.website_status || raw.website_status || 'Active',
+    google_ads_status: dbLead.googleAdsDetected ? 'Active' : (raw.google_ads_status || 'No Ads'),
+    meta_pixel_status: dbLead.metaPixelDetected ? 'Installed' : (raw.meta_pixel_status || 'No Pixel'),
+    seo_status: (dbLead.seo_status as any) || raw.seo_status || 'Needs Technical SEO',
+    lead_score: dbLead.leadScore || dbLead.lead_score || raw.lead_score || 70,
     score_breakdown: {
       business_fit: 12,
       gmb_opportunity: 12,
@@ -86,36 +88,36 @@ export function mapDbLeadToModel(dbLead: any): Lead {
       reputation: 8,
       contactability: 8,
       revenue_potential: 4,
-      total: dbLead.leadScore || dbLead.lead_score || 70,
-      ...(dbLead.rawPayload?.score_breakdown || {}),
+      total: dbLead.leadScore || dbLead.lead_score || raw.lead_score || 70,
+      ...(raw.score_breakdown || {}),
       ...(dbLead.score_breakdown || {}),
     },
-    gaps: dbLead.gaps || ['Missing Local Schema', 'Needs Technical SEO'],
-    owner: dbLead.owner || 'Sophia (AI Sales Rep)',
-    original_data: dbLead.original_data || {},
-    pipeline_stage: (dbLead.leadStatus || dbLead.pipeline_stage || 'New Lead') as PipelineStage,
-    estimated_retainer: dbLead.estimatedRetainer || dbLead.estimated_retainer || 2500,
-    is_hot_target: dbLead.isHotTarget !== undefined ? dbLead.isHotTarget : (dbLead.leadScore >= 80),
-    opportunity_angle: dbLead.opportunityAngle || dbLead.opportunity_angle || 'Local Search & Conversion Optimization',
-    recommended_service: dbLead.recommendedService || dbLead.recommended_service || 'SEO & GMB Optimization',
-    notes: (dbLead.notes || []).map((n: any) => ({
-      id: String(n.id),
-      timestamp: n.createdAt ? new Date(n.createdAt).toISOString() : new Date().toISOString(),
+    gaps: raw.gaps || dbLead.gaps || ['Missing Local Schema', 'Needs Technical SEO'],
+    owner: dbLead.assignedTo || dbLead.owner || raw.owner || 'Sophia (AI Sales Rep)',
+    original_data: raw,
+    pipeline_stage: (dbLead.leadStatus || dbLead.pipeline_stage || raw.pipeline_stage || 'New Lead') as PipelineStage,
+    estimated_retainer: dbLead.estimatedRetainer || dbLead.estimated_retainer || raw.estimated_retainer || 2500,
+    is_hot_target: dbLead.isHotTarget !== undefined ? dbLead.isHotTarget : (raw.is_hot_target !== undefined ? raw.is_hot_target : ((dbLead.leadScore || raw.lead_score || 0) >= 80)),
+    opportunity_angle: dbLead.opportunityAngle || dbLead.opportunity_angle || raw.opportunity_angle || 'Local Search & Conversion Optimization',
+    recommended_service: dbLead.recommendedService || dbLead.recommended_service || raw.recommended_service || 'SEO & GMB Optimization',
+    notes: (dbLead.notes && dbLead.notes.length > 0 ? dbLead.notes : (raw.notes || [])).map((n: any) => ({
+      id: String(n.id || `n-${Date.now()}`),
+      timestamp: n.createdAt ? new Date(n.createdAt).toISOString() : (n.timestamp || new Date().toISOString()),
       author: n.authorName || n.author || 'Sophia',
       content: n.content,
       activity_type: n.noteType || n.activity_type || 'Note',
-      is_ai_generated: n.authorName?.includes('Sophia') || false,
+      is_ai_generated: n.authorName?.includes('Sophia') || n.is_ai_generated || false,
     })),
-    stage_history: (dbLead.statusHistory || []).map((h: any) => ({
-      id: String(h.id),
-      previous_stage: h.previousStatus,
-      new_stage: h.newStatus,
-      timestamp: h.createdAt ? new Date(h.createdAt).toISOString() : new Date().toISOString(),
-      changed_by: h.changedBy || 'Sophia',
+    stage_history: (dbLead.statusHistory && dbLead.statusHistory.length > 0 ? dbLead.statusHistory : (raw.stage_history || [])).map((h: any) => ({
+      id: String(h.id || `sh-${Date.now()}`),
+      previous_stage: h.previousStatus || h.previous_stage || 'Initial Import',
+      new_stage: h.newStatus || h.new_stage || 'New Lead',
+      timestamp: h.createdAt ? new Date(h.createdAt).toISOString() : (h.timestamp || new Date().toISOString()),
+      changed_by: h.changedBy || h.changed_by || 'Sophia',
       reason: h.reason || 'Pipeline progression',
     })),
-    created_at: dbLead.createdAt ? new Date(dbLead.createdAt).toISOString() : new Date().toISOString(),
-    updated_at: dbLead.updatedAt ? new Date(dbLead.updatedAt).toISOString() : new Date().toISOString(),
+    created_at: dbLead.createdAt ? new Date(dbLead.createdAt).toISOString() : (raw.created_at || new Date().toISOString()),
+    updated_at: dbLead.updatedAt ? new Date(dbLead.updatedAt).toISOString() : (raw.updated_at || new Date().toISOString()),
   };
 }
 
@@ -196,8 +198,9 @@ export function getLeads(): Lead[] {
         try {
           const legacyParsed = JSON.parse(legacyRaw);
           if (Array.isArray(legacyParsed)) {
+            const seedIds = new Set(OREGON_CCB_LEADS.map((s) => s.lead_id));
             const userImported = legacyParsed.filter(
-              (l: Lead) => !l.lead_id?.startsWith('CCB-') && !l.tags?.some((t) => t.includes('CCB'))
+              (l: Lead) => !seedIds.has(l.lead_id)
             );
             if (userImported.length > 0) {
               saveLeads(userImported);
@@ -222,7 +225,7 @@ export function getLeads(): Lead[] {
           if (!currentId || seenIds.has(currentId)) {
             hadDuplicates = true;
             const licType = lead.original_data?.licenseType || lead.tags?.find((t) => t.startsWith('Type:'))?.replace('Type: ', '').trim() || idx;
-            currentId = currentId ? `${currentId}-${licType}` : `CCB-LEAD-${idx}`;
+            currentId = currentId ? `${currentId}-${licType}` : `MCA-LEAD-${idx}`;
             if (seenIds.has(currentId)) {
               currentId = `${currentId}-${idx}`;
             }

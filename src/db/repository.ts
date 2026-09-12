@@ -706,7 +706,10 @@ export async function checkLeadDuplicate(params: {
 export async function createDbLead(leadData: any) {
   initInMemoryDefaults();
 
-  const uniqueLeadId = leadData.lead_id || leadData.leadId || `CCB-${Date.now().toString().slice(-6)}`;
+  const uniqueLeadId =
+    leadData.lead_id ||
+    leadData.leadId ||
+    `MCA-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const numericId = inMemoryLeads.length + 101;
 
   const inMemoryRecord = {
@@ -716,11 +719,11 @@ export async function createDbLead(leadData: any) {
     businessName: leadData.business_name || leadData.businessName,
     contactName: leadData.contact_name || leadData.contactName || leadData.business_name || leadData.businessName,
     phone: leadData.phone || '',
-    phoneE164: leadData.phone_e164 || leadData.phone || '',
+    phoneE164: leadData.phone_e164 || leadData.phoneE164 || leadData.phone || '',
     email: leadData.email || '',
     website: leadData.website || '',
     industry: leadData.industry || 'Contractor',
-    serviceCategory: 'Construction',
+    serviceCategory: leadData.service_category || leadData.serviceCategory || 'Construction',
     niche: leadData.niche || 'General Contractor',
     address: leadData.address || '',
     city: leadData.city || 'Portland',
@@ -730,15 +733,15 @@ export async function createDbLead(leadData: any) {
     postalCode: leadData.postal_code || leadData.postalCode || '',
     googleMapsUrl: leadData.google_maps_url || leadData.googleMapsUrl || '',
     googlePlaceId: null,
-    leadSource: leadData.lead_source || 'Manual Entry',
+    leadSource: leadData.lead_source || leadData.leadSource || 'CSV/Excel Import Engine',
     leadStatus: leadData.pipeline_stage || leadData.leadStatus || 'New Lead',
     leadScore: leadData.lead_score || leadData.leadScore || 65,
     estimatedRetainer: leadData.estimated_retainer || leadData.estimatedRetainer || 2500,
     estimatedValue: (leadData.estimated_retainer || leadData.estimatedRetainer || 2500) * 12,
-    assignedTo: leadData.assigned_to || leadData.assignedTo || 'Sophia (AI Sales Rep)',
+    assignedTo: leadData.owner || leadData.assigned_to || leadData.assignedTo || 'Sophia (AI Sales Rep)',
     assignedUserId: null,
-    ccbLicenseNumber: uniqueLeadId.replace('CCB-', ''),
-    isHotTarget: leadData.is_hot_target !== undefined ? leadData.is_hot_target : (leadData.lead_score >= 80),
+    ccbLicenseNumber: leadData.ccb_license_number || (uniqueLeadId.startsWith('CCB-') ? uniqueLeadId.replace('CCB-', '') : null),
+    isHotTarget: leadData.is_hot_target !== undefined ? Boolean(leadData.is_hot_target) : ((leadData.lead_score || leadData.leadScore || 65) >= 80),
     doNotContact: false,
     opportunityAngle: leadData.opportunity_angle || leadData.opportunityAngle || 'Immediate Local Growth Optimization',
     recommendedService: leadData.recommended_service || leadData.recommendedService || 'SEO & GMB Optimization',
@@ -1630,9 +1633,10 @@ export async function batchImportDbLeads(
   let validCount = 0;
   let duplicatesCount = 0;
   const insertedIds: number[] = [];
+  const insertedLeads: any[] = [];
 
   for (const row of rows) {
-    const bizName = row.business_name || row.Business_Name || row['Business Name'];
+    const bizName = row.business_name || row.Business_Name || row['Business Name'] || row.businessName;
     if (!bizName) continue;
 
     const phone = row.phone || row.Phone || '';
@@ -1645,24 +1649,48 @@ export async function batchImportDbLeads(
       continue;
     }
 
+    const leadId =
+      row.lead_id ||
+      row.leadId ||
+      `MCA-LEAD-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
     const newLead = await createDbLead({
+      lead_id: leadId,
       business_name: bizName,
-      contact_name: row.contact_name || row['Contact Name'] || bizName,
+      contact_name: row.contact_name || row['Contact Name'] || row.contactName || bizName,
       phone,
+      phone_e164: row.phone_e164 || row.phoneE164 || phone,
       email,
       website,
-      niche: row.niche || row.Trade || row.Industry || 'General Contractor',
+      address: row.address || row.Address || '',
       city: row.city || row.City || 'Portland',
-      state: row.state || row.State || 'OR',
-      lead_score: Number(row.lead_score || row.Score || 65),
-      estimated_retainer: Number(row.estimated_retainer || 2500),
-      pipeline_stage: 'New Lead',
-      original_data: row,
+      state: row.state || row.State || row.stateRegion || 'OR',
+      postal_code: row.postal_code || row.postalCode || row.zip || row.Zip || '',
+      niche: row.niche || row.Trade || row.Industry || 'General Contractor',
+      gmb_status: row.gmb_status || row.gmbStatus || 'Established',
+      gmb_rating: row.gmb_rating !== undefined ? Number(row.gmb_rating) : 4.5,
+      gmb_review_count: row.gmb_review_count !== undefined ? Number(row.gmb_review_count) : 10,
+      google_maps_url: row.google_maps_url || row.googleMapsUrl || '',
+      website_status: row.website_status || row.websiteStatus || 'Active',
+      pagespeed_score: row.pagespeed_score !== undefined ? Number(row.pagespeed_score) : 60,
+      google_ads_status: row.google_ads_status || 'No Ads',
+      meta_pixel_status: row.meta_pixel_status || 'No Pixel',
+      lead_score: Number(row.lead_score || row.leadScore || row.Score || 65),
+      score_breakdown: row.score_breakdown || {},
+      is_hot_target: row.is_hot_target !== undefined ? Boolean(row.is_hot_target) : (Number(row.lead_score || row.Score || 65) >= 80),
+      opportunity_angle: row.opportunity_angle || row.opportunityAngle || 'Immediate Local Growth Optimization',
+      recommended_service: row.recommended_service || row.recommendedService || 'SEO & GMB Optimization',
+      estimated_retainer: Number(row.estimated_retainer || row.estimatedRetainer || 2500),
+      pipeline_stage: row.pipeline_stage || row.leadStatus || 'New Lead',
+      owner: row.owner || row.assigned_to || row.assignedTo || 'Sophia (AI Sales Rep)',
+      notes: row.notes || [],
+      original_data: row.original_data || row.rawPayload || row,
     });
 
     if (newLead) {
       validCount++;
       insertedIds.push(newLead.id);
+      insertedLeads.push(newLead);
     }
   }
 
@@ -1680,6 +1708,7 @@ export async function batchImportDbLeads(
     validCount,
     duplicatesCount,
     insertedCount: insertedIds.length,
+    leads: insertedLeads,
   };
 }
 
