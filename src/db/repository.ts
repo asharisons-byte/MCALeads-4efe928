@@ -1,5 +1,5 @@
 import { eq, ilike, or, and, desc, asc, sql, inArray } from 'drizzle-orm';
-import { db, isDbConfigured } from './index.ts';
+import { db, isDbConfigured } from './index.js';
 import * as schema from './schema.ts';
 import { OREGON_CCB_LEADS } from '../data/ccbLeadsData.ts';
 
