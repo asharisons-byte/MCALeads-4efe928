@@ -4,7 +4,7 @@ import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
 import dotenv from 'dotenv';
 import { telephonyManager } from './telephony-server.js';
-import { databaseRoutes } from './src/routes/databaseRoutes.ts';
+import { databaseRoutes } from './src/routes/databaseRoutes.js';
 import { integrationRoutes } from './src/routes/integrationRoutes.ts';
 import { initDatabaseDefaults, saveDbAiContent, addDbLeadSms } from './src/db/repository.ts';
 
