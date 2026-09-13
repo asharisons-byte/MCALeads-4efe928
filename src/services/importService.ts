@@ -114,11 +114,15 @@ export function detectColumnMapping(columnName: string): { field: keyof Lead | '
   const clean = columnName.trim().toLowerCase().replace(/[_\-\.]+/g, ' ');
   const cleanNoSpaces = columnName.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
 
+  // PASS 1 — Exact matching: Iterate through ALL fields/aliases first
   for (const [field, aliases] of Object.entries(ALIASES)) {
     if (aliases.includes(clean) || aliases.some((a) => a.replace(/\s+/g, '') === cleanNoSpaces)) {
       return { field: field as keyof Lead, confidence: 0.99 };
     }
-    // Partial substring match
+  }
+
+  // PASS 2 — Partial matching: Only if PASS 1 found no exact match
+  for (const [field, aliases] of Object.entries(ALIASES)) {
     if (aliases.some((alias) => clean.includes(alias) || alias.includes(clean))) {
       return { field: field as keyof Lead, confidence: 0.88 };
     }
