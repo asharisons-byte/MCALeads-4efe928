@@ -2302,6 +2302,44 @@ async function updateDbIntegrationStatus(provider, integrationType, status, conf
   }
   return existingMem || inMemoryIntegrations[inMemoryIntegrations.length - 1];
 }
+async function truncateAllLeads() {
+  if (!isDbConfigured) {
+    console.warn("truncateAllLeads: Database not configured, nothing to truncate");
+    return { success: false, reason: "Database not configured" };
+  }
+  try {
+    await db.execute(import_drizzle_orm2.sql.raw(`
+      TRUNCATE TABLE public.lead_details CASCADE;
+      TRUNCATE TABLE public.lead_audits CASCADE;
+      TRUNCATE TABLE public.lead_scores CASCADE;
+      TRUNCATE TABLE public.leads CASCADE;
+    `));
+    inMemoryLeads = [];
+    console.log("truncateAllLeads: Successfully truncated all leads and related tables");
+    return { success: true, message: "All leads and related data permanently deleted" };
+  } catch (error) {
+    console.error("truncateAllLeads failed:", error?.message);
+    return { success: false, error: error?.message };
+  }
+}
+async function deleteAllDbLeads() {
+  if (!isDbConfigured) {
+    console.warn("deleteAllDbLeads: Database not configured, nothing to delete");
+    return { success: false, reason: "Database not configured" };
+  }
+  try {
+    await db.delete(leadDetails).where(import_drizzle_orm2.sql`1=1`);
+    await db.delete(leadAudits).where(import_drizzle_orm2.sql`1=1`);
+    await db.delete(leadScores).where(import_drizzle_orm2.sql`1=1`);
+    await db.delete(leads).where(import_drizzle_orm2.sql`1=1`);
+    inMemoryLeads = [];
+    console.log("deleteAllDbLeads: Successfully deleted all leads");
+    return { success: true, message: "All leads permanently deleted" };
+  } catch (error) {
+    console.error("deleteAllDbLeads failed:", error?.message);
+    return { success: false, error: error?.message };
+  }
+}
 
 // telephony-server.ts
 var TelnyxVoiceProvider = class {
@@ -2730,6 +2768,24 @@ router.delete("/leads/:id", async (req, res) => {
     return res.json({ success: true, lead: deleted });
   } catch (err) {
     return res.status(500).json({ error: err.message });
+  }
+});
+router.delete("/leads", async (req, res) => {
+  try {
+    const useTruncate = req.query.method === "truncate";
+    let result;
+    if (useTruncate) {
+      result = await truncateAllLeads();
+    } else {
+      result = await deleteAllDbLeads();
+    }
+    if (result.success) {
+      return res.json(result);
+    } else {
+      return res.status(500).json(result);
+    }
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 router.post("/leads/:id/notes", async (req, res) => {

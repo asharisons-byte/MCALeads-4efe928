@@ -1967,3 +1967,60 @@ export async function updateDbIntegrationStatus(
 
   return existingMem || inMemoryIntegrations[inMemoryIntegrations.length - 1];
 }
+
+/**
+ * TRUNCATE all leads and related tables - CASCADE delete for complete wipe
+ * This is the ONLY way to fully clear Neon database leads
+ */
+export async function truncateAllLeads() {
+  if (!isDbConfigured) {
+    console.warn('truncateAllLeads: Database not configured, nothing to truncate');
+    return { success: false, reason: 'Database not configured' };
+  }
+
+  try {
+    // Use raw SQL for CASCADE truncate - Drizzle doesn't support TRUNCATE directly
+    await db.execute(sql.raw(`
+      TRUNCATE TABLE public.lead_details CASCADE;
+      TRUNCATE TABLE public.lead_audits CASCADE;
+      TRUNCATE TABLE public.lead_scores CASCADE;
+      TRUNCATE TABLE public.leads CASCADE;
+    `));
+    
+    // Clear in-memory leads as well
+    inMemoryLeads = [];
+    
+    console.log('truncateAllLeads: Successfully truncated all leads and related tables');
+    return { success: true, message: 'All leads and related data permanently deleted' };
+  } catch (error: any) {
+    console.error('truncateAllLeads failed:', error?.message);
+    return { success: false, error: error?.message };
+  }
+}
+
+/**
+ * Delete ALL leads from database (alternative to TRUNCATE - respects foreign keys)
+ */
+export async function deleteAllDbLeads() {
+  if (!isDbConfigured) {
+    console.warn('deleteAllDbLeads: Database not configured, nothing to delete');
+    return { success: false, reason: 'Database not configured' };
+  }
+
+  try {
+    // Delete in order to respect foreign key constraints
+    await db.delete(schema.leadDetails).where(sql`1=1`);
+    await db.delete(schema.leadAudits).where(sql`1=1`);
+    await db.delete(schema.leadScores).where(sql`1=1`);
+    await db.delete(schema.leads).where(sql`1=1`);
+    
+    // Clear in-memory leads as well
+    inMemoryLeads = [];
+    
+    console.log('deleteAllDbLeads: Successfully deleted all leads');
+    return { success: true, message: 'All leads permanently deleted' };
+  } catch (error: any) {
+    console.error('deleteAllDbLeads failed:', error?.message);
+    return { success: false, error: error?.message };
+  }
+}
