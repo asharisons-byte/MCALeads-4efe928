@@ -53,9 +53,14 @@ async function bgApiCall(endpoint: string, method = 'GET', data?: any): Promise<
 
 export function mapDbLeadToModel(dbLead: any): Lead {
   const raw = dbLead.rawPayload || dbLead.original_data || {};
+  
+  // Handle both database (camelCase) and frontend/memory (snake_case) field names
   return {
     ...raw,
+    // Primary identifiers - check all possible sources
     lead_id: dbLead.leadId || dbLead.lead_id || raw.lead_id,
+    
+    // Business information
     business_name: dbLead.businessName || dbLead.business_name || raw.business_name,
     contact_name: dbLead.contactName || dbLead.contact_name || raw.contact_name || dbLead.businessName || raw.business_name,
     phone: dbLead.phone || raw.phone || '',
@@ -69,6 +74,8 @@ export function mapDbLeadToModel(dbLead: any): Lead {
     country: dbLead.country || raw.country || 'USA',
     postal_code: dbLead.postalCode || dbLead.postal_code || raw.postal_code || '',
     niche: dbLead.niche || raw.niche || 'General Contractor',
+    
+    // GMB/Google data
     gmb_status: dbLead.gmbStatus || dbLead.gmb_status || raw.gmb_status || 'Established',
     gmb_rating: dbLead.googleRating ? Number(dbLead.googleRating) : (dbLead.gmb_rating || raw.gmb_rating || 4.5),
     gmb_review_count: dbLead.reviewCount || dbLead.gmb_review_count || raw.gmb_review_count || 12,
@@ -77,7 +84,9 @@ export function mapDbLeadToModel(dbLead: any): Lead {
     google_ads_status: dbLead.googleAdsDetected ? 'Active' : (raw.google_ads_status || 'No Ads'),
     meta_pixel_status: dbLead.metaPixelDetected ? 'Installed' : (raw.meta_pixel_status || 'No Pixel'),
     seo_status: (dbLead.seo_status as any) || raw.seo_status || 'Needs Technical SEO',
-    lead_score: dbLead.leadScore || dbLead.lead_score || raw.lead_score || 70,
+    
+    // Scoring
+    lead_score: dbLead.leadScore !== undefined ? dbLead.leadScore : (dbLead.lead_score !== undefined ? dbLead.lead_score : (raw.lead_score || 70)),
     score_breakdown: {
       business_fit: 12,
       gmb_opportunity: 12,
@@ -88,18 +97,26 @@ export function mapDbLeadToModel(dbLead: any): Lead {
       reputation: 8,
       contactability: 8,
       revenue_potential: 4,
-      total: dbLead.leadScore || dbLead.lead_score || raw.lead_score || 70,
+      total: dbLead.leadScore !== undefined ? dbLead.leadScore : (dbLead.lead_score !== undefined ? dbLead.lead_score : (raw.lead_score || 70)),
       ...(raw.score_breakdown || {}),
       ...(dbLead.score_breakdown || {}),
     },
     gaps: raw.gaps || dbLead.gaps || ['Missing Local Schema', 'Needs Technical SEO'],
+    
+    // Pipeline & ownership
     owner: dbLead.assignedTo || dbLead.owner || raw.owner || 'Sophia (AI Sales Rep)',
     original_data: raw,
-    pipeline_stage: (dbLead.leadStatus || dbLead.pipeline_stage || raw.pipeline_stage || 'New Lead') as PipelineStage,
-    estimated_retainer: dbLead.estimatedRetainer || dbLead.estimated_retainer || raw.estimated_retainer || 2500,
-    is_hot_target: dbLead.isHotTarget !== undefined ? dbLead.isHotTarget : (raw.is_hot_target !== undefined ? raw.is_hot_target : ((dbLead.leadScore || raw.lead_score || 0) >= 80)),
+    pipeline_stage: (dbLead.leadStatus !== undefined ? dbLead.leadStatus : (dbLead.pipeline_stage !== undefined ? dbLead.pipeline_stage : (raw.pipeline_stage || 'New Lead'))) as PipelineStage,
+    
+    // Financial & targeting
+    estimated_retainer: dbLead.estimatedRetainer !== undefined ? dbLead.estimatedRetainer : (dbLead.estimated_retainer !== undefined ? dbLead.estimated_retainer : (raw.estimated_retainer || 2500)),
+    is_hot_target: dbLead.isHotTarget !== undefined ? dbLead.isHotTarget : (raw.is_hot_target !== undefined ? raw.is_hot_target : ((dbLead.leadScore !== undefined ? dbLead.leadScore : (raw.lead_score || 0)) >= 80)),
+    
+    // Opportunity details
     opportunity_angle: dbLead.opportunityAngle || dbLead.opportunity_angle || raw.opportunity_angle || 'Local Search & Conversion Optimization',
     recommended_service: dbLead.recommendedService || dbLead.recommended_service || raw.recommended_service || 'SEO & GMB Optimization',
+    
+    // Notes and history
     notes: (dbLead.notes && dbLead.notes.length > 0 ? dbLead.notes : (raw.notes || [])).map((n: any) => ({
       id: String(n.id || `n-${Date.now()}`),
       timestamp: n.createdAt ? new Date(n.createdAt).toISOString() : (n.timestamp || new Date().toISOString()),
