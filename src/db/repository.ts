@@ -733,7 +733,7 @@ export async function createDbLead(leadData: any) {
     postalCode: leadData.postal_code || leadData.postalCode || '',
     googleMapsUrl: leadData.google_maps_url || leadData.googleMapsUrl || '',
     googlePlaceId: null,
-    leadSource: leadData.lead_source || leadData.leadSource || 'CSV/Excel Import Engine',
+    leadSource: leadData.lead_source || leadData.leadSource || 'Manual Intake',
     leadStatus: leadData.pipeline_stage || leadData.leadStatus || 'New Lead',
     leadScore: leadData.lead_score || leadData.leadScore || 65,
     estimatedRetainer: leadData.estimated_retainer || leadData.estimatedRetainer || 2500,
@@ -793,20 +793,7 @@ export async function createDbLead(leadData: any) {
     ],
   };
 
-  inMemoryLeads.unshift(inMemoryRecord);
-
-  // Log in-memory activity
-  inMemoryActivities.unshift({
-    id: inMemoryActivities.length + 1,
-    leadId: inMemoryRecord.id,
-    activityType: 'lead_created',
-    title: 'Lead Created',
-    description: `New contractor profile registered: ${inMemoryRecord.businessName} (${inMemoryRecord.leadId})`,
-    metadata: { leadId: inMemoryRecord.leadId, status: inMemoryRecord.leadStatus },
-    createdAt: new Date(),
-  });
-
-  // If database is configured, attempt INSERT and return ONLY the actual database record on success
+  // If database is configured, attempt INSERT directly to Neon public.leads
   if (isDbConfigured) {
     try {
       const [newLead] = await db
@@ -820,6 +807,7 @@ export async function createDbLead(leadData: any) {
           email: inMemoryRecord.email,
           website: inMemoryRecord.website,
           industry: inMemoryRecord.industry,
+          serviceCategory: inMemoryRecord.serviceCategory,
           niche: inMemoryRecord.niche,
           address: inMemoryRecord.address,
           city: inMemoryRecord.city,
@@ -828,10 +816,13 @@ export async function createDbLead(leadData: any) {
           country: inMemoryRecord.country,
           postalCode: inMemoryRecord.postalCode,
           googleMapsUrl: inMemoryRecord.googleMapsUrl,
+          leadSource: inMemoryRecord.leadSource,
           leadStatus: inMemoryRecord.leadStatus,
           leadScore: inMemoryRecord.leadScore,
           estimatedRetainer: inMemoryRecord.estimatedRetainer,
+          estimatedValue: inMemoryRecord.estimatedValue,
           assignedTo: inMemoryRecord.assignedTo,
+          ccbLicenseNumber: inMemoryRecord.ccbLicenseNumber,
           isHotTarget: inMemoryRecord.isHotTarget,
           opportunityAngle: inMemoryRecord.opportunityAngle,
           recommendedService: inMemoryRecord.recommendedService,
@@ -839,17 +830,31 @@ export async function createDbLead(leadData: any) {
         })
         .returning();
 
+      // Only synchronize in-memory cache once Neon INSERT has succeeded
+      const mergedPersistedRecord = { ...inMemoryRecord, ...newLead, id: newLead.id };
+      inMemoryLeads.unshift(mergedPersistedRecord);
+      inMemoryActivities.unshift({
+        id: inMemoryActivities.length + 1,
+        leadId: newLead.id,
+        activityType: 'lead_created',
+        title: 'Lead Created',
+        description: `New contractor profile registered: ${mergedPersistedRecord.businessName} (${mergedPersistedRecord.leadId})`,
+        metadata: { leadId: mergedPersistedRecord.leadId, status: mergedPersistedRecord.leadStatus },
+        createdAt: new Date(),
+      });
+
       // SUCCESS: Return the actual database-created record with DB-generated fields
       return { ...newLead, _dbSource: 'neon' };
     } catch (error: any) {
       // FAILURE: Database INSERT failed - return explicit failure indicator
-      // Do NOT return inMemoryRecord as if it were persisted
+      // Do NOT add to inMemoryLeads or pretend it was saved
       console.error('createDbLead DB insert FAILED:', error?.message);
-      return { _dbSource: 'failed', _error: error?.message, _inMemoryRecord: inMemoryRecord };
+      return { _dbSource: 'failed', _error: error?.message };
     }
   }
 
   // Database not configured - return in-memory record with clear indicator
+  inMemoryLeads.unshift(inMemoryRecord);
   return { ...inMemoryRecord, _dbSource: 'memory_only' };
 }
 
@@ -1696,22 +1701,37 @@ export async function batchImportDbLeads(
     });
 
     // Check if the insert was successful by examining _dbSource
-    if (result._dbSource === 'neon' || result._dbSource === 'memory_only') {
-      // SUCCESS: Valid record created (persisted to Neon or resilient memory store)
-      const dbRecord = (result._inMemoryRecord || result) as any;
+    if (result._dbSource === 'neon') {
+      // SUCCESS: Valid record created and confirmed in Neon PostgreSQL
+      const dbRecord = ((result as any)._inMemoryRecord ? { ...(result as any)._inMemoryRecord, ...result } : result) as any;
       validCount++;
       insertedIds.push(dbRecord.id);
       insertedLeads.push(dbRecord);
     } else if (result._dbSource === 'failed') {
-      // FAILURE: Database INSERT failed - track for error reporting
+      // FAILURE: Database INSERT failed
+      // Check if failure is due to unique key constraint (e.g. duplicate lead_id)
+      if (
+        result._error?.includes('unique') ||
+        result._error?.includes('duplicate key') ||
+        result._error?.includes('23505')
+      ) {
+        duplicatesCount++;
+      } else {
+        failedInserts.push({
+          lead_id: leadId,
+          business_name: bizName,
+          error: result._error,
+        });
+      }
+      console.error(`Batch import: Failed to insert lead ${leadId} (${bizName}): ${result._error}`);
+    } else {
+      // memory_only: PostgreSQL not configured - MUST NOT report as successfully persisted to Neon
       failedInserts.push({
         lead_id: leadId,
         business_name: bizName,
-        error: result._error,
+        error: 'Database not configured or persistence unavailable; memory records cannot be confirmed as Neon persisted',
       });
-      console.error(`Batch import: Failed to insert lead ${leadId} (${bizName}): ${result._error}`);
-    } else {
-      console.warn(`Batch import: Lead ${leadId} (${bizName}) could not be stored`);
+      console.warn(`Batch import: Lead ${leadId} (${bizName}) not persisted to Neon (source: ${result._dbSource})`);
     }
   }
 

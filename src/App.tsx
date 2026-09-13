@@ -120,11 +120,12 @@ export function App() {
   }, [leads, searchQuery]);
 
   // Lead CRUD handlers
-  const handleAddLead = (newLead: Lead) => {
-    const saved = addLead(newLead);
+  const handleAddLead = async (newLead: Lead) => {
+    const saved = await addLead(newLead);
     setLeads(getLeads());
     setActivities(getActivities());
     setSelectedLead(saved);
+    return saved;
   };
 
   const handleUpdateLead = (leadId: string, updates: Partial<Lead>) => {
@@ -247,17 +248,17 @@ export function App() {
       let confirmedLeads: Lead[] = [];
       if (result && Array.isArray(result.leads) && result.leads.length > 0) {
         confirmedLeads = result.leads.map((record: any) => mapDbLeadToModel(record));
-      } else {
-        confirmedLeads = newLeads;
       }
 
-      const current = getLeads();
-      const confirmedIds = new Set(confirmedLeads.map((l) => l.lead_id));
-      const remainingCurrent = current.filter((l) => !confirmedIds.has(l.lead_id));
-      const combined = [...confirmedLeads, ...remainingCurrent];
+      if (confirmedLeads.length > 0) {
+        const current = getLeads();
+        const confirmedIds = new Set(confirmedLeads.map((l) => l.lead_id));
+        const remainingCurrent = current.filter((l) => !confirmedIds.has(l.lead_id));
+        const combined = [...confirmedLeads, ...remainingCurrent];
 
-      saveLeads(combined);
-      setLeads(combined);
+        saveLeads(combined);
+        setLeads(combined);
+      }
 
       addImportHistory({
         id: `imp-${Date.now()}`,
@@ -266,29 +267,22 @@ export function App() {
         rows_count: totalCount,
         valid_count: result.validCount !== undefined ? result.validCount : confirmedLeads.length,
         duplicates_count: result.duplicatesCount !== undefined ? result.duplicatesCount : 0,
-        rejected_count: Math.max(0, totalCount - (result.validCount !== undefined ? result.validCount : confirmedLeads.length)),
+        rejected_count: result.failedCount !== undefined ? result.failedCount : Math.max(0, totalCount - confirmedLeads.length),
         imported_by: 'Sophia (AI Sales Rep)',
-        status: 'Completed',
+        status: result.failedCount > 0 && confirmedLeads.length === 0 ? 'Failed' : 'Completed',
       });
     } catch (err) {
-      console.warn('[Batch Import Sync Fallback Notice]:', err);
-      const current = getLeads();
-      const newIds = new Set(newLeads.map((l) => l.lead_id));
-      const remainingCurrent = current.filter((l) => !newIds.has(l.lead_id));
-      const combined = [...newLeads, ...remainingCurrent];
-      saveLeads(combined);
-      setLeads(combined);
-
+      console.error('[Batch Import Sync Error]:', err);
       addImportHistory({
         id: `imp-${Date.now()}`,
         file_name: fileName,
         imported_date: new Date().toLocaleDateString(),
         rows_count: totalCount,
-        valid_count: newLeads.length,
+        valid_count: 0,
         duplicates_count: 0,
-        rejected_count: 0,
+        rejected_count: totalCount,
         imported_by: 'Sophia (AI Sales Rep)',
-        status: 'Completed',
+        status: 'Failed',
       });
     }
 

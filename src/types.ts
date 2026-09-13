@@ -403,6 +403,7 @@ export interface Lead {
   country?: string;
   postal_code?: string;
   niche?: string;
+  lead_source?: string;
 
   // GMB & Google Maps
   gmb_status?: 'Established' | 'Thin GMB' | 'Unclaimed' | 'No GMB' | 'Needs Optimization';

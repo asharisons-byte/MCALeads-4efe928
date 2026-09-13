@@ -140,19 +140,16 @@ export async function syncWithDatabase(): Promise<Lead[]> {
       const dbUserLeads = res.leads
         .filter((l: any) => {
           const id = l.leadId || l.lead_id;
-          const source = l.leadSource || l.lead_source;
-          return !seedIds.has(id) && source !== 'Oregon CCB License Database';
+          return !seedIds.has(id);
         })
         .map((l: any) => mapDbLeadToModel(l));
 
-      if (dbUserLeads.length > 0) {
-        const local = getLeads();
-        const dbIds = new Set(dbUserLeads.map((l) => l.lead_id));
-        const localOnly = local.filter((l) => !dbIds.has(l.lead_id));
-        const merged = [...dbUserLeads, ...localOnly];
-        saveLeads(merged);
-        return merged;
-      }
+      const local = getLeads();
+      const dbIds = new Set(dbUserLeads.map((l) => l.lead_id));
+      const localOnly = local.filter((l) => !dbIds.has(l.lead_id) && !seedIds.has(l.lead_id));
+      const merged = [...dbUserLeads, ...localOnly];
+      saveLeads(merged);
+      return merged;
     }
   } catch (err) {
     dbSyncStatus = 'offline';
@@ -307,12 +304,12 @@ export function clearAllLeads(): void {
   }
 }
 
-export function addLead(lead: Lead): Lead {
-  const current = getLeads();
+export async function addLead(lead: Lead): Promise<Lead> {
   const timestamp = new Date().toISOString();
 
   const preparedLead: Lead = {
     ...lead,
+    lead_source: lead.lead_source || 'Manual Intake',
     created_at: lead.created_at || timestamp,
     updated_at: timestamp,
     stage_history: [
@@ -327,43 +324,70 @@ export function addLead(lead: Lead): Lead {
     ],
   };
 
-  const updated = [preparedLead, ...current];
-  saveLeads(updated);
-
-  // Background Cloud SQL persistence
-  bgApiCall('/api/leads', 'POST', {
-    lead_id: preparedLead.lead_id,
-    business_name: preparedLead.business_name,
-    contact_name: preparedLead.contact_name,
-    phone: preparedLead.phone,
-    email: preparedLead.email,
-    website: preparedLead.website,
-    niche: preparedLead.niche,
-    city: preparedLead.city,
-    state: preparedLead.state,
-    lead_score: preparedLead.lead_score,
-    pipeline_stage: preparedLead.pipeline_stage,
-    estimated_retainer: preparedLead.estimated_retainer,
-    opportunity_angle: preparedLead.opportunity_angle,
-    recommended_service: preparedLead.recommended_service,
+  // Direct persistence to PostgreSQL database
+  const res = await fetch('/api/leads', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      lead_id: preparedLead.lead_id,
+      business_name: preparedLead.business_name,
+      contact_name: preparedLead.contact_name,
+      phone: preparedLead.phone,
+      phone_e164: preparedLead.phone_e164 || preparedLead.phone,
+      email: preparedLead.email,
+      website: preparedLead.website,
+      niche: preparedLead.niche,
+      address: preparedLead.address,
+      city: preparedLead.city,
+      state: preparedLead.state,
+      postal_code: preparedLead.postal_code,
+      lead_score: preparedLead.lead_score,
+      lead_source: preparedLead.lead_source || 'Manual Intake',
+      pipeline_stage: preparedLead.pipeline_stage,
+      estimated_retainer: preparedLead.estimated_retainer,
+      opportunity_angle: preparedLead.opportunity_angle,
+      recommended_service: preparedLead.recommended_service,
+      is_hot_target: preparedLead.is_hot_target,
+      original_data: preparedLead.original_data || preparedLead,
+    }),
   });
 
-  addActivity({
-    id: `act-${Date.now()}`,
-    activity_id: `act-${Date.now()}`,
-    lead_id: preparedLead.lead_id,
-    lead_name: preparedLead.business_name,
-    timestamp,
-    type: 'lead_created',
-    activity_type: 'lead_created',
-    channel: 'SYSTEM',
-    title: 'Lead Created in MCA Suite',
-    description: `Added ${preparedLead.business_name} with initial opportunity score of ${preparedLead.lead_score}/100.`,
-    author: 'Agency User',
-    source: 'Agency User',
-  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `Failed to save lead (HTTP ${res.status})`);
+  }
 
-  return preparedLead;
+  const data = await res.json();
+  if (data.lead && data.lead._dbSource === 'neon') {
+    const persistedLead = mapDbLeadToModel(data.lead);
+    const current = getLeads();
+    const updated = [persistedLead, ...current.filter((l) => l.lead_id !== persistedLead.lead_id)];
+    saveLeads(updated);
+
+    addActivity({
+      id: `act-${Date.now()}`,
+      activity_id: `act-${Date.now()}`,
+      lead_id: persistedLead.lead_id,
+      lead_name: persistedLead.business_name,
+      timestamp,
+      type: 'lead_created',
+      activity_type: 'lead_created',
+      channel: 'SYSTEM',
+      title: 'Lead Created in MCA Suite',
+      description: `Added ${persistedLead.business_name} with initial opportunity score of ${persistedLead.lead_score}/100.`,
+      author: 'Agency User',
+      source: 'Agency User',
+    });
+
+    return persistedLead;
+  } else if (data.lead && data.lead._dbSource === 'memory_only') {
+    const current = getLeads();
+    const updated = [preparedLead, ...current.filter((l) => l.lead_id !== preparedLead.lead_id)];
+    saveLeads(updated);
+    return preparedLead;
+  } else {
+    throw new Error(data.error || 'Database persistence failed');
+  }
 }
 
 export function updateLead(leadId: string, updates: Partial<Lead>): Lead | null {

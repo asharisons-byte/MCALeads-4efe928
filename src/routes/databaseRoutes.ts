@@ -106,9 +106,22 @@ router.get('/leads/:id', async (req: Request, res: Response) => {
 router.post('/leads', async (req: Request, res: Response) => {
   try {
     const lead = await createDbLead(req.body);
-    return res.status(201).json({ lead });
+    if (lead._dbSource === 'failed') {
+      return res.status(500).json({
+        success: false,
+        error: lead._error || 'Failed to persist lead to Neon database',
+      });
+    }
+    if (lead._dbSource === 'memory_only') {
+      return res.status(200).json({
+        success: false,
+        warning: 'Lead held in memory only; database is not configured.',
+        lead,
+      });
+    }
+    return res.status(201).json({ success: true, lead });
   } catch (err: any) {
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 

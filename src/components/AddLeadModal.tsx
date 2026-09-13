@@ -6,7 +6,7 @@ import { calculateLeadScore } from '../services/scoringService';
 interface AddLeadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAddLead: (lead: Lead) => void;
+  onAddLead: (lead: Lead) => Promise<any> | void;
 }
 
 export const AddLeadModal: React.FC<AddLeadModalProps> = ({
@@ -28,12 +28,17 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
   const [websiteStatus, setWebsiteStatus] = useState<'Active' | 'No Website' | 'Slow / Unreachable Server'>('Active');
   const [metaPixelStatus, setMetaPixelStatus] = useState<'Installed' | 'No Pixel'>('No Pixel');
   const [googleAdsStatus, setGoogleAdsStatus] = useState<'Active' | 'No Ads'>('No Ads');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!businessName.trim()) return;
+    if (!businessName.trim() || isSubmitting) return;
+
+    setErrorMessage(null);
+    setIsSubmitting(true);
 
     const rating = parseFloat(gmbRating) || 4.5;
     const reviews = parseInt(gmbReviews, 10) || 12;
@@ -109,8 +114,14 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
       is_hot_target: scoring.isHot,
     } as Lead;
 
-    onAddLead(completeLead);
-    onClose();
+    try {
+      await onAddLead(completeLead);
+      onClose();
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to persist lead to database.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -129,7 +140,7 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">
+          <button onClick={onClose} disabled={isSubmitting} className="text-slate-400 hover:text-white disabled:opacity-50">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -282,20 +293,28 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
             </div>
           </div>
 
+          {errorMessage && (
+            <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-medium">
+              {errorMessage}
+            </div>
+          )}
+
           <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700"
+              disabled={isSubmitting}
+              className="px-4 py-2 rounded-lg bg-slate-800 text-slate-300 font-semibold hover:bg-slate-700 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center gap-1.5 shadow-md shadow-indigo-600/20"
+              disabled={isSubmitting}
+              className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center gap-1.5 shadow-md shadow-indigo-600/20 disabled:opacity-50"
             >
               <Plus className="w-4 h-4" />
-              <span>Save &amp; Calculate Score</span>
+              <span>{isSubmitting ? 'Saving to Database...' : 'Save & Calculate Score'}</span>
             </button>
           </div>
         </form>
