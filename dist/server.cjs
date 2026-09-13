@@ -1015,12 +1015,7 @@ var inMemoryIntegrations = [
   { id: 4, provider: "Gmail Workspace", integrationType: "Email Outreach", status: "Active", configurationReference: { oauth2: true }, lastSyncAt: /* @__PURE__ */ new Date() },
   { id: 5, provider: "n8n Automation", integrationType: "Workflows", status: "Connected", configurationReference: { webhookBus: "active" }, lastSyncAt: /* @__PURE__ */ new Date() }
 ];
-function initInMemoryDefaults() {
-  return;
-}
-initInMemoryDefaults();
 async function initDatabaseDefaults() {
-  initInMemoryDefaults();
   if (!isDbConfigured) {
     console.log("[Database Engine] Active in resilient high-speed in-memory mode (Cloud SQL ready when configured).");
     return;
@@ -1098,7 +1093,6 @@ async function initDatabaseDefaults() {
   }
 }
 async function getDbLeads(params) {
-  initInMemoryDefaults();
   if (isDbConfigured) {
     try {
       const conditions = [];
@@ -1163,7 +1157,6 @@ async function getDbLeads(params) {
   return filtered.slice(offset, offset + limit);
 }
 async function getDbLeadById(leadIdentifier) {
-  initInMemoryDefaults();
   if (isDbConfigured) {
     try {
       let lead;
@@ -1245,13 +1238,12 @@ async function checkLeadDuplicate(params) {
   return { isDuplicate: false, matches: [] };
 }
 async function createDbLead(leadData) {
-  initInMemoryDefaults();
   const rawBusinessName = leadData.business_name || leadData.businessName || leadData.company_name || leadData.companyName || leadData["Business Name"] || leadData["Company Name"] || leadData["name"] || leadData.name || "Contractor";
   const rawContactName = leadData.contact_name || leadData.contactName || leadData["Contact Name"] || leadData["Contact Person"] || rawBusinessName;
   const rawPhone = leadData.phone || leadData.phone_e164 || leadData.phoneE164 || leadData["Phone"] || leadData["Phone Number"] || "";
   const rawEmail = leadData.email || leadData["Email"] || leadData["Email Address"] || "";
-  const rawCity = leadData.city || leadData.City || "Portland";
-  const rawState = leadData.state || leadData.State || leadData.state_region || leadData.stateRegion || "OR";
+  const rawCity = leadData.city || leadData.City || null;
+  const rawState = leadData.state || leadData.State || leadData.state_region || leadData.stateRegion || null;
   const rawNiche = leadData.niche || leadData.Niche || leadData.trade || leadData.Trade || leadData.industry || leadData.Industry || "General Contractor";
   const rawPostal = leadData.postal_code || leadData.postalCode || leadData.zip || leadData.Zip || leadData.Postal || "";
   const rawScore = Number(leadData.lead_score ?? leadData.leadScore ?? leadData.Score);
@@ -1409,7 +1401,6 @@ async function createDbLead(leadData) {
   return { ...inMemoryRecord, _dbSource: "memory_only" };
 }
 async function updateDbLead(leadId, updates) {
-  initInMemoryDefaults();
   const idNum = Number(leadId);
   const target = inMemoryLeads.find(
     (l) => !isNaN(idNum) && l.id === idNum || String(l.leadId) === String(leadId)
@@ -1483,7 +1474,6 @@ async function updateDbLead(leadId, updates) {
   return target || { success: true };
 }
 async function archiveOrDeleteDbLead(leadId, softDelete = true) {
-  initInMemoryDefaults();
   const idNum = Number(leadId);
   const target = inMemoryLeads.find(
     (l) => !isNaN(idNum) && l.id === idNum || String(l.leadId) === String(leadId)
@@ -1512,7 +1502,6 @@ async function archiveOrDeleteDbLead(leadId, softDelete = true) {
   return target || { success: true };
 }
 async function addDbLeadNote(leadId, noteData) {
-  initInMemoryDefaults();
   const lead = await getDbLeadById(leadId);
   const note = {
     id: Math.floor(Math.random() * 9e5) + 1e5,
@@ -1554,7 +1543,6 @@ async function addDbLeadNote(leadId, noteData) {
   return note;
 }
 async function deleteDbLeadNote(noteId) {
-  initInMemoryDefaults();
   for (const l of inMemoryLeads) {
     if (l.notes) {
       l.notes = l.notes.filter((n) => n.id !== noteId);
@@ -1570,7 +1558,6 @@ async function deleteDbLeadNote(noteId) {
   return { success: true };
 }
 async function addDbLeadCall(leadId, callData) {
-  initInMemoryDefaults();
   const lead = await getDbLeadById(leadId);
   const call = {
     id: Math.floor(Math.random() * 9e5) + 1e5,
@@ -1615,7 +1602,6 @@ async function addDbLeadCall(leadId, callData) {
   return call;
 }
 async function addDbLeadEmail(leadId, emailData) {
-  initInMemoryDefaults();
   const lead = await getDbLeadById(leadId);
   const emailMsg = {
     id: Math.floor(Math.random() * 9e5) + 1e5,
@@ -1656,7 +1642,6 @@ async function addDbLeadEmail(leadId, emailData) {
   return emailMsg;
 }
 async function addDbLeadSms(leadId, smsData) {
-  initInMemoryDefaults();
   const lead = await getDbLeadById(leadId);
   const smsMsg = {
     id: Math.floor(Math.random() * 9e5) + 1e5,
@@ -1694,7 +1679,6 @@ async function addDbLeadSms(leadId, smsData) {
   return smsMsg;
 }
 async function addDbLeadTask(leadId, taskData) {
-  initInMemoryDefaults();
   const lead = await getDbLeadById(leadId);
   const task = {
     id: Math.floor(Math.random() * 9e5) + 1e5,
@@ -1731,7 +1715,6 @@ async function addDbLeadTask(leadId, taskData) {
   return task;
 }
 async function convertDbLeadToClient(leadId, clientData) {
-  initInMemoryDefaults();
   const lead = await getDbLeadById(leadId);
   const clientId = inMemoryClients.length + 1;
   const client = {
@@ -1811,7 +1794,6 @@ async function convertDbLeadToClient(leadId, clientData) {
   return { client, lead };
 }
 async function getDbClients() {
-  initInMemoryDefaults();
   if (isDbConfigured) {
     try {
       const clientsList = await db.select().from(clients).orderBy((0, import_drizzle_orm2.desc)(clients.createdAt));
@@ -1830,7 +1812,6 @@ async function getDbClients() {
   return inMemoryClients;
 }
 async function getDbDashboardMetrics() {
-  initInMemoryDefaults();
   if (isDbConfigured) {
     try {
       const confirmedMrrResult = await db.select({ total: import_drizzle_orm2.sql`coalesce(sum(${clients.actualMrr}), 0)` }).from(clients).where((0, import_drizzle_orm2.eq)(clients.clientStatus, "Active"));
@@ -1905,7 +1886,6 @@ async function getDbDashboardMetrics() {
   };
 }
 async function getDbActivities(limit = 50) {
-  initInMemoryDefaults();
   if (isDbConfigured) {
     try {
       const rows = await db.select().from(activities).orderBy((0, import_drizzle_orm2.desc)(activities.createdAt)).limit(limit);
@@ -1917,7 +1897,6 @@ async function getDbActivities(limit = 50) {
   return inMemoryActivities.slice(0, limit);
 }
 async function getDbAuditLogs(limit = 100) {
-  initInMemoryDefaults();
   if (isDbConfigured) {
     try {
       const rows = await db.select().from(auditLogs).orderBy((0, import_drizzle_orm2.desc)(auditLogs.createdAt)).limit(limit);
@@ -1929,7 +1908,6 @@ async function getDbAuditLogs(limit = 100) {
   return inMemoryAuditLogs.slice(0, limit);
 }
 async function getDbAgencySettings() {
-  initInMemoryDefaults();
   if (isDbConfigured) {
     try {
       const rows = await db.select().from(agencySettings).limit(1);
@@ -1941,7 +1919,6 @@ async function getDbAgencySettings() {
   return inMemorySettings;
 }
 async function updateDbAgencySettings(updates) {
-  initInMemoryDefaults();
   Object.assign(inMemorySettings, updates, { updatedAt: /* @__PURE__ */ new Date() });
   if (isDbConfigured) {
     try {
@@ -1957,7 +1934,6 @@ async function updateDbAgencySettings(updates) {
   return inMemorySettings;
 }
 async function getDbSystemHealth() {
-  initInMemoryDefaults();
   const start = Date.now();
   let dbStatus = isDbConfigured ? "OPERATIONAL" : "IN_MEMORY_RESILIENT";
   let dbLatency = 1;
@@ -2019,7 +1995,6 @@ async function getDbSystemHealth() {
   };
 }
 async function batchImportDbLeads(rows, importMeta) {
-  initInMemoryDefaults();
   let validCount = 0;
   let duplicatesCount = 0;
   const insertedIds = [];
@@ -2046,8 +2021,8 @@ async function batchImportDbLeads(rows, importMeta) {
       email,
       website,
       address: row.address || row.Address || "",
-      city: row.city || row.City || "Portland",
-      state: row.state || row.State || row.stateRegion || "OR",
+      city: row.city || row.City || null,
+      state: row.state || row.State || row.stateRegion || null,
       postal_code: row.postal_code || row.postalCode || row.zip || row.Zip || "",
       niche: row.niche || row.Trade || row.Industry || "General Contractor",
       gmb_status: row.gmb_status || row.gmbStatus || "Established",
@@ -2113,7 +2088,6 @@ async function batchImportDbLeads(rows, importMeta) {
   };
 }
 async function getDbAiContentForLead(leadId) {
-  initInMemoryDefaults();
   const existing = await getDbLeadById(leadId);
   if (!existing) return [];
   const memContents = inMemoryAiContent.filter((c) => c.leadId === existing.id);
@@ -2223,7 +2197,6 @@ async function getDbAutomationRuns(limit = 50) {
   return inMemoryAutomationRuns.slice(0, limit);
 }
 async function findLeadByPhone(phone) {
-  initInMemoryDefaults();
   if (!phone) return null;
   const cleanPhone = phone.replace(/[^\d+]/g, "");
   const last7 = cleanPhone.slice(-7);
@@ -2239,7 +2212,6 @@ async function findLeadByPhone(phone) {
   return null;
 }
 async function recordDbInboundSms(params) {
-  initInMemoryDefaults();
   const lead = await findLeadByPhone(params.phone);
   const leadId = lead ? lead.id : null;
   const smsMsg = {

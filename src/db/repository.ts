@@ -43,14 +43,15 @@ export function initInMemoryDefaults() {
   return;
 }
 
+// initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 // Ensure defaults are initialized (now no-op)
-initInMemoryDefaults();
+// initInMemoryDefaults(); // REMOVED
 
 // ==========================================
 // 1. INITIALIZATION & SEEDING REPOSITORY
 // ==========================================
 export async function initDatabaseDefaults() {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   if (!isDbConfigured) {
     console.log('[Database Engine] Active in resilient high-speed in-memory mode (Cloud SQL ready when configured).');
@@ -165,7 +166,7 @@ export async function getDbLeads(params: {
   limit?: number;
   offset?: number;
 }) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   // Try Cloud SQL if configured
   if (isDbConfigured) {
@@ -264,7 +265,7 @@ export async function getDbLeads(params: {
 }
 
 export async function getDbLeadById(leadIdentifier: string | number) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   if (isDbConfigured) {
     try {
@@ -380,7 +381,7 @@ export async function checkLeadDuplicate(params: {
 
 
 export async function createDbLead(leadData: any) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   const rawBusinessName =
     leadData.business_name ||
@@ -417,14 +418,14 @@ export async function createDbLead(leadData: any) {
   const rawCity =
     leadData.city ||
     leadData.City ||
-    'Portland';
+    null;
 
   const rawState =
     leadData.state ||
     leadData.State ||
     leadData.state_region ||
     leadData.stateRegion ||
-    'OR';
+    null;
 
   const rawNiche =
     leadData.niche ||
@@ -618,7 +619,7 @@ export async function createDbLead(leadData: any) {
 }
 
 export async function updateDbLead(leadId: string | number, updates: any) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   const idNum = Number(leadId);
   const target = inMemoryLeads.find(
@@ -707,7 +708,7 @@ export async function updateDbLead(leadId: string | number, updates: any) {
 }
 
 export async function archiveOrDeleteDbLead(leadId: string | number, softDelete = true) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   const idNum = Number(leadId);
   const target = inMemoryLeads.find(
@@ -747,7 +748,7 @@ export async function archiveOrDeleteDbLead(leadId: string | number, softDelete 
 }
 
 export async function addDbLeadNote(leadId: string | number, noteData: any) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   const lead = await getDbLeadById(leadId);
   const note = {
@@ -798,7 +799,7 @@ export async function addDbLeadNote(leadId: string | number, noteData: any) {
 }
 
 export async function deleteDbLeadNote(noteId: number) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   for (const l of inMemoryLeads) {
     if (l.notes) {
@@ -818,7 +819,7 @@ export async function deleteDbLeadNote(noteId: number) {
 }
 
 export async function addDbLeadCall(leadId: string | number, callData: any) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   const lead = await getDbLeadById(leadId);
   const call = {
@@ -872,7 +873,7 @@ export async function addDbLeadCall(leadId: string | number, callData: any) {
 }
 
 export async function addDbLeadEmail(leadId: string | number, emailData: any) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   const lead = await getDbLeadById(leadId);
   const emailMsg = {
@@ -922,7 +923,7 @@ export async function addDbLeadEmail(leadId: string | number, emailData: any) {
 }
 
 export async function addDbLeadSms(leadId: string | number, smsData: any) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   const lead = await getDbLeadById(leadId);
   const smsMsg = {
@@ -969,7 +970,7 @@ export async function addDbLeadSms(leadId: string | number, smsData: any) {
 }
 
 export async function addDbLeadTask(leadId: string | number, taskData: any) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   const lead = await getDbLeadById(leadId);
   const task = {
@@ -1027,7 +1028,7 @@ export async function convertDbLeadToClient(leadId: string | number, clientData:
   services?: Array<{ serviceName: string; category?: string; monthlyFee: number }>;
   notes?: string;
 }) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   const lead = await getDbLeadById(leadId);
   const clientId = inMemoryClients.length + 1;
@@ -1122,7 +1123,7 @@ export async function convertDbLeadToClient(leadId: string | number, clientData:
 // 4. CLIENTS REPOSITORY
 // ==========================================
 export async function getDbClients() {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   if (isDbConfigured) {
     try {
@@ -1147,7 +1148,7 @@ export async function getDbClients() {
 // 5. DASHBOARD METRICS & REVENUE AGGREGATION
 // ==========================================
 export async function getDbDashboardMetrics() {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   if (isDbConfigured) {
     try {
@@ -1269,7 +1270,7 @@ export async function getDbDashboardMetrics() {
 // 6. ACTIVITIES & AUDIT LOGS
 // ==========================================
 export async function getDbActivities(limit = 50) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   if (isDbConfigured) {
     try {
@@ -1284,7 +1285,7 @@ export async function getDbActivities(limit = 50) {
 }
 
 export async function getDbAuditLogs(limit = 100) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   if (isDbConfigured) {
     try {
@@ -1302,7 +1303,7 @@ export async function getDbAuditLogs(limit = 100) {
 // 7. AGENCY SETTINGS
 // ==========================================
 export async function getDbAgencySettings() {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   if (isDbConfigured) {
     try {
@@ -1317,7 +1318,7 @@ export async function getDbAgencySettings() {
 }
 
 export async function updateDbAgencySettings(updates: any) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   Object.assign(inMemorySettings, updates, { updatedAt: new Date() });
 
@@ -1344,7 +1345,7 @@ export async function updateDbAgencySettings(updates: any) {
 // 8. SYSTEM HEALTH & MONITORING
 // ==========================================
 export async function getDbSystemHealth() {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   const start = Date.now();
   let dbStatus = isDbConfigured ? 'OPERATIONAL' : 'IN_MEMORY_RESILIENT';
@@ -1420,7 +1421,7 @@ export async function batchImportDbLeads(
   rows: any[],
   importMeta: { fileName: string; importedBy?: string }
 ) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
   
   let validCount = 0;
   let duplicatesCount = 0;
@@ -1457,8 +1458,8 @@ export async function batchImportDbLeads(
       email,
       website,
       address: row.address || row.Address || '',
-      city: row.city || row.City || 'Portland',
-      state: row.state || row.State || row.stateRegion || 'OR',
+      city: row.city || row.City || null,
+      state: row.state || row.State || row.stateRegion || null,
       postal_code: row.postal_code || row.postalCode || row.zip || row.Zip || '',
       niche: row.niche || row.Trade || row.Industry || 'General Contractor',
       gmb_status: row.gmb_status || row.gmbStatus || 'Established',
@@ -1547,7 +1548,7 @@ export async function saveDbAiContent(params: {
   model?: string;
   status?: string;
 }) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   let resolvedLeadId: number | null = null;
   let businessName = 'Prospect';
@@ -1606,7 +1607,7 @@ export async function saveDbAiContent(params: {
 }
 
 export async function getDbAiContentForLead(leadId: number | string) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   const existing = await getDbLeadById(leadId);
   if (!existing) return [];
@@ -1785,7 +1786,7 @@ export async function getDbAutomationRuns(limit = 50) {
 }
 
 export async function findLeadByPhone(phone: string) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   if (!phone) return null;
   const cleanPhone = phone.replace(/[^\d+]/g, '');
@@ -1811,7 +1812,7 @@ export async function findLeadByPhone(phone: string) {
 }
 
 export async function findLeadByEmail(email: string) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   if (!email) return null;
   const trimmed = email.trim().toLowerCase();
@@ -1841,7 +1842,7 @@ export async function recordDbInboundSms(params: {
   externalMessageId?: string;
   aiClassification?: any;
 }) {
-  initInMemoryDefaults();
+  // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   const lead = await findLeadByPhone(params.phone);
   const leadId = lead ? lead.id : null;
