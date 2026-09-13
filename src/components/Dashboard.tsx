@@ -25,7 +25,6 @@ interface DashboardProps {
   leads: Lead[];
   activities: ActivityEvent[];
   onSelectLead: (lead: Lead) => void;
-  onOpenImport: () => void;
   onOpenSophia: () => void;
   onNavigateToLeads: () => void;
   onNavigateToPipeline: () => void;
@@ -35,7 +34,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
   leads,
   activities,
   onSelectLead,
-  onOpenImport,
   onOpenSophia,
   onNavigateToLeads,
   onNavigateToPipeline,
@@ -100,14 +98,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div className="flex items-center gap-3 flex-shrink-0">
-            <button
-              id="dashboard-btn-import"
-              onClick={onOpenImport}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-lg shadow-emerald-600/20"
-            >
-              <FileSpreadsheet className="w-4 h-4" />
-              <span>Import Leads (.xlsx / .csv)</span>
-            </button>
             <button
               id="dashboard-btn-sophia-ask"
               onClick={onOpenSophia}

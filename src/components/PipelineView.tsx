@@ -6,7 +6,6 @@ import {
   MapPin,
   ChevronRight,
   DollarSign,
-  Plus,
   ArrowRight,
   MoreVertical,
 } from 'lucide-react';
@@ -15,7 +14,6 @@ interface PipelineViewProps {
   leads: Lead[];
   onSelectLead: (lead: Lead) => void;
   onUpdateStage: (leadId: string, stage: PipelineStage) => void;
-  onOpenAddLead: () => void;
 }
 
 const STAGES: PipelineStage[] = [
@@ -31,7 +29,6 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
   leads,
   onSelectLead,
   onUpdateStage,
-  onOpenAddLead,
 }) => {
   return (
     <div id="mca-pipeline-kanban" className="p-8 space-y-6 max-w-7xl mx-auto">
@@ -43,14 +40,6 @@ export const PipelineView: React.FC<PipelineViewProps> = ({
             Visual kanban tracking deals from initial cold import through high-ticket retainers.
           </p>
         </div>
-
-        <button
-          onClick={onOpenAddLead}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white transition-all shadow-sm self-start sm:self-auto"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Add Lead</span>
-        </button>
       </div>
 
       {/* Kanban Columns Grid */}

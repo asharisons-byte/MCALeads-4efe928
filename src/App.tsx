@@ -355,8 +355,6 @@ export function App() {
         <Header
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          onOpenImport={() => setImportModalOpen(true)}
-          onOpenAddLead={() => setAddLeadModalOpen(true)}
           onOpenSophia={() => setSophiaModalOpen(true)}
           searchResults={searchResults}
           onSelectLead={(lead) => {
@@ -460,7 +458,6 @@ export function App() {
               leads={leads}
               activities={activities}
               onSelectLead={(lead) => setSelectedLead(lead)}
-              onOpenImport={() => setImportModalOpen(true)}
               onOpenSophia={() => setSophiaModalOpen(true)}
               onNavigateToLeads={() => setCurrentTab('leads')}
               onNavigateToPipeline={() => setCurrentTab('pipeline')}
@@ -512,7 +509,6 @@ export function App() {
               leads={leads}
               onSelectLead={(lead) => setSelectedLead(lead)}
               onUpdateStage={(leadId, stage) => handleUpdateLead(leadId, { pipeline_stage: stage })}
-              onOpenAddLead={() => setAddLeadModalOpen(true)}
             />
           ) : currentTab === 'audits_proposals' ? (
             <div className="p-6 max-w-7xl mx-auto">

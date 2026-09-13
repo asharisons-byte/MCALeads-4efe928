@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import {
   Search,
-  Upload,
-  Plus,
   Sparkles,
   Bell,
   CheckCircle2,
@@ -15,8 +13,6 @@ import { Lead } from '../types';
 interface HeaderProps {
   searchQuery: string;
   onSearchChange: (query: string) => void;
-  onOpenImport: () => void;
-  onOpenAddLead: () => void;
   onOpenSophia: () => void;
   searchResults: Lead[];
   onSelectLead: (lead: Lead) => void;
@@ -26,8 +22,6 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   searchQuery,
   onSearchChange,
-  onOpenImport,
-  onOpenAddLead,
   onOpenSophia,
   searchResults,
   onSelectLead,
@@ -135,26 +129,6 @@ export const Header: React.FC<HeaderProps> = ({
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
           <span className="text-[10px] text-emerald-500 font-sans">Live</span>
         </div>
-
-        {/* Import Leads CTA */}
-        <button
-          id="header-btn-import"
-          onClick={onOpenImport}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700/80 text-xs font-semibold text-slate-200 hover:text-white hover:border-slate-600 transition-all shadow-sm"
-        >
-          <Upload className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Import Leads</span>
-        </button>
-
-        {/* Add Lead Button */}
-        <button
-          id="header-btn-add-lead"
-          onClick={onOpenAddLead}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white transition-all shadow-md shadow-indigo-600/20"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>Add Lead</span>
-        </button>
 
         {/* AI Assistant (Sophia) Button */}
         <button

@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   Users,
   ListFilter,
-  FileSpreadsheet,
   BrainCircuit,
   Award,
   Sparkles,
@@ -22,12 +21,14 @@ import {
   Phone,
   FileCheck,
   ShieldCheck,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 export type NavigationItem =
   | 'command_center'
   | 'dashboard'
   | 'leads'
+  | 'import_leads'
   | 'lead_lists'
   | 'lead_intelligence'
   | 'ai_analysis'
@@ -52,7 +53,7 @@ export type NavigationItem =
 interface SidebarProps {
   currentTab: NavigationItem;
   onNavigate: (tab: NavigationItem) => void;
-  onOpenImport: () => void;
+  onOpenImport?: () => void;
   leadsCount: number;
   hotCount: number;
   draftsCount?: number;
@@ -156,6 +157,24 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </button>
 
             <button
+              id="nav-import-leads"
+              onClick={() => onNavigate('import_leads')}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                currentTab === 'import_leads'
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <FileSpreadsheet className="w-4 h-4 text-indigo-400" />
+                <span>Import Leads</span>
+              </div>
+              <span className="px-1.5 py-0.5 text-[9px] rounded font-bold bg-indigo-500/20 text-indigo-300">
+                .CSV
+              </span>
+            </button>
+
+            <button
               id="nav-lead-lists"
               onClick={() => onNavigate('lead_lists')}
               className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
@@ -168,20 +187,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <ListFilter className="w-4 h-4 text-slate-400" />
                 <span>Lead Lists</span>
               </div>
-            </button>
-
-            <button
-              id="nav-import-leads"
-              onClick={onOpenImport}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold text-emerald-300 hover:bg-emerald-950/40 border border-emerald-500/20 transition-all group"
-            >
-              <div className="flex items-center gap-2.5">
-                <FileSpreadsheet className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
-                <span>Import Leads</span>
-              </div>
-              <span className="text-[10px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-300 rounded font-semibold">
-                Excel/CSV
-              </span>
             </button>
           </div>
         </div>

@@ -3,8 +3,6 @@ import {
   Search,
   Filter,
   Download,
-  Upload,
-  Plus,
   ArrowUpDown,
   Sparkles,
   Flame,
@@ -31,8 +29,8 @@ import * as XLSX from 'xlsx';
 interface LeadsTableProps {
   leads: Lead[];
   onSelectLead: (lead: Lead) => void;
-  onOpenImport: () => void;
-  onOpenAddLead: () => void;
+  onOpenImport?: () => void;
+  onOpenAddLead?: () => void;
   onBulkUpdateStage: (leadIds: string[], stage: PipelineStage) => void;
   onBulkDelete: (leadIds: string[]) => void;
   onTriggerAIEnrichment: (leadIds: string[]) => void;
@@ -242,22 +240,6 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           >
             <Download className="w-3.5 h-3.5 text-slate-400" />
             <span>Export</span>
-          </button>
-          <button
-            id="leads-btn-import"
-            onClick={onOpenImport}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white transition-all shadow-sm"
-          >
-            <Upload className="w-3.5 h-3.5" />
-            <span>Import Leads</span>
-          </button>
-          <button
-            id="leads-btn-add"
-            onClick={onOpenAddLead}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-semibold text-white transition-all shadow-sm"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>Add Lead</span>
           </button>
         </div>
       </div>
@@ -470,15 +452,8 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                       </div>
                       <div className="text-sm font-semibold text-white">No Leads Found</div>
                       <p className="text-xs text-slate-400">
-                        No records match the current view and search filters. Try clearing your search or importing new leads.
+                        No records match the current view and search filters. Try clearing your search or filters.
                       </p>
-                      <button
-                        onClick={onOpenImport}
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold"
-                      >
-                        <Upload className="w-3.5 h-3.5" />
-                        <span>Import Excel File</span>
-                      </button>
                     </div>
                   </td>
                 </tr>
