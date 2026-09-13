@@ -507,6 +507,7 @@ export function App() {
               onOpenAICall={(lead) => {
                 setSophiaAICallLead(lead);
               }}
+              onImportComplete={handleImportComplete}
             />
           ) : currentTab === 'pipeline' ? (
             <PipelineView

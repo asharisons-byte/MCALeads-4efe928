@@ -28,9 +28,12 @@ import {
   ChevronDown,
   FileText,
   FileCode,
+  FolderOpen,
+  Table,
 } from 'lucide-react';
 import { Lead, PipelineStage, ViewFilterType } from '../types';
 import * as XLSX from 'xlsx';
+import { ExcelColumnConverterModal } from './ExcelColumnConverterModal';
 
 interface LeadsTableProps {
   leads: Lead[];
@@ -43,6 +46,7 @@ interface LeadsTableProps {
   onClearAllLeads?: () => void;
   onOpenDialer?: (lead: Lead) => void;
   onOpenAICall?: (lead: Lead) => void;
+  onImportComplete?: (leads: Lead[], source: string, count: number) => void;
 }
 
 export const LeadsTable: React.FC<LeadsTableProps> = ({
@@ -56,6 +60,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   onClearAllLeads,
   onOpenDialer,
   onOpenAICall,
+  onImportComplete,
 }) => {
   // State
   const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
@@ -72,6 +77,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   const [bulkStageTarget, setBulkStageTarget] = useState<PipelineStage>('Contacted');
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
+  const [showColumnConverter, setShowColumnConverter] = useState(false);
 
   // Extract unique niches for filter
   const uniqueNiches = useMemo(() => {
@@ -237,6 +243,31 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             </button>
           )}
 
+          {/* Go to Excel Sheet in Google Drive */}
+          <a
+            id="leads-btn-go-to-excel-sheet"
+            href="https://drive.google.com/drive/folders/13CDyT2NXYzZtZ-2Jj-TX3Fh6pQz9Dvi7?usp=sharing"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition-colors cursor-pointer shadow-sm"
+            title="Go to Excel Sheet in Google Drive (Lead for Suite folder)"
+          >
+            <FolderOpen className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Go to Excel Sheet</span>
+            <ExternalLink className="w-3 h-3 text-emerald-400/80" />
+          </a>
+
+          {/* Convert Columns for Suite Database */}
+          <button
+            id="leads-btn-convert-columns"
+            onClick={() => setShowColumnConverter(true)}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700/80 hover:border-slate-600 hover:bg-slate-800 text-xs font-semibold text-slate-200 hover:text-white transition-colors cursor-pointer shadow-sm"
+            title="Convert and format columns from Excel or Google Sheets for the Suite"
+          >
+            <Table className="w-3.5 h-3.5 text-indigo-400" />
+            <span>Convert Columns</span>
+          </button>
+
           {/* Import Leads Button with Formats Dropdown */}
           {onOpenImport && (
             <div className="relative">
@@ -263,7 +294,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               {isImportMenuOpen && (
                 <div
                   id="leads-import-dropdown"
-                  className="absolute right-0 mt-1.5 w-64 bg-[#0e1322] border border-slate-700 rounded-xl shadow-2xl p-1.5 z-40 space-y-1 text-xs"
+                  className="absolute right-0 mt-1.5 w-72 bg-[#0e1322] border border-slate-700 rounded-xl shadow-2xl p-1.5 z-40 space-y-1 text-xs"
                 >
                   <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800/80">
                     Select Import Source
@@ -271,11 +302,24 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   <button
                     onClick={() => {
                       setIsImportMenuOpen(false);
+                      setShowColumnConverter(true);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-emerald-300 hover:bg-emerald-950/40 hover:text-emerald-200 transition-colors text-left cursor-pointer border border-emerald-500/20 bg-emerald-500/5"
+                  >
+                    <Table className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <div>
+                      <div className="font-semibold text-emerald-300">Convert Columns &amp; Paste Data</div>
+                      <div className="text-[10px] text-emerald-400/80">Convert any Excel columns for Suite</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsImportMenuOpen(false);
                       onOpenImport('upload');
                     }}
                     className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer"
                   >
-                    <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-400 shrink-0" />
                     <div>
                       <div className="font-semibold text-white">CSV or Excel (.csv, .xlsx)</div>
                       <div className="text-[10px] text-slate-400">Spreadsheet file upload</div>
@@ -288,7 +332,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     }}
                     className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer"
                   >
-                    <LinkIcon className="w-4 h-4 text-emerald-400" />
+                    <LinkIcon className="w-4 h-4 text-emerald-400 shrink-0" />
                     <div>
                       <div className="font-semibold text-white">Google Sheet Link</div>
                       <div className="text-[10px] text-slate-400">Live fetch via shared link or ID</div>
@@ -301,7 +345,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     }}
                     className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer"
                   >
-                    <FileCode className="w-4 h-4 text-amber-400" />
+                    <FileCode className="w-4 h-4 text-amber-400 shrink-0" />
                     <div>
                       <div className="font-semibold text-white">JSON Lead File (.json)</div>
                       <div className="text-[10px] text-slate-400">Upload JSON array or object</div>
@@ -314,7 +358,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     }}
                     className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer"
                   >
-                    <FileText className="w-4 h-4 text-sky-400" />
+                    <FileText className="w-4 h-4 text-sky-400 shrink-0" />
                     <div>
                       <div className="font-semibold text-white">Plain Text File (.txt)</div>
                       <div className="text-[10px] text-slate-400">Delimited text file upload</div>
@@ -327,12 +371,41 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     }}
                     className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer"
                   >
-                    <Sparkles className="w-4 h-4 text-indigo-400" />
+                    <Sparkles className="w-4 h-4 text-indigo-400 shrink-0" />
                     <div>
                       <div className="font-semibold text-white">Paste Raw Data</div>
                       <div className="text-[10px] text-slate-400">Copy &amp; paste CSV, TSV, JSON</div>
                     </div>
                   </button>
+
+                  <div className="border-t border-slate-800/80 my-1 pt-1">
+                    <a
+                      href="https://drive.google.com/drive/folders/13CDyT2NXYzZtZ-2Jj-TX3Fh6pQz9Dvi7?usp=sharing"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-indigo-300 hover:bg-indigo-950/40 hover:text-indigo-200 transition-colors text-left cursor-pointer"
+                    >
+                      <FolderOpen className="w-4 h-4 text-indigo-400 shrink-0" />
+                      <div>
+                        <div className="font-semibold flex items-center gap-1">
+                          <span>Go to Excel Sheet (Drive)</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </div>
+                        <div className="text-[10px] text-slate-400">Lead for Suite folder</div>
+                      </div>
+                    </a>
+                    <a
+                      href="/suite_leads_template.xlsx"
+                      download="suite_leads_template.xlsx"
+                      className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer"
+                    >
+                      <Download className="w-4 h-4 text-emerald-400 shrink-0" />
+                      <div>
+                        <div className="font-semibold">Download Template (.xlsx)</div>
+                        <div className="text-[10px] text-slate-400">28-column database schema</div>
+                      </div>
+                    </a>
+                  </div>
                 </div>
               )}
             </div>
@@ -928,6 +1001,19 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           </div>
         </div>
       )}
+
+      {/* Excel Column Converter & Paste Formatter Modal */}
+      <ExcelColumnConverterModal
+        isOpen={showColumnConverter}
+        onClose={() => setShowColumnConverter(false)}
+        existingLeads={leads}
+        onImportComplete={(imported, source, count) => {
+          if (onImportComplete) {
+            onImportComplete(imported, source, count);
+          }
+          setShowColumnConverter(false);
+        }}
+      />
     </div>
   );
 };

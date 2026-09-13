@@ -16,7 +16,11 @@ import {
   FileCode,
   FileText,
   Database,
+  FolderOpen,
+  Table,
+  ExternalLink,
 } from 'lucide-react';
+import { ExcelColumnConverterModal } from './ExcelColumnConverterModal';
 import {
   parseFileToRawData,
   parseTextToRawData,
@@ -64,6 +68,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   const [sheetError, setSheetError] = useState<string | null>(null);
   const [pastedContent, setPastedContent] = useState<string>('');
   const [copiedRepaired, setCopiedRepaired] = useState<boolean>(false);
+  const [showConverterModal, setShowConverterModal] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -399,6 +404,57 @@ export const ImportModal: React.FC<ImportModalProps> = ({
           {/* STEP 1: Upload, Google Sheets, Paste, or Preset */}
           {step === 1 && (
             <div className="space-y-5">
+              {/* Suite Google Drive Folder & Column Converter Bar */}
+              <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-gradient-to-r from-indigo-950/40 via-slate-900 to-emerald-950/30 border border-emerald-500/30">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                    <FileSpreadsheet className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-white flex items-center gap-2">
+                      <span>Suite Google Drive Folder &amp; Column Formatter</span>
+                      <span className="px-1.5 py-0.2 bg-emerald-500/20 text-emerald-300 rounded text-[10px] font-semibold">
+                        Ready
+                      </span>
+                    </div>
+                    <div className="text-[11px] text-slate-400">
+                      Convert spreadsheet columns to match the 28 Suite database fields or open the Drive folder.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowConverterModal(true)}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold transition-colors cursor-pointer shadow-sm"
+                  >
+                    <Table className="w-3.5 h-3.5" />
+                    <span>Convert Columns &amp; Paste</span>
+                  </button>
+                  <a
+                    id="import-modal-drive-link"
+                    href="https://drive.google.com/drive/folders/13CDyT2NXYzZtZ-2Jj-TX3Fh6pQz9Dvi7?usp=sharing"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    <FolderOpen className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Go to Excel Sheet (Drive)</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                  <a
+                    id="import-modal-template-download"
+                    href="/suite_leads_template.xlsx"
+                    download="suite_leads_template.xlsx"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-medium transition-colors"
+                  >
+                    <Download className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Template (.xlsx)</span>
+                  </a>
+                </div>
+              </div>
+
               {/* Input Mode Switcher */}
               <div className="flex flex-wrap items-center gap-2 p-1 bg-slate-900 rounded-xl border border-slate-800">
                 <button
@@ -1089,6 +1145,18 @@ export const ImportModal: React.FC<ImportModalProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Excel Column Converter & Paste Formatter Modal */}
+      <ExcelColumnConverterModal
+        isOpen={showConverterModal}
+        onClose={() => setShowConverterModal(false)}
+        existingLeads={existingLeads}
+        onImportComplete={(imported, source, count) => {
+          onImportComplete(imported, source, count);
+          setShowConverterModal(false);
+          onClose();
+        }}
+      />
     </div>
   );
 };
