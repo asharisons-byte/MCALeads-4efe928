@@ -127,11 +127,32 @@ export async function syncWithDatabase(): Promise<Lead[]> {
   dbSyncStatus = 'syncing';
 
   try {
-    // Probe database connectivity to verify live connection without automatically pulling 202 records into the Leads page
     const health = await bgApiCall('/api/health');
     if (health) {
       lastDbSyncTime = new Date().toISOString();
       dbSyncStatus = 'connected';
+    }
+
+    // Safely sync user leads from database, strictly excluding seeded Oregon CCB records
+    const res = await bgApiCall('/api/leads?limit=300');
+    if (res && Array.isArray(res.leads)) {
+      const seedIds = new Set(OREGON_CCB_LEADS.map((s) => s.lead_id));
+      const dbUserLeads = res.leads
+        .filter((l: any) => {
+          const id = l.leadId || l.lead_id;
+          const source = l.leadSource || l.lead_source;
+          return !seedIds.has(id) && source !== 'Oregon CCB License Database';
+        })
+        .map((l: any) => mapDbLeadToModel(l));
+
+      if (dbUserLeads.length > 0) {
+        const local = getLeads();
+        const dbIds = new Set(dbUserLeads.map((l) => l.lead_id));
+        const localOnly = local.filter((l) => !dbIds.has(l.lead_id));
+        const merged = [...dbUserLeads, ...localOnly];
+        saveLeads(merged);
+        return merged;
+      }
     }
   } catch (err) {
     dbSyncStatus = 'offline';

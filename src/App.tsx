@@ -252,9 +252,9 @@ export function App() {
       }
 
       const current = getLeads();
-      const existingIds = new Set(current.map((l) => l.lead_id));
-      const newConfirmed = confirmedLeads.filter((l) => !existingIds.has(l.lead_id));
-      const combined = [...newConfirmed, ...current];
+      const confirmedIds = new Set(confirmedLeads.map((l) => l.lead_id));
+      const remainingCurrent = current.filter((l) => !confirmedIds.has(l.lead_id));
+      const combined = [...confirmedLeads, ...remainingCurrent];
 
       saveLeads(combined);
       setLeads(combined);
@@ -264,18 +264,18 @@ export function App() {
         file_name: fileName,
         imported_date: new Date().toLocaleDateString(),
         rows_count: totalCount,
-        valid_count: result.validCount !== undefined ? result.validCount : newConfirmed.length,
+        valid_count: result.validCount !== undefined ? result.validCount : confirmedLeads.length,
         duplicates_count: result.duplicatesCount !== undefined ? result.duplicatesCount : 0,
-        rejected_count: totalCount - (result.validCount !== undefined ? result.validCount : newConfirmed.length),
+        rejected_count: Math.max(0, totalCount - (result.validCount !== undefined ? result.validCount : confirmedLeads.length)),
         imported_by: 'Sophia (AI Sales Rep)',
         status: 'Completed',
       });
     } catch (err) {
       console.warn('[Batch Import Sync Fallback Notice]:', err);
       const current = getLeads();
-      const existingIds = new Set(current.map((l) => l.lead_id));
-      const newOnly = newLeads.filter((l) => !existingIds.has(l.lead_id));
-      const combined = [...newOnly, ...current];
+      const newIds = new Set(newLeads.map((l) => l.lead_id));
+      const remainingCurrent = current.filter((l) => !newIds.has(l.lead_id));
+      const combined = [...newLeads, ...remainingCurrent];
       saveLeads(combined);
       setLeads(combined);
 
@@ -284,7 +284,7 @@ export function App() {
         file_name: fileName,
         imported_date: new Date().toLocaleDateString(),
         rows_count: totalCount,
-        valid_count: newOnly.length,
+        valid_count: newLeads.length,
         duplicates_count: 0,
         rejected_count: 0,
         imported_by: 'Sophia (AI Sales Rep)',
