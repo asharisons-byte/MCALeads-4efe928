@@ -1,5 +1,5 @@
 import { eq, ilike, or, and, desc, asc, sql, inArray } from 'drizzle-orm';
-import { db, isDbConfigured } from './index.js';
+import { db, isDbConfigured, getDatabaseDetails } from './index.js';
 import * as schema from './schema.js';
 import { OREGON_CCB_LEADS } from '../data/ccbLeadsData.js';
 
@@ -510,13 +510,11 @@ export async function getDbLeads(params: {
         .select()
         .from(schema.leads)
         .where(whereClause)
-        .orderBy(desc(schema.leads.leadScore), desc(schema.leads.createdAt))
-        .limit(params.limit || 150)
+        .orderBy(desc(schema.leads.createdAt), desc(schema.leads.leadScore))
+        .limit(params.limit || 500)
         .offset(params.offset || 0);
 
-      if (rows && rows.length > 0) {
-        return rows;
-      }
+      return rows || [];
     } catch (error: any) {
       console.warn('getDbLeads DB query skipped (using in-memory store):', error?.message);
     }
@@ -706,6 +704,70 @@ export async function checkLeadDuplicate(params: {
 export async function createDbLead(leadData: any) {
   initInMemoryDefaults();
 
+  const rawBusinessName =
+    leadData.business_name ||
+    leadData.businessName ||
+    leadData.company_name ||
+    leadData.companyName ||
+    leadData['Business Name'] ||
+    leadData['Company Name'] ||
+    leadData['name'] ||
+    leadData.name ||
+    'Contractor';
+
+  const rawContactName =
+    leadData.contact_name ||
+    leadData.contactName ||
+    leadData['Contact Name'] ||
+    leadData['Contact Person'] ||
+    rawBusinessName;
+
+  const rawPhone =
+    leadData.phone ||
+    leadData.phone_e164 ||
+    leadData.phoneE164 ||
+    leadData['Phone'] ||
+    leadData['Phone Number'] ||
+    '';
+
+  const rawEmail =
+    leadData.email ||
+    leadData['Email'] ||
+    leadData['Email Address'] ||
+    '';
+
+  const rawCity =
+    leadData.city ||
+    leadData.City ||
+    'Portland';
+
+  const rawState =
+    leadData.state ||
+    leadData.State ||
+    leadData.state_region ||
+    leadData.stateRegion ||
+    'OR';
+
+  const rawNiche =
+    leadData.niche ||
+    leadData.Niche ||
+    leadData.trade ||
+    leadData.Trade ||
+    leadData.industry ||
+    leadData.Industry ||
+    'General Contractor';
+
+  const rawPostal =
+    leadData.postal_code ||
+    leadData.postalCode ||
+    leadData.zip ||
+    leadData.Zip ||
+    leadData.Postal ||
+    '';
+
+  const rawScore = Number(leadData.lead_score ?? leadData.leadScore ?? leadData.Score);
+  const validatedScore = Number.isFinite(rawScore) ? Math.min(100, Math.max(0, Math.round(rawScore))) : 65;
+
   const uniqueLeadId =
     leadData.lead_id ||
     leadData.leadId ||
@@ -716,32 +778,32 @@ export async function createDbLead(leadData: any) {
     id: numericId,
     leadId: uniqueLeadId,
     organizationId: 1,
-    businessName: leadData.business_name || leadData.businessName,
-    contactName: leadData.contact_name || leadData.contactName || leadData.business_name || leadData.businessName,
-    phone: leadData.phone || '',
-    phoneE164: leadData.phone_e164 || leadData.phoneE164 || leadData.phone || '',
-    email: leadData.email || '',
-    website: leadData.website || '',
+    businessName: rawBusinessName,
+    contactName: rawContactName,
+    phone: rawPhone,
+    phoneE164: leadData.phone_e164 || leadData.phoneE164 || rawPhone,
+    email: rawEmail,
+    website: leadData.website || leadData['Website'] || '',
     industry: leadData.industry || 'Contractor',
     serviceCategory: leadData.service_category || leadData.serviceCategory || 'Construction',
-    niche: leadData.niche || 'General Contractor',
-    address: leadData.address || '',
-    city: leadData.city || 'Portland',
-    county: leadData.county || 'Multnomah',
-    stateRegion: leadData.state || leadData.stateRegion || 'OR',
+    niche: rawNiche,
+    address: leadData.address || leadData.Address || '',
+    city: rawCity,
+    county: leadData.county || leadData.County || 'Multnomah',
+    stateRegion: rawState,
     country: leadData.country || 'USA',
-    postalCode: leadData.postal_code || leadData.postalCode || '',
+    postalCode: rawPostal,
     googleMapsUrl: leadData.google_maps_url || leadData.googleMapsUrl || '',
     googlePlaceId: null,
     leadSource: leadData.lead_source || leadData.leadSource || 'Manual Intake',
-    leadStatus: leadData.pipeline_stage || leadData.leadStatus || 'New Lead',
-    leadScore: leadData.lead_score || leadData.leadScore || 65,
-    estimatedRetainer: leadData.estimated_retainer || leadData.estimatedRetainer || 2500,
-    estimatedValue: (leadData.estimated_retainer || leadData.estimatedRetainer || 2500) * 12,
+    leadStatus: leadData.pipeline_stage || leadData.lead_status || leadData.leadStatus || 'New Lead',
+    leadScore: validatedScore,
+    estimatedRetainer: Number(leadData.estimated_retainer || leadData.estimatedRetainer || 2500),
+    estimatedValue: (Number(leadData.estimated_retainer || leadData.estimatedRetainer || 2500)) * 12,
     assignedTo: leadData.owner || leadData.assigned_to || leadData.assignedTo || 'Sophia (AI Sales Rep)',
     assignedUserId: null,
-    ccbLicenseNumber: leadData.ccb_license_number || (uniqueLeadId.startsWith('CCB-') ? uniqueLeadId.replace('CCB-', '') : null),
-    isHotTarget: leadData.is_hot_target !== undefined ? Boolean(leadData.is_hot_target) : ((leadData.lead_score || leadData.leadScore || 65) >= 80),
+    ccbLicenseNumber: leadData.ccb_license_number || leadData.licenseNumber || (uniqueLeadId.startsWith('CCB-') ? uniqueLeadId.replace('CCB-', '') : null),
+    isHotTarget: leadData.is_hot_target !== undefined ? Boolean(leadData.is_hot_target) : (validatedScore >= 80),
     doNotContact: false,
     opportunityAngle: leadData.opportunity_angle || leadData.opportunityAngle || 'Immediate Local Growth Optimization',
     recommendedService: leadData.recommended_service || leadData.recommendedService || 'SEO & GMB Optimization',
@@ -770,7 +832,7 @@ export async function createDbLead(leadData: any) {
       {
         id: numericId,
         leadId: numericId,
-        totalScore: leadData.lead_score || leadData.leadScore || 65,
+        totalScore: validatedScore,
         reasoning: leadData.opportunity_angle || 'Initial intake assessment score.',
         createdAt: new Date(),
       }
@@ -827,6 +889,25 @@ export async function createDbLead(leadData: any) {
           opportunityAngle: inMemoryRecord.opportunityAngle,
           recommendedService: inMemoryRecord.recommendedService,
           rawPayload: inMemoryRecord.rawPayload,
+        })
+        .onConflictDoUpdate({
+          target: schema.leads.leadId,
+          set: {
+            businessName: inMemoryRecord.businessName,
+            contactName: inMemoryRecord.contactName,
+            phone: inMemoryRecord.phone,
+            phoneE164: inMemoryRecord.phoneE164,
+            email: inMemoryRecord.email,
+            website: inMemoryRecord.website,
+            address: inMemoryRecord.address,
+            city: inMemoryRecord.city,
+            stateRegion: inMemoryRecord.stateRegion,
+            postalCode: inMemoryRecord.postalCode,
+            niche: inMemoryRecord.niche,
+            leadScore: inMemoryRecord.leadScore,
+            leadStatus: inMemoryRecord.leadStatus,
+            updatedAt: new Date(),
+          },
         })
         .returning();
 
@@ -927,10 +1008,15 @@ export async function updateDbLead(leadId: string | number, updates: any) {
       if (updates.pipeline_stage !== undefined) updateFields.leadStatus = updates.pipeline_stage;
       if (updates.leadStatus !== undefined) updateFields.leadStatus = updates.leadStatus;
 
+      const numId = Number(leadId);
+      const whereClause = isNaN(numId)
+        ? eq(schema.leads.leadId, String(leadId))
+        : or(eq(schema.leads.id, numId), eq(schema.leads.leadId, String(leadId)));
+
       const [updated] = await db
         .update(schema.leads)
         .set(updateFields)
-        .where(eq(schema.leads.id, target ? target.id : Number(leadId)))
+        .where(whereClause)
         .returning();
 
       if (updated) return updated;
@@ -961,13 +1047,18 @@ export async function archiveOrDeleteDbLead(leadId: string | number, softDelete 
 
   if (isDbConfigured) {
     try {
+      const numId = Number(leadId);
+      const whereClause = isNaN(numId)
+        ? eq(schema.leads.leadId, String(leadId))
+        : or(eq(schema.leads.id, numId), eq(schema.leads.leadId, String(leadId)));
+
       if (softDelete) {
         await db
           .update(schema.leads)
           .set({ deletedAt: new Date(), leadStatus: 'Archived' })
-          .where(eq(schema.leads.id, target ? target.id : Number(leadId)));
+          .where(whereClause);
       } else {
-        await db.delete(schema.leads).where(eq(schema.leads.id, target ? target.id : Number(leadId)));
+        await db.delete(schema.leads).where(whereClause);
       }
     } catch (error: any) {
       console.warn('archiveOrDeleteDbLead DB skipped (memory updated):', error?.message);
@@ -1580,17 +1671,25 @@ export async function getDbSystemHealth() {
   const start = Date.now();
   let dbStatus = isDbConfigured ? 'OPERATIONAL' : 'IN_MEMORY_RESILIENT';
   let dbLatency = 1;
+  let totalStoredCount = inMemoryLeads.filter((l) => !l.deletedAt).length;
+
+  const dbDetails = getDatabaseDetails();
 
   if (isDbConfigured) {
     try {
-      await db.select({ val: sql`1` });
+      const [leadCount] = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(schema.leads)
+        .where(sql`deleted_at IS NULL`);
       dbLatency = Date.now() - start;
-    } catch (err) {
-      dbStatus = 'IN_MEMORY_RESILIENT';
+      if (leadCount && leadCount.count !== undefined) {
+        totalStoredCount = Number(leadCount.count);
+      }
+    } catch (err: any) {
+      console.warn('Health check DB ping failed, using memory count fallback:', err?.message);
+      dbStatus = 'DEGRADED';
     }
   }
-
-  const activeLeadsCount = inMemoryLeads.filter((l) => !l.deletedAt).length;
 
   return {
     status: 'HEALTHY',
@@ -1598,10 +1697,14 @@ export async function getDbSystemHealth() {
       cloudSqlPostgres: {
         status: dbStatus,
         latencyMs: dbLatency,
-        provider: isDbConfigured ? 'Google Cloud SQL Developer Edition' : 'In-Memory High-Speed Cache (Cloud SQL Ready)',
-        engine: 'PostgreSQL 16 Compatible',
-        region: 'europe-west3',
-        totalLeadsStored: activeLeadsCount,
+        provider: dbDetails.provider,
+        engine: dbDetails.isNeon ? 'Neon Serverless PostgreSQL 16' : 'PostgreSQL 16 Compatible',
+        region: dbDetails.host.includes('us-east-1') ? 'us-east-1' : 'europe-west3',
+        host: dbDetails.host,
+        database: dbDetails.database,
+        sslMode: dbDetails.sslMode,
+        isNeon: dbDetails.isNeon,
+        totalLeadsStored: totalStoredCount,
       },
       geminiAi: {
         status: 'OPERATIONAL',

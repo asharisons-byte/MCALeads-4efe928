@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import { getDatabaseDetails } from '../db/index.js';
 import {
   initDatabaseDefaults,
   getDbLeads,
@@ -31,6 +32,35 @@ router.get('/health', async (req: Request, res: Response) => {
   try {
     const health = await getDbSystemHealth();
     return res.json(health);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// Database Connection Details Endpoint
+router.get('/database/details', async (req: Request, res: Response) => {
+  try {
+    const details = getDatabaseDetails();
+    const health = await getDbSystemHealth();
+    return res.json({
+      success: true,
+      details,
+      health: health.services.cloudSqlPostgres,
+    });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/db-details', async (req: Request, res: Response) => {
+  try {
+    const details = getDatabaseDetails();
+    const health = await getDbSystemHealth();
+    return res.json({
+      success: true,
+      details,
+      health: health.services.cloudSqlPostgres,
+    });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

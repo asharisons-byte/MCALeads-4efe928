@@ -3,8 +3,11 @@ import * as dotenv from "dotenv";
 
 dotenv.config();
 
-// Prefer Vercel PostgreSQL connection string, fallback to legacy Cloud SQL variables
-const postgresUrl = process.env.POSTGRES_URL;
+// Prefer Neon / Vercel PostgreSQL connection string, fallback to legacy Cloud SQL variables
+const postgresUrl =
+  process.env.DATABASE_URL ||
+  process.env.POSTGRES_URL ||
+  process.env.NEON_DATABASE_URL;
 const sqlHost = process.env.SQL_HOST;
 const sqlDbName = process.env.SQL_DB_NAME;
 const user = process.env.SQL_ADMIN_USER || process.env.SQL_USER;
@@ -13,8 +16,8 @@ const password = process.env.SQL_ADMIN_PASSWORD || process.env.SQL_PASSWORD;
 let dbCredentialsConfig: any;
 
 if (postgresUrl) {
-  // Vercel/Neon PostgreSQL mode using connection string
-  console.log("Using Vercel PostgreSQL connection string for Drizzle Kit.");
+  // Neon / Vercel PostgreSQL mode using connection string
+  console.log("Using Neon / PostgreSQL connection string for Drizzle Kit.");
   dbCredentialsConfig = {
     url: postgresUrl,
   };
@@ -30,7 +33,7 @@ if (postgresUrl) {
   };
 } else {
   throw new Error(
-    "Either POSTGRES_URL (Vercel) or SQL_HOST/SQL_DB_NAME/SQL_USER/SQL_PASSWORD (Cloud SQL) must be set in environment variables."
+    "Either DATABASE_URL / POSTGRES_URL (Neon/Vercel) or SQL_HOST/SQL_DB_NAME/SQL_USER/SQL_PASSWORD must be set in environment variables."
   );
 }
 

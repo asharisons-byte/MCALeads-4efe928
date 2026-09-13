@@ -8,14 +8,103 @@ declare global {
   var _postgresPool: Pool | undefined;
 }
 
+// Function to resolve connection string from environment variables
+export const getDatabaseUrl = (): string | undefined => {
+  return (
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.NEON_DATABASE_URL ||
+    undefined
+  );
+};
+
+export interface DatabaseDetails {
+  configured: boolean;
+  provider: string;
+  host: string;
+  database: string;
+  user?: string;
+  sslMode: string;
+  isNeon: boolean;
+  maskedUrl: string;
+  rawEnvKeyUsed: string;
+}
+
+export function getDatabaseDetails(): DatabaseDetails {
+  const url = getDatabaseUrl();
+  const rawEnvKeyUsed = process.env.DATABASE_URL
+    ? 'DATABASE_URL'
+    : process.env.POSTGRES_URL
+    ? 'POSTGRES_URL'
+    : process.env.NEON_DATABASE_URL
+    ? 'NEON_DATABASE_URL'
+    : process.env.SQL_HOST
+    ? 'SQL_HOST'
+    : 'NONE';
+
+  if (url) {
+    try {
+      const parsed = new URL(url);
+      const isNeon = parsed.hostname.includes('neon.tech');
+      return {
+        configured: true,
+        provider: isNeon ? 'Neon Serverless PostgreSQL' : 'PostgreSQL Database',
+        host: parsed.hostname,
+        database: parsed.pathname.replace(/^\//, '') || 'neondb',
+        user: parsed.username || 'neondb_owner',
+        sslMode: parsed.searchParams.get('sslmode') || 'require',
+        isNeon,
+        maskedUrl: `${parsed.protocol}//${parsed.username}:••••••••@${parsed.hostname}${parsed.pathname}`,
+        rawEnvKeyUsed,
+      };
+    } catch {
+      const isNeon = url.includes('neon.tech');
+      return {
+        configured: true,
+        provider: isNeon ? 'Neon Serverless PostgreSQL' : 'PostgreSQL Database',
+        host: isNeon ? 'ep-*.neon.tech' : 'configured via URL',
+        database: 'neondb',
+        sslMode: 'require',
+        isNeon,
+        maskedUrl: 'postgresql://••••••••@configured-host/neondb',
+        rawEnvKeyUsed,
+      };
+    }
+  }
+
+  if (process.env.SQL_HOST) {
+    return {
+      configured: true,
+      provider: 'Google Cloud SQL',
+      host: process.env.SQL_HOST,
+      database: process.env.SQL_DB_NAME || 'crm_db',
+      user: process.env.SQL_USER,
+      sslMode: 'standard',
+      isNeon: false,
+      maskedUrl: `postgresql://${process.env.SQL_USER}:••••••••@${process.env.SQL_HOST}/${process.env.SQL_DB_NAME}`,
+      rawEnvKeyUsed,
+    };
+  }
+
+  return {
+    configured: false,
+    provider: 'In-Memory Resilient Store',
+    host: 'localhost',
+    database: 'in-memory',
+    sslMode: 'none',
+    isNeon: false,
+    maskedUrl: 'memory://local',
+    rawEnvKeyUsed,
+  };
+}
+
 // Function to create or retrieve the connection pool.
 export const createPool = () => {
   if (!global._postgresPool) {
-    // Support Vercel PostgreSQL via POSTGRES_URL connection string
-    const postgresUrl = process.env.POSTGRES_URL;
+    const postgresUrl = getDatabaseUrl();
 
     if (postgresUrl) {
-      // Vercel/Neon PostgreSQL connection string mode
+      // Neon / Vercel PostgreSQL connection string mode
       global._postgresPool = new Pool({
         connectionString: postgresUrl,
         max: 10,
@@ -50,5 +139,10 @@ const pool = createPool();
 
 // Initialize Drizzle with the pool and schema (only if pool exists).
 export const db = pool ? drizzle(pool, { schema }) : null;
-export const isDbConfigured = Boolean(process.env.POSTGRES_URL || process.env.SQL_HOST);
+export const isDbConfigured = Boolean(
+  process.env.DATABASE_URL ||
+  process.env.POSTGRES_URL ||
+  process.env.NEON_DATABASE_URL ||
+  process.env.SQL_HOST
+);
 export { schema };

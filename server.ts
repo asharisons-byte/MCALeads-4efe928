@@ -9,6 +9,14 @@ import { initDatabaseDefaults, saveDbAiContent, addDbLeadSms } from './src/db/re
 
 dotenv.config();
 
+// Normalize Neon / PostgreSQL connection strings across environments
+if (!process.env.POSTGRES_URL && process.env.DATABASE_URL) {
+  process.env.POSTGRES_URL = process.env.DATABASE_URL;
+}
+if (!process.env.DATABASE_URL && process.env.POSTGRES_URL) {
+  process.env.DATABASE_URL = process.env.POSTGRES_URL;
+}
+
 function safeJsonParse(raw: string | undefined, fallback: any): any {
   if (!raw) return fallback;
   let cleaned = raw.trim();

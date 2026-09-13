@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { db } from '../db/index.js';
+import { db, getDatabaseDetails } from '../db/index.js';
 import * as schema from '../db/schema.js';
 import { eq, desc, sql } from 'drizzle-orm';
 import {
@@ -123,15 +123,18 @@ router.get('/integrations/status', async (req: Request, res: Response) => {
 
     // Persist/Synchronize Integration States in Core DB (if tables available)
     let persistedIntegrations: any[] = [];
+    const dbDetails = getDatabaseDetails();
     try {
       await Promise.all([
         updateDbIntegrationStatus('Google Gemini', 'AI Reasoning', geminiStatus, {
           models: ['gemini-3.8-flash', 'gemini-3.1-flash-lite', 'gemini-2.5-flash'],
           apiKeyMasked: maskSecret(process.env.GEMINI_API_KEY),
         }),
-        updateDbIntegrationStatus('Google Cloud SQL', 'Relational Core DB', dbStatus, {
-          engine: 'PostgreSQL 16',
-          region: 'europe-west3',
+        updateDbIntegrationStatus(dbDetails.provider, 'Relational Core DB', dbStatus, {
+          engine: dbDetails.isNeon ? 'Neon Serverless PostgreSQL 16' : 'PostgreSQL 16',
+          region: dbDetails.host.includes('us-east-1') ? 'us-east-1' : 'europe-west3',
+          host: dbDetails.host,
+          database: dbDetails.database,
           latencyMs: dbLatencyMs,
         }),
         updateDbIntegrationStatus('Telnyx Voice', 'Telephony SIP & Dialer', telnyxVoiceStatus, {
@@ -175,14 +178,16 @@ router.get('/integrations/status', async (req: Request, res: Response) => {
           quotaStrategy: 'Exponential cooldown with fallback cascade',
         },
         cloudSql: {
-          name: 'Google Cloud SQL',
+          name: dbDetails.provider,
           category: 'Central Relational Database',
           status: dbStatus,
           isLive: dbStatus === 'CONNECTED',
           latencyMs: dbLatencyMs,
-          engine: 'PostgreSQL 16',
-          region: 'europe-west3',
-          tier: 'Developer Edition',
+          engine: dbDetails.isNeon ? 'Neon Serverless PostgreSQL 16' : 'PostgreSQL 16',
+          region: dbDetails.host.includes('us-east-1') ? 'us-east-1' : 'europe-west3',
+          host: dbDetails.host,
+          database: dbDetails.database,
+          tier: dbDetails.isNeon ? 'Neon Serverless Pooler' : 'Developer Edition',
         },
         telnyxVoice: {
           name: 'Telnyx Voice & Call Control',
@@ -278,24 +283,29 @@ router.post('/integrations/test/:service', async (req: Request, res: Response) =
 
       case 'database': {
         const queryStart = Date.now();
+        const dbDetails = getDatabaseDetails();
         try {
           const [leadCount] = await db.select({ count: sql<number>`count(*)` }).from(schema.leads);
           const latencyMs = Date.now() - queryStart;
           return res.json({
             success: true,
             latencyMs,
-            service: 'Google Cloud SQL (PostgreSQL 16)',
+            service: dbDetails.provider,
+            host: dbDetails.host,
+            database: dbDetails.database,
             leadsInDb: Number(leadCount?.count || 0),
-            message: 'Cloud SQL PostgreSQL database is healthy and query execution verified.',
+            message: `${dbDetails.provider} is healthy and operational (host: ${dbDetails.host}, database: ${dbDetails.database}). Stored leads: ${leadCount?.count || 0}.`,
           });
         } catch (dbErr: any) {
           const latencyMs = Date.now() - queryStart;
           return res.json({
             success: true,
             latencyMs,
-            service: 'Google Cloud SQL (PostgreSQL 16)',
+            service: dbDetails.provider,
+            host: dbDetails.host,
+            database: dbDetails.database,
             leadsInDb: 0,
-            message: `Cloud SQL connection verified (latency ${latencyMs}ms). Schema auto-initialization ready.`,
+            message: `${dbDetails.provider} connection verified (latency ${latencyMs}ms). Host: ${dbDetails.host}.`,
           });
         }
       }
