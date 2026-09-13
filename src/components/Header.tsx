@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   X,
   ExternalLink,
-  Database,
 } from 'lucide-react';
 import { Lead } from '../types';
 
@@ -118,18 +117,6 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Header Actions */}
       <div className="flex items-center space-x-3">
-        {/* Cloud SQL Database Status Badge */}
-        <div
-          id="header-cloud-sql-status"
-          title="Cloud SQL PostgreSQL 16 (europe-west3) • Persistent Storage Active"
-          className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-[11px] font-mono text-emerald-400 select-none shadow-sm"
-        >
-          <Database className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-          <span className="font-semibold text-emerald-300">Cloud SQL</span>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-          <span className="text-[10px] text-emerald-500 font-sans">Live</span>
-        </div>
-
         {/* AI Assistant (Sophia) Button */}
         <button
           id="header-btn-sophia"

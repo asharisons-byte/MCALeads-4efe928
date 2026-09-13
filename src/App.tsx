@@ -68,6 +68,7 @@ export function App() {
 
   // Modals
   const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importInitialMode, setImportInitialMode] = useState<'upload' | 'sheets' | 'paste' | 'preset'>('upload');
   const [addLeadModalOpen, setAddLeadModalOpen] = useState(false);
   const [sophiaModalOpen, setSophiaModalOpen] = useState(false);
   const [composerLead, setComposerLead] = useState<Lead | null>(null);
@@ -489,7 +490,10 @@ export function App() {
             <LeadsTable
               leads={leads}
               onSelectLead={(lead) => setSelectedLead(lead)}
-              onOpenImport={() => setImportModalOpen(true)}
+              onOpenImport={(mode) => {
+                setImportInitialMode(mode || 'upload');
+                setImportModalOpen(true);
+              }}
               onOpenAddLead={() => setAddLeadModalOpen(true)}
               onBulkUpdateStage={handleBulkUpdateStage}
               onBulkDelete={handleBulkDelete}
@@ -596,6 +600,7 @@ export function App() {
       {/* Import Modal */}
       <ImportModal
         isOpen={importModalOpen}
+        initialMode={importInitialMode}
         onClose={() => setImportModalOpen(false)}
         existingLeads={leads}
         onImportComplete={handleImportComplete}

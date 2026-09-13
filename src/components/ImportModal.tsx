@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Upload,
   FileSpreadsheet,
@@ -12,10 +12,15 @@ import {
   Download,
   Check,
   RefreshCw,
+  Link as LinkIcon,
+  FileCode,
+  FileText,
+  Database,
 } from 'lucide-react';
 import {
   parseFileToRawData,
   parseTextToRawData,
+  fetchGoogleSheetData,
   detectColumnMapping,
   analyzeImportRows,
   convertRowsToLeads,
@@ -34,6 +39,7 @@ interface ImportModalProps {
   onClose: () => void;
   existingLeads: Lead[];
   onImportComplete: (newLeads: Lead[], fileName: string, totalCount: number) => void;
+  initialMode?: 'upload' | 'sheets' | 'paste' | 'preset';
 }
 
 export const ImportModal: React.FC<ImportModalProps> = ({
@@ -41,6 +47,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   onClose,
   existingLeads,
   onImportComplete,
+  initialMode = 'upload',
 }) => {
   const [step, setStep] = useState<number>(1);
   const [file, setFile] = useState<File | null>(null);
@@ -52,12 +59,55 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   const [isProcessing, setIsProcessing] = useState<boolean>(false);
   const [importProgress, setImportProgress] = useState<number>(0);
   const [importedLeads, setImportedLeads] = useState<Lead[]>([]);
-  const [inputMode, setInputMode] = useState<'upload' | 'paste'>('upload');
+  const [inputMode, setInputMode] = useState<'upload' | 'sheets' | 'paste' | 'preset'>(initialMode);
+  const [googleSheetUrl, setGoogleSheetUrl] = useState<string>('');
+  const [sheetError, setSheetError] = useState<string | null>(null);
   const [pastedContent, setPastedContent] = useState<string>('');
   const [copiedRepaired, setCopiedRepaired] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (isOpen) {
+      setInputMode(initialMode);
+      setStep(1);
+    }
+  }, [isOpen, initialMode]);
+
   if (!isOpen) return null;
+
+  const handleFetchGoogleSheet = async () => {
+    if (!googleSheetUrl.trim()) return;
+    setIsProcessing(true);
+    setSheetError(null);
+    try {
+      const { headers, rows } = await fetchGoogleSheetData(googleSheetUrl.trim());
+      if (headers.length === 0 || rows.length === 0) {
+        throw new Error('No rows or columns found in Google Sheet. Please check the URL.');
+      }
+      setRawHeaders(headers);
+      setRawRows(rows);
+      setFileName('Google_Sheet_Import.csv');
+
+      const detectedMappings: ColumnMapping[] = headers.map((col) => {
+        const det = detectColumnMapping(col);
+        return {
+          rawColumn: col,
+          mappedField: det.field,
+          confidence: det.confidence,
+        };
+      });
+      setMappings(detectedMappings);
+      setStep(2);
+    } catch (err: any) {
+      console.error('Failed to import Google Sheet', err);
+      setSheetError(
+        err.message ||
+          'Failed to access Google Sheet. Please ensure it is shared as "Anyone with the link can view".'
+      );
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const handleProcessPastedData = () => {
     if (!pastedContent.trim()) {
@@ -346,38 +396,63 @@ export const ImportModal: React.FC<ImportModalProps> = ({
 
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-6">
-          {/* STEP 1: Upload or Paste */}
+          {/* STEP 1: Upload, Google Sheets, Paste, or Preset */}
           {step === 1 && (
             <div className="space-y-5">
               {/* Input Mode Switcher */}
-              <div className="flex items-center gap-2 p-1 bg-slate-900 rounded-xl border border-slate-800 w-fit">
+              <div className="flex flex-wrap items-center gap-2 p-1 bg-slate-900 rounded-xl border border-slate-800">
                 <button
                   type="button"
                   onClick={() => setInputMode('upload')}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2 ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                     inputMode === 'upload'
                       ? 'bg-indigo-600 text-white shadow-sm'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
-                  <FileSpreadsheet className="w-3.5 h-3.5" />
-                  <span>Upload Spreadsheet File (.xlsx, .csv)</span>
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>File Upload (.csv, .xlsx, .json, .txt)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInputMode('sheets')}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                    inputMode === 'sheets'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <LinkIcon className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Google Sheets Link</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setInputMode('paste')}
-                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2 ${
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                     inputMode === 'paste'
                       ? 'bg-indigo-600 text-white shadow-sm'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  <span>Paste Lead Data (CSV, TSV, or JSON)</span>
+                  <span>Paste Lead Data (CSV/JSON)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInputMode('preset')}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+                    inputMode === 'preset'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <Database className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Curated Datasets</span>
                 </button>
               </div>
 
-              {inputMode === 'upload' ? (
+              {/* MODE 1: File Upload (CSV, XLSX, JSON, TXT) */}
+              {inputMode === 'upload' && (
                 <div
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={(e) => {
@@ -386,13 +461,13 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                       handleFileUpload(e.dataTransfer.files[0]);
                     }
                   }}
-                  className="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl p-10 text-center flex flex-col items-center justify-center transition-colors bg-slate-900/30 group cursor-pointer"
+                  className="border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl p-8 text-center flex flex-col items-center justify-center transition-colors bg-slate-900/30 group cursor-pointer"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept=".xlsx, .xls, .csv"
+                    accept=".xlsx, .xls, .csv, .json, .txt, text/plain, application/json, text/csv"
                     className="hidden"
                     onChange={(e) => {
                       if (e.target.files && e.target.files[0]) {
@@ -400,35 +475,127 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                       }
                     }}
                   />
-                  <div className="w-14 h-14 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform mb-4">
+                  <div className="w-14 h-14 rounded-2xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 transition-transform mb-3">
                     <Upload className="w-7 h-7" />
                   </div>
-                  <h3 className="text-base font-bold text-white mb-1">
-                    Drag and drop your lead list here
+                  <h3 className="text-sm font-bold text-white mb-1">
+                    Drag and drop your lead list file here
                   </h3>
-                  <p className="text-xs text-slate-400 max-w-sm mb-4">
-                    Supports Excel (.xlsx, .xls) and CSV files. Automatic column detection maps 98% of columns instantly.
+                  <p className="text-xs text-slate-400 max-w-md mb-3">
+                    Supports Excel (.xlsx, .xls), CSV (.csv), JSON (.json), and Plain Text (.txt) formats with automatic column detection and Neon DB mapping.
                   </p>
+                  <div className="flex flex-wrap items-center justify-center gap-2 mb-4">
+                    <span className="px-2.5 py-1 rounded bg-slate-800 border border-slate-700 text-[11px] font-mono text-indigo-300 font-semibold">
+                      .CSV
+                    </span>
+                    <span className="px-2.5 py-1 rounded bg-slate-800 border border-slate-700 text-[11px] font-mono text-emerald-300 font-semibold">
+                      .XLSX / .XLS
+                    </span>
+                    <span className="px-2.5 py-1 rounded bg-slate-800 border border-slate-700 text-[11px] font-mono text-amber-300 font-semibold">
+                      .JSON
+                    </span>
+                    <span className="px-2.5 py-1 rounded bg-slate-800 border border-slate-700 text-[11px] font-mono text-sky-300 font-semibold">
+                      .TXT
+                    </span>
+                  </div>
                   <button
                     type="button"
                     className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md"
                   >
-                    Browse Computer
+                    Browse Files on Computer
                   </button>
                 </div>
-              ) : (
+              )}
+
+              {/* MODE 2: Google Sheets Import */}
+              {inputMode === 'sheets' && (
+                <div className="space-y-4 p-5 rounded-2xl bg-slate-900/50 border border-slate-800">
+                  <div className="flex items-center gap-2.5 text-white">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                      <FileSpreadsheet className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-white">Import from Google Sheets</h4>
+                      <p className="text-[11px] text-slate-400">
+                        Paste the shareable link of any public or shared Google Spreadsheet
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-slate-300 text-xs font-semibold">
+                      Google Sheet URL or Spreadsheet ID
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="url"
+                        value={googleSheetUrl}
+                        onChange={(e) => {
+                          setGoogleSheetUrl(e.target.value);
+                          if (sheetError) setSheetError(null);
+                        }}
+                        placeholder="https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit"
+                        className="flex-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 font-mono"
+                      />
+                      <button
+                        type="button"
+                        disabled={!googleSheetUrl.trim() || isProcessing}
+                        onClick={handleFetchGoogleSheet}
+                        className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-emerald-600/20 whitespace-nowrap"
+                      >
+                        {isProcessing ? (
+                          <>
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>Fetching...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>Fetch &amp; Map Sheet</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {sheetError && (
+                    <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-medium flex items-start gap-2">
+                      <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold">Google Sheet Access Error</p>
+                        <p className="text-[11px] text-rose-300 mt-0.5">{sheetError}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="p-3.5 rounded-xl bg-slate-800/40 border border-slate-700/60 text-slate-300 space-y-1.5 text-[11px]">
+                    <div className="font-semibold text-slate-200 flex items-center gap-1.5">
+                      <HelpCircle className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>How to share your Google Sheet for 1-click import:</span>
+                    </div>
+                    <ol className="list-decimal list-inside space-y-1 text-slate-400 pl-1">
+                      <li>In Google Sheets, click the blue <strong className="text-white">Share</strong> button in the top right.</li>
+                      <li>Under "General access", select <strong className="text-white">"Anyone with the link"</strong> (Viewer).</li>
+                      <li>Click <strong className="text-white">Copy link</strong> and paste it into the box above.</li>
+                    </ol>
+                  </div>
+                </div>
+              )}
+
+              {/* MODE 3: Paste Data (CSV, TSV, or JSON) */}
+              {inputMode === 'paste' && (
                 <div className="space-y-3 p-5 rounded-2xl bg-slate-900/40 border border-slate-800">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-white flex items-center gap-1.5">
-                      <span>Paste your raw lead table (CSV, Tab-Separated, or JSON)</span>
+                      <span>Paste your raw lead table (CSV, Tab-Separated, TXT, or JSON)</span>
                     </label>
-                    <span className="text-[11px] text-slate-400">Include header row</span>
+                    <span className="text-[11px] text-slate-400">Include header row or JSON array</span>
                   </div>
                   <textarea
                     value={pastedContent}
                     onChange={(e) => setPastedContent(e.target.value)}
                     placeholder={`licenseNumber,businessName,city,state,zip,phone,gmbRating,gmbReviews,gmbCategory,gmbMapsUrl\n12345,Apex Plumbing,Portland,OR,97201,503-555-0100,4.8,42,Plumber,https://maps.google.com/...`}
-                    rows={10}
+                    rows={8}
                     className="w-full rounded-xl bg-slate-950 border border-slate-800 p-3.5 text-xs text-slate-200 font-mono focus:outline-none focus:border-indigo-500 placeholder:text-slate-600 resize-none"
                   />
                   <div className="flex items-center justify-between">
@@ -448,6 +615,16 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                       <span>Process &amp; Map Data</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {/* MODE 4: Curated Datasets */}
+              {inputMode === 'preset' && (
+                <div className="space-y-3">
+                  <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 space-y-2">
+                    <div className="text-xs font-bold text-white">Select a pre-verified contractor dataset to import into Neon DB:</div>
+                    <p className="text-xs text-slate-400">These datasets are verified against official CCB registries and formatted with complete audit metrics.</p>
                   </div>
                 </div>
               )}

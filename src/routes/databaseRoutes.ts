@@ -277,4 +277,68 @@ router.put('/settings/agency', async (req: Request, res: Response) => {
   }
 });
 
+// 21. Google Sheet Fetch Proxy & Parser
+router.post('/import/google-sheet', async (req: Request, res: Response) => {
+  try {
+    const { url, sheetId } = req.body;
+    if (!url && !sheetId) {
+      return res.status(400).json({ error: 'Google Sheet URL or Spreadsheet ID is required' });
+    }
+
+    let id = sheetId ? String(sheetId).trim() : '';
+    let gid = '0';
+
+    if (url) {
+      const rawUrl = String(url).trim();
+      const match = rawUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+      if (match) {
+        id = match[1];
+      } else if (rawUrl.startsWith('http')) {
+        id = rawUrl;
+      } else {
+        id = rawUrl;
+      }
+
+      const gidMatch = rawUrl.match(/[#&?]gid=([0-9]+)/);
+      if (gidMatch) {
+        gid = gidMatch[1];
+      }
+    }
+
+    const exportUrl = id.startsWith('http')
+      ? id
+      : `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+
+    const fetchResponse = await fetch(exportUrl, {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      },
+    });
+
+    if (!fetchResponse.ok) {
+      return res.status(400).json({
+        error: `Could not access Google Sheet (HTTP ${fetchResponse.status}). Please make sure the sheet is shared as "Anyone with the link can view".`,
+      });
+    }
+
+    const text = await fetchResponse.text();
+
+    if (
+      text.includes('<!DOCTYPE html>') ||
+      text.includes('<html') ||
+      text.includes('accounts.google.com')
+    ) {
+      return res.status(403).json({
+        error:
+          'Google Sheet requires login. Please set permissions to "Anyone with the link can view" (Viewer), or export as CSV/XLSX and upload.',
+      });
+    }
+
+    return res.json({ success: true, csvText: text, spreadsheetId: id });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Failed to fetch Google Sheet' });
+  }
+});
+
 export { router as databaseRoutes };

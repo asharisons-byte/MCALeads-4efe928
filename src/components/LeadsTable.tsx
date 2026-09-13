@@ -22,6 +22,12 @@ import {
   Bot,
   X,
   FileSpreadsheet,
+  Plus,
+  Upload,
+  Link as LinkIcon,
+  ChevronDown,
+  FileText,
+  FileCode,
 } from 'lucide-react';
 import { Lead, PipelineStage, ViewFilterType } from '../types';
 import * as XLSX from 'xlsx';
@@ -29,7 +35,7 @@ import * as XLSX from 'xlsx';
 interface LeadsTableProps {
   leads: Lead[];
   onSelectLead: (lead: Lead) => void;
-  onOpenImport?: () => void;
+  onOpenImport?: (mode?: 'upload' | 'sheets' | 'paste' | 'preset') => void;
   onOpenAddLead?: () => void;
   onBulkUpdateStage: (leadIds: string[], stage: PipelineStage) => void;
   onBulkDelete: (leadIds: string[]) => void;
@@ -65,6 +71,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   const [showBulkStageModal, setShowBulkStageModal] = useState(false);
   const [bulkStageTarget, setBulkStageTarget] = useState<PipelineStage>('Contacted');
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
 
   // Extract unique niches for filter
   const uniqueNiches = useMemo(() => {
@@ -217,7 +224,131 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Add Lead Button */}
+          {onOpenAddLead && (
+            <button
+              id="leads-btn-add-lead"
+              onClick={onOpenAddLead}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Lead</span>
+            </button>
+          )}
+
+          {/* Import Leads Button with Formats Dropdown */}
+          {onOpenImport && (
+            <div className="relative">
+              <div className="flex items-center rounded-lg bg-slate-900 border border-slate-700/80 hover:border-slate-600 shadow-sm overflow-hidden">
+                <button
+                  id="leads-btn-import"
+                  onClick={() => onOpenImport('upload')}
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                >
+                  <Upload className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Import Leads</span>
+                </button>
+                <button
+                  id="leads-btn-import-menu"
+                  onClick={() => setIsImportMenuOpen(!isImportMenuOpen)}
+                  className="px-2 py-2 border-l border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                  title="Choose import format: CSV, XLSX, Google Sheet, JSON, TXT"
+                >
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Import Options Dropdown Menu */}
+              {isImportMenuOpen && (
+                <div
+                  id="leads-import-dropdown"
+                  className="absolute right-0 mt-1.5 w-64 bg-[#0e1322] border border-slate-700 rounded-xl shadow-2xl p-1.5 z-40 space-y-1 text-xs"
+                >
+                  <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800/80">
+                    Select Import Source
+                  </div>
+                  <button
+                    onClick={() => {
+                      setIsImportMenuOpen(false);
+                      onOpenImport('upload');
+                    }}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer"
+                  >
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                    <div>
+                      <div className="font-semibold text-white">CSV or Excel (.csv, .xlsx)</div>
+                      <div className="text-[10px] text-slate-400">Spreadsheet file upload</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsImportMenuOpen(false);
+                      onOpenImport('sheets');
+                    }}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer"
+                  >
+                    <LinkIcon className="w-4 h-4 text-emerald-400" />
+                    <div>
+                      <div className="font-semibold text-white">Google Sheet Link</div>
+                      <div className="text-[10px] text-slate-400">Live fetch via shared link or ID</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsImportMenuOpen(false);
+                      onOpenImport('upload');
+                    }}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer"
+                  >
+                    <FileCode className="w-4 h-4 text-amber-400" />
+                    <div>
+                      <div className="font-semibold text-white">JSON Lead File (.json)</div>
+                      <div className="text-[10px] text-slate-400">Upload JSON array or object</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsImportMenuOpen(false);
+                      onOpenImport('upload');
+                    }}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer"
+                  >
+                    <FileText className="w-4 h-4 text-sky-400" />
+                    <div>
+                      <div className="font-semibold text-white">Plain Text File (.txt)</div>
+                      <div className="text-[10px] text-slate-400">Delimited text file upload</div>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsImportMenuOpen(false);
+                      onOpenImport('paste');
+                    }}
+                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer"
+                  >
+                    <Sparkles className="w-4 h-4 text-indigo-400" />
+                    <div>
+                      <div className="font-semibold text-white">Paste Raw Data</div>
+                      <div className="text-[10px] text-slate-400">Copy &amp; paste CSV, TSV, JSON</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Export Button */}
+          <button
+            id="leads-btn-export"
+            onClick={() => handleExport('xlsx')}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white hover:border-slate-700 transition-all cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-400" />
+            <span>Export</span>
+          </button>
+
+          {/* Clear All Button */}
           {onClearAllLeads && leads.length > 0 && (
             <button
               id="leads-btn-clear-all"
@@ -227,20 +358,12 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 }
               }}
               title="Clear all leads from CRM"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 border border-rose-900/40 text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 transition-all"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 border border-rose-900/40 text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 transition-all cursor-pointer"
             >
               <Trash2 className="w-3.5 h-3.5 text-rose-400" />
               <span className="hidden sm:inline">Clear All</span>
             </button>
           )}
-          <button
-            id="leads-btn-export"
-            onClick={() => handleExport('xlsx')}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white hover:border-slate-700 transition-all"
-          >
-            <Download className="w-3.5 h-3.5 text-slate-400" />
-            <span>Export</span>
-          </button>
         </div>
       </div>
 
@@ -452,8 +575,28 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                       </div>
                       <div className="text-sm font-semibold text-white">No Leads Found</div>
                       <p className="text-xs text-slate-400">
-                        No records match the current view and search filters. Try clearing your search or filters.
+                        No records match the current view and search filters. You can add a lead manually or import contractor leads.
                       </p>
+                      <div className="flex items-center justify-center gap-2 pt-2">
+                        {onOpenAddLead && (
+                          <button
+                            onClick={onOpenAddLead}
+                            className="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-indigo-600/20"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Add Lead</span>
+                          </button>
+                        )}
+                        {onOpenImport && (
+                          <button
+                            onClick={() => onOpenImport('upload')}
+                            className="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5"
+                          >
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>Import Leads</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </td>
                 </tr>

@@ -403,6 +403,9 @@ export interface Lead {
   country?: string;
   postal_code?: string;
   niche?: string;
+  industry?: string;
+  service_category?: string;
+  ccb_license_number?: string;
   lead_source?: string;
 
   // GMB & Google Maps

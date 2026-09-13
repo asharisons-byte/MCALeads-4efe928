@@ -152,28 +152,59 @@ export function parseTextToRawData(text: string): { headers: string[]; rows: Rec
   const trimmed = text.trim();
   if (!trimmed) return { headers: [], rows: [] };
 
-  // Check if text is JSON array
-  if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+  // Check if text is JSON (Array or Object containing list)
+  if ((trimmed.startsWith('[') && trimmed.endsWith(']')) || (trimmed.startsWith('{') && trimmed.endsWith('}'))) {
     try {
       const parsed = JSON.parse(trimmed);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        const headers = Object.keys(parsed[0] || {}).filter((h) => h.trim().length > 0);
-        return { headers, rows: parsed };
+      let records: any[] = [];
+      if (Array.isArray(parsed)) {
+        records = parsed;
+      } else if (parsed && typeof parsed === 'object') {
+        records = parsed.leads || parsed.data || parsed.records || parsed.items || parsed.rows || [parsed];
+      }
+
+      if (Array.isArray(records) && records.length > 0) {
+        const headerSet = new Set<string>();
+        records.forEach((rec) => {
+          if (rec && typeof rec === 'object') {
+            Object.keys(rec).forEach((k) => {
+              if (k.trim().length > 0) headerSet.add(k);
+            });
+          }
+        });
+        const headers = Array.from(headerSet);
+        return { headers, rows: records };
       }
     } catch (e) {
-      // fallback to CSV parsing
+      // fallback to delimited parsing
     }
   }
 
-  // Parse as delimited text (CSV or TSV)
+  // Parse as delimited text (CSV, TSV, Pipe, Semicolon)
   const lines = trimmed.split(/\r?\n/).filter((l) => l.trim().length > 0);
   if (lines.length === 0) return { headers: [], rows: [] };
 
-  // Detect delimiter
+  // Detect delimiter across comma, tab, pipe, semicolon
   const firstLine = lines[0];
   const tabCount = (firstLine.match(/\t/g) || []).length;
   const commaCount = (firstLine.match(/,/g) || []).length;
-  const delimiter = tabCount > commaCount ? '\t' : ',';
+  const pipeCount = (firstLine.match(/\|/g) || []).length;
+  const semiCount = (firstLine.match(/;/g) || []).length;
+
+  let delimiter = ',';
+  let maxDelimCount = commaCount;
+  if (tabCount > maxDelimCount) {
+    delimiter = '\t';
+    maxDelimCount = tabCount;
+  }
+  if (pipeCount > maxDelimCount) {
+    delimiter = '|';
+    maxDelimCount = pipeCount;
+  }
+  if (semiCount > maxDelimCount) {
+    delimiter = ';';
+    maxDelimCount = semiCount;
+  }
 
   // Helper to parse a single delimited line with quotes
   const parseLine = (line: string): string[] => {
@@ -227,8 +258,44 @@ export function parseTextToRawData(text: string): { headers: string[]; rows: Rec
 
 export function parseFileToRawData(file: File): Promise<{ headers: string[]; rows: Record<string, any>[] }> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
+    const lowerName = file.name.toLowerCase();
 
+    // 1. JSON file handling (.json)
+    if (lowerName.endsWith('.json') || file.type === 'application/json') {
+      const textReader = new FileReader();
+      textReader.onload = (e) => {
+        try {
+          const rawText = String(e.target?.result || '');
+          const result = parseTextToRawData(rawText);
+          resolve(result);
+        } catch (err) {
+          reject(new Error(`Failed to parse JSON file: ${(err as any)?.message}`));
+        }
+      };
+      textReader.onerror = (err) => reject(err);
+      textReader.readAsText(file);
+      return;
+    }
+
+    // 2. Plain Text file handling (.txt)
+    if (lowerName.endsWith('.txt') || file.type.startsWith('text/plain')) {
+      const textReader = new FileReader();
+      textReader.onload = (e) => {
+        try {
+          const rawText = String(e.target?.result || '');
+          const result = parseTextToRawData(rawText);
+          resolve(result);
+        } catch (err) {
+          reject(new Error(`Failed to parse text file: ${(err as any)?.message}`));
+        }
+      };
+      textReader.onerror = (err) => reject(err);
+      textReader.readAsText(file);
+      return;
+    }
+
+    // 3. Spreadsheet file handling (.xlsx, .xls, .csv)
+    const reader = new FileReader();
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
@@ -253,6 +320,31 @@ export function parseFileToRawData(file: File): Promise<{ headers: string[]; row
     reader.onerror = (err) => reject(err);
     reader.readAsArrayBuffer(file);
   });
+}
+
+/**
+ * Fetches and parses a public or shared Google Sheet directly
+ */
+export async function fetchGoogleSheetData(
+  urlOrId: string
+): Promise<{ headers: string[]; rows: Record<string, any>[] }> {
+  const res = await fetch('/api/import/google-sheet', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url: urlOrId }),
+  });
+
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || `Failed to fetch Google Sheet (HTTP ${res.status})`);
+  }
+
+  const data = await res.json();
+  if (!data.csvText) {
+    throw new Error('Google Sheet returned empty data.');
+  }
+
+  return parseTextToRawData(data.csvText);
 }
 
 /**

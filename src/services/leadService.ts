@@ -336,18 +336,31 @@ export async function addLead(lead: Lead): Promise<Lead> {
       phone_e164: preparedLead.phone_e164 || preparedLead.phone,
       email: preparedLead.email,
       website: preparedLead.website,
+      industry: preparedLead.industry || 'Contractor',
+      service_category: preparedLead.service_category || 'Construction',
       niche: preparedLead.niche,
       address: preparedLead.address,
       city: preparedLead.city,
+      county: preparedLead.county || 'Multnomah',
       state: preparedLead.state,
       postal_code: preparedLead.postal_code,
+      country: preparedLead.country || 'USA',
       lead_score: preparedLead.lead_score,
       lead_source: preparedLead.lead_source || 'Manual Intake',
       pipeline_stage: preparedLead.pipeline_stage,
       estimated_retainer: preparedLead.estimated_retainer,
+      ccb_license_number: preparedLead.ccb_license_number,
       opportunity_angle: preparedLead.opportunity_angle,
       recommended_service: preparedLead.recommended_service,
       is_hot_target: preparedLead.is_hot_target,
+      gmb_status: preparedLead.gmb_status,
+      gmb_rating: preparedLead.gmb_rating,
+      gmb_review_count: preparedLead.gmb_review_count,
+      website_status: preparedLead.website_status,
+      google_ads_status: preparedLead.google_ads_status,
+      meta_pixel_status: preparedLead.meta_pixel_status,
+      google_maps_url: preparedLead.google_maps_url,
+      owner: preparedLead.owner || 'Sophia (AI Sales Rep)',
       original_data: preparedLead.original_data || preparedLead,
     }),
   });
@@ -384,6 +397,22 @@ export async function addLead(lead: Lead): Promise<Lead> {
     const current = getLeads();
     const updated = [preparedLead, ...current.filter((l) => l.lead_id !== preparedLead.lead_id)];
     saveLeads(updated);
+
+    addActivity({
+      id: `act-${Date.now()}`,
+      activity_id: `act-${Date.now()}`,
+      lead_id: preparedLead.lead_id,
+      lead_name: preparedLead.business_name,
+      timestamp,
+      type: 'lead_created',
+      activity_type: 'lead_created',
+      channel: 'SYSTEM',
+      title: 'Lead Created in MCA Suite',
+      description: `Added ${preparedLead.business_name} with initial opportunity score of ${preparedLead.lead_score}/100.`,
+      author: 'Agency User',
+      source: 'Agency User',
+    });
+
     return preparedLead;
   } else {
     throw new Error(data.error || 'Database persistence failed');
