@@ -495,10 +495,10 @@ export function convertRowsToLeads(
     const email = leadPartial.email || row['email'] || row['Email'] || 'Not provided';
     const website = leadPartial.website || row['gmbWebsite'] || row['website'] || row['Website'] || 'Not provided';
     const niche = leadPartial.niche || row['gmbCategory'] || row['endorsementText'] || row['licenseType'] || 'Local Business';
-    const city = leadPartial.city || row['city'] || row['City'] || 'Portland';
-    const state = leadPartial.state || row['state'] || row['State'] || 'Oregon';
-    const postalCode = leadPartial.postal_code || row['zip'] || row['ZIP'] || row['postalCode'] || '97201';
-    const address = leadPartial.address || row['gmbAddress'] || row['address'] || `${city}, ${state} ${postalCode}`;
+    const city = leadPartial.city || row['city'] || row['City'] || null;
+    const state = leadPartial.state || row['state'] || row['State'] || null;
+    const postalCode = leadPartial.postal_code || row['zip'] || row['ZIP'] || row['postalCode'] || null;
+    const address = leadPartial.address || row['gmbAddress'] || row['address'] || (city && state && postalCode ? `${city}, ${state} ${postalCode}` : null);
 
     // Parse numeric fields safely
     let gmbRating = undefined;

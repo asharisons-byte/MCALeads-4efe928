@@ -34,256 +34,16 @@ let inMemoryIntegrations: any[] = [
 
 let isInitialized = false;
 
+// DISABLED: initInMemoryDefaults() - was seeding fake CCB data into memory
+// This function populated inMemoryLeads with 202 fabricated OREGON_CCB_LEADS records
+// causing duplicate check false positives and data contamination
 export function initInMemoryDefaults() {
-  if (isInitialized && inMemoryLeads.length > 0) return;
-
-  // 1. Seed Leads from OREGON_CCB_LEADS
-  inMemoryLeads = OREGON_CCB_LEADS.map((l, idx) => {
-    const leadNumericId = idx + 1;
-    const notes = (l.notes || []).map((n: any, nIdx: number) => ({
-      id: leadNumericId * 1000 + nIdx + 1,
-      organizationId: 1,
-      leadId: leadNumericId,
-      authorName: n.author || 'Sophia',
-      content: n.content,
-      noteType: n.activity_type || 'General',
-      visibility: 'Internal',
-      createdAt: n.timestamp ? new Date(n.timestamp) : new Date(),
-    }));
-
-    const statusHistory = (l.stage_history || []).map((h: any, hIdx: number) => ({
-      id: leadNumericId * 1000 + hIdx + 1,
-      leadId: leadNumericId,
-      previousStatus: h.previous_stage || 'New Lead',
-      newStatus: h.new_stage || l.pipeline_stage || 'New Lead',
-      changedBy: h.changed_by || 'Sophia (AI Sales Rep)',
-      reason: h.reason || 'Pipeline progression',
-      createdAt: h.timestamp ? new Date(h.timestamp) : new Date(),
-    }));
-
-    const audits = [
-      {
-        id: leadNumericId,
-        leadId: leadNumericId,
-        gmbStatus: l.gmb_status || 'Established',
-        googleRating: l.gmb_rating ? String(l.gmb_rating) : '4.5',
-        reviewCount: l.gmb_review_count || 12,
-        websiteStatus: l.website_status || 'Active',
-        mobileScore: l.score_breakdown?.website_opportunity ? Math.max(25, 100 - (l.score_breakdown.website_opportunity * 4)) : 45,
-        desktopScore: 68,
-        performanceScore: 55,
-        cms: 'WordPress',
-        metaPixelDetected: l.meta_pixel_status === 'Installed',
-        googleAdsDetected: l.google_ads_status === 'Active',
-        auditSummary: l.opportunity_angle || 'Verified Oregon contractor profile with growth opportunities.',
-        createdAt: new Date(),
-      }
-    ];
-
-    const scores = [
-      {
-        id: leadNumericId,
-        leadId: leadNumericId,
-        totalScore: l.lead_score || 75,
-        gmbScore: l.score_breakdown?.gmb_opportunity || 12,
-        websiteScore: l.score_breakdown?.website_opportunity || 12,
-        technicalScore: l.score_breakdown?.seo_opportunity || 8,
-        adsScore: l.score_breakdown?.google_ads_opportunity || 8,
-        opportunityScore: 25,
-        contactScore: l.score_breakdown?.contactability || 8,
-        reasoning: l.opportunity_angle || 'Automated multi-factor audit calculation.',
-        createdAt: new Date(),
-      }
-    ];
-
-    return {
-      id: leadNumericId,
-      leadId: l.lead_id,
-      organizationId: 1,
-      businessName: l.business_name,
-      contactName: l.contact_name || l.business_name,
-      phone: l.phone || '',
-      phoneE164: l.phone_e164 || l.phone || '',
-      email: l.email || '',
-      website: l.website || '',
-      industry: 'Contractor',
-      serviceCategory: 'Construction',
-      niche: l.niche || 'General Contractor',
-      address: l.address || '',
-      city: l.city || 'Portland',
-      county: l.county || 'Multnomah',
-      stateRegion: l.state || 'OR',
-      country: l.country || 'USA',
-      postalCode: l.postal_code || '',
-      latitude: (l as any).latitude ? String((l as any).latitude) : null,
-      longitude: (l as any).longitude ? String((l as any).longitude) : null,
-      googleMapsUrl: l.google_maps_url || '',
-      googlePlaceId: null,
-      leadSource: 'Oregon CCB Registry',
-      leadStatus: l.pipeline_stage || 'New Lead',
-      leadScore: l.lead_score || 75,
-      estimatedRetainer: l.estimated_retainer || 2500,
-      estimatedValue: (l.estimated_retainer || 2500) * 12,
-      assignedTo: l.owner || 'Sophia (AI Sales Rep)',
-      assignedUserId: null,
-      ccbLicenseNumber: l.lead_id.replace('CCB-', ''),
-      isHotTarget: l.is_hot_target !== undefined ? l.is_hot_target : (l.lead_score >= 80),
-      doNotContact: false,
-      opportunityAngle: l.opportunity_angle || 'Local Search & Website Optimization',
-      recommendedService: l.recommended_service || 'SEO & GMB Optimization',
-      rawPayload: l,
-      createdAt: l.created_at ? new Date(l.created_at) : new Date(),
-      updatedAt: l.updated_at ? new Date(l.updated_at) : new Date(),
-      archivedAt: null,
-      deletedAt: null,
-      // Nested collections attached
-      audits,
-      scores,
-      notes,
-      calls: [],
-      emails: [],
-      sms: [],
-      tasks: ((l as any).tasks || []).map((t: any, tIdx: number) => ({
-        id: leadNumericId * 1000 + tIdx + 1,
-        leadId: leadNumericId,
-        title: t.title || 'Follow up with contractor',
-        taskType: t.task_type || 'Follow-Up',
-        status: t.status || 'Pending',
-        priority: t.priority || 'Medium',
-        dueDate: t.due_date ? new Date(t.due_date) : new Date(Date.now() + 86400000),
-        assignedTo: t.assigned_to || 'Sophia',
-        createdAt: new Date(),
-      })),
-      statusHistory,
-    };
-  });
-
-  // 2. Seed Default Active Clients
-  inMemoryClients = [
-    {
-      id: 1,
-      organizationId: 1,
-      leadId: 1,
-      clientName: 'Cascade Elite Construction LLC',
-      contactPerson: 'David Lee Arias',
-      email: 'contact@cascadeeliteconstruction.com',
-      phone: '(503) 490-4213',
-      website: 'https://cascadeeliteconstruction.com',
-      clientStatus: 'Active',
-      contractStartDate: new Date('2026-01-15'),
-      contractEndDate: null,
-      actualMrr: 2800,
-      billingFrequency: 'Monthly',
-      accountManager: 'Sophia',
-      healthScore: 94,
-      churnRisk: 'Low',
-      notes: 'Signed for Full SEO & GMB Domination retainer.',
-      services: [
-        { id: 1, serviceName: 'SEO & Content Growth', category: 'SEO', monthlyFee: 1800, active: true },
-        { id: 2, serviceName: 'Google Business Profile Domination', category: 'Reputation', monthlyFee: 1000, active: true },
-      ],
-      createdAt: new Date('2026-01-15'),
-      updatedAt: new Date(),
-    },
-    {
-      id: 2,
-      organizationId: 1,
-      leadId: 2,
-      clientName: 'Apex Roofing & Exteriors',
-      contactPerson: 'Marcus Vance',
-      email: 'marcus@apexroofingpdx.com',
-      phone: '(503) 555-0182',
-      website: 'https://apexroofingpdx.com',
-      clientStatus: 'Active',
-      contractStartDate: new Date('2026-02-01'),
-      contractEndDate: null,
-      actualMrr: 3200,
-      billingFrequency: 'Monthly',
-      accountManager: 'Sophia',
-      healthScore: 88,
-      churnRisk: 'Low',
-      notes: 'Website redesign completed; active on Local Service Ads campaign.',
-      services: [
-        { id: 3, serviceName: 'High-Converting Contractor Website', category: 'Development', monthlyFee: 1500, active: true },
-        { id: 4, serviceName: 'Google Local Service Ads (LSA)', category: 'PPC', monthlyFee: 1700, active: true },
-      ],
-      createdAt: new Date('2026-02-01'),
-      updatedAt: new Date(),
-    },
-    {
-      id: 3,
-      organizationId: 1,
-      leadId: 3,
-      clientName: 'Northwest Timberline Renovations',
-      contactPerson: 'Sarah Jenkins',
-      email: 'sarah@nwtimberline.com',
-      phone: '(503) 555-0144',
-      website: 'https://nwtimberline.com',
-      clientStatus: 'Active',
-      contractStartDate: new Date('2026-02-20'),
-      contractEndDate: null,
-      actualMrr: 2500,
-      billingFrequency: 'Monthly',
-      accountManager: 'Sophia',
-      healthScore: 91,
-      churnRisk: 'Low',
-      notes: 'Voice Search & AI Overview readiness package.',
-      services: [
-        { id: 5, serviceName: 'Voice Search & AI Overview Readiness', category: 'AI SEO', monthlyFee: 1500, active: true },
-        { id: 6, serviceName: 'GMB / Google Business Profile Domination', category: 'Reputation', monthlyFee: 1000, active: true },
-      ],
-      createdAt: new Date('2026-02-20'),
-      updatedAt: new Date(),
-    },
-  ];
-
-  // 3. Seed Activities
-  inMemoryActivities = [
-    {
-      id: 1,
-      organizationId: 1,
-      activityType: 'lead_imported',
-      title: 'Oregon CCB Registry Synced',
-      description: `Loaded ${inMemoryLeads.length} verified contractor records with real-time audit profiles.`,
-      metadata: { count: inMemoryLeads.length, source: 'Oregon CCB Registry' },
-      createdAt: new Date(),
-    },
-    {
-      id: 2,
-      organizationId: 1,
-      activityType: 'client_onboarded',
-      title: 'Active Retainer Confirmed: Cascade Elite Construction',
-      description: 'Retainer activated at $2,800/mo for SEO & GMB Domination.',
-      metadata: { clientId: 1, mrr: 2800 },
-      createdAt: new Date(Date.now() - 3600000 * 4),
-    },
-    {
-      id: 3,
-      organizationId: 1,
-      activityType: 'ai_audit_generated',
-      title: 'Sophia AI Cold Pitch Pack Dispatched',
-      description: 'Audit & proposal ready for High-Converting Contractor Website.',
-      metadata: { model: 'gemini-3.8-flash' },
-      createdAt: new Date(Date.now() - 3600000 * 8),
-    },
-  ];
-
-  // 4. Seed Audit Logs
-  inMemoryAuditLogs = [
-    {
-      id: 1,
-      action: 'system.initialized',
-      resourceType: 'system',
-      resourceId: 'mca-suite',
-      newDataReference: { status: 'OPERATIONAL', leadsCount: inMemoryLeads.length },
-      createdAt: new Date(),
-    },
-  ];
-
-  isInitialized = true;
+  // No-op: disabled to prevent fake seed data contamination
+  // All legitimate data should come from Neon database or user imports
+  return;
 }
 
-// Ensure defaults are initialized immediately upon module load
+// Ensure defaults are initialized (now no-op)
 initInMemoryDefaults();
 
 // ==========================================
@@ -376,75 +136,15 @@ export async function initDatabaseDefaults() {
     const leadCountResult = await db.select({ count: sql<number>`count(*)` }).from(schema.leads);
     const count = Number(leadCountResult[0]?.count || 0);
 
-    if (count === 0 && OREGON_CCB_LEADS.length > 0) {
-      console.log(`[Database Seed] Seeding initial CCB contractor leads to Cloud SQL...`);
-      const batch = OREGON_CCB_LEADS.slice(0, 60);
-      for (const l of batch) {
-        try {
-          const [insertedLead] = await db
-            .insert(schema.leads)
-            .values({
-              leadId: l.lead_id,
-              organizationId: orgId,
-              businessName: l.business_name,
-              contactName: l.contact_name || l.business_name,
-              phone: l.phone || '',
-              phoneE164: l.phone_e164 || l.phone || '',
-              email: l.email || '',
-              website: l.website || '',
-              industry: 'Contractor',
-              niche: l.niche || 'General Contractor',
-              address: l.address || '',
-              city: l.city || 'Portland',
-              county: l.county || 'Multnomah',
-              stateRegion: l.state || 'OR',
-              postalCode: l.postal_code || '',
-              latitude: (l as any).latitude ? String((l as any).latitude) : null,
-              longitude: (l as any).longitude ? String((l as any).longitude) : null,
-              googleMapsUrl: l.google_maps_url || '',
-              leadStatus: l.pipeline_stage || 'New Lead',
-              leadScore: l.lead_score || 75,
-              estimatedRetainer: l.estimated_retainer || 2500,
-              isHotTarget: l.is_hot_target || (l.lead_score >= 80),
-              opportunityAngle: l.opportunity_angle || 'Local Search & Website Optimization',
-              recommendedService: l.recommended_service || 'SEO & GMB Optimization',
-              rawPayload: l,
-            })
-            .onConflictDoNothing()
-            .returning();
-
-          if (insertedLead) {
-            await db.insert(schema.leadAudits).values({
-              leadId: insertedLead.id,
-              gmbStatus: l.gmb_status || 'Established',
-              googleRating: l.gmb_rating ? String(l.gmb_rating) : '4.5',
-              reviewCount: l.gmb_review_count || 10,
-              websiteStatus: l.website_status || 'Active',
-              mobileScore: 45,
-              desktopScore: 68,
-              performanceScore: 55,
-              cms: 'WordPress',
-              metaPixelDetected: l.meta_pixel_status === 'Installed',
-              googleAdsDetected: l.google_ads_status === 'Active',
-              auditSummary: l.opportunity_angle || 'Verified contractor with immediate growth opportunities.',
-            });
-
-            await db.insert(schema.leadScores).values({
-              leadId: insertedLead.id,
-              totalScore: l.lead_score || 75,
-              gmbScore: 12,
-              websiteScore: 12,
-              technicalScore: 8,
-              adsScore: 10,
-              opportunityScore: 25,
-              contactScore: 8,
-              reasoning: l.opportunity_angle || 'Automated multi-factor audit calculation.',
-            });
-          }
-        } catch (itemErr) {
-          // ignore single item insert error
-        }
-      }
+    // DISABLED: Auto-seeding fake CCB leads on empty database
+    // This was creating fabricated data with hardcoded ratings/scores that contaminated production data
+    // if (count === 0 && OREGON_CCB_LEADS.length > 0) {
+    //   console.log(`[Database Seed] Seeding initial CCB contractor leads to Cloud SQL...`);
+    //   ... (removed seeding logic)
+    // }
+    
+    if (count === 0) {
+      console.log('[Database Seed] No auto-seeding performed. Database is empty and ready for legitimate user imports.');
     }
 
     console.log('[Cloud SQL Init] Database defaults confirmed operational.');
@@ -631,8 +331,7 @@ export async function checkLeadDuplicate(params: {
   email?: string;
   website?: string;
 }) {
-  initInMemoryDefaults();
-
+  // NEON-ONLY duplicate check - no in-memory fallback to prevent false positives from fake seed data
   if (isDbConfigured) {
     try {
       const checks = [];
@@ -664,42 +363,21 @@ export async function checkLeadDuplicate(params: {
           .where(and(sql`${schema.leads.deletedAt} IS NULL`, or(...checks)))
           .limit(5);
 
-        if (matches.length > 0) {
-          return { isDuplicate: true, matches };
-        }
+        return { isDuplicate: matches.length > 0, matches };
       }
     } catch (error: any) {
-      console.warn('checkLeadDuplicate DB query skipped (using memory):', error?.message);
+      console.error('checkLeadDuplicate DB query failed:', error?.message);
+      // On DB error, assume NOT a duplicate to avoid blocking legitimate imports
+      return { isDuplicate: false, matches: [] };
     }
   }
 
-  // In-Memory Duplicate Check
-  const bName = params.businessName ? params.businessName.trim().toLowerCase() : '';
-  const cleanPhone = params.phone ? params.phone.replace(/\D/g, '').slice(-7) : '';
-  const email = params.email && !params.email.toLowerCase().includes('not provided') ? params.email.trim().toLowerCase() : '';
-  const website = params.website && !params.website.toLowerCase().includes('not provided') ? params.website.replace(/https?:\/\//, '').replace(/\/$/, '').toLowerCase() : '';
-
-  const matches = inMemoryLeads.filter((l) => {
-    if (l.deletedAt) return false;
-    if (bName && l.businessName && l.businessName.toLowerCase() === bName) return true;
-    if (cleanPhone && l.phone && l.phone.replace(/\D/g, '').includes(cleanPhone)) return true;
-    if (email && l.email && l.email.toLowerCase() === email) return true;
-    if (website && l.website && l.website.toLowerCase().includes(website)) return true;
-    return false;
-  }).slice(0, 5).map((l) => ({
-    id: l.id,
-    leadId: l.leadId,
-    businessName: l.businessName,
-    phone: l.phone,
-    email: l.email,
-    leadStatus: l.leadStatus,
-  }));
-
-  return {
-    isDuplicate: matches.length > 0,
-    matches,
-  };
+  // Database not configured - cannot perform duplicate check
+  // Return NOT a duplicate to avoid blocking legitimate imports
+  console.warn('checkLeadDuplicate: Database not configured, skipping duplicate check');
+  return { isDuplicate: false, matches: [] };
 }
+
 
 export async function createDbLead(leadData: any) {
   initInMemoryDefaults();
