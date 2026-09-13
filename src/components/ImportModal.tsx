@@ -35,7 +35,6 @@ import {
 } from '../services/importService';
 import { Lead, PipelineStage } from '../types';
 import { OREGON_CCB_LEADS } from '../data/ccbLeadsData';
-import { REPAIRED_LEADS_CSV, REPAIRED_LEADS_DATA } from '../data/repairedLeads';
 import * as XLSX from 'xlsx';
 
 interface ImportModalProps {
