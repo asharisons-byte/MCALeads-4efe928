@@ -806,6 +806,7 @@ export async function createDbLead(leadData: any) {
     createdAt: new Date(),
   });
 
+  // If database is configured, attempt INSERT and return ONLY the actual database record on success
   if (isDbConfigured) {
     try {
       const [newLead] = await db
@@ -838,13 +839,18 @@ export async function createDbLead(leadData: any) {
         })
         .returning();
 
-      return newLead;
+      // SUCCESS: Return the actual database-created record with DB-generated fields
+      return { ...newLead, _dbSource: 'neon' };
     } catch (error: any) {
-      console.warn('createDbLead DB insert skipped (memory record saved):', error?.message);
+      // FAILURE: Database INSERT failed - return explicit failure indicator
+      // Do NOT return inMemoryRecord as if it were persisted
+      console.error('createDbLead DB insert FAILED:', error?.message);
+      return { _dbSource: 'failed', _error: error?.message, _inMemoryRecord: inMemoryRecord };
     }
   }
 
-  return inMemoryRecord;
+  // Database not configured - return in-memory record with clear indicator
+  return { ...inMemoryRecord, _dbSource: 'memory_only' };
 }
 
 export async function updateDbLead(leadId: string | number, updates: any) {
@@ -1629,11 +1635,12 @@ export async function batchImportDbLeads(
   importMeta: { fileName: string; importedBy?: string }
 ) {
   initInMemoryDefaults();
-
+  
   let validCount = 0;
   let duplicatesCount = 0;
   const insertedIds: number[] = [];
   const insertedLeads: any[] = [];
+  const failedInserts: any[] = [];
 
   for (const row of rows) {
     const bizName = row.business_name || row.Business_Name || row['Business Name'] || row.businessName;
@@ -1649,12 +1656,13 @@ export async function batchImportDbLeads(
       continue;
     }
 
+    // Use existing lead_id from frontend if supplied, otherwise generate unique ID
     const leadId =
       row.lead_id ||
       row.leadId ||
       `MCA-LEAD-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-    const newLead = await createDbLead({
+    const result = await createDbLead({
       lead_id: leadId,
       business_name: bizName,
       contact_name: row.contact_name || row['Contact Name'] || row.contactName || bizName,
@@ -1687,10 +1695,24 @@ export async function batchImportDbLeads(
       original_data: row.original_data || row.rawPayload || row,
     });
 
-    if (newLead) {
+    // Check if the insert was successful by examining _dbSource
+    if (result._dbSource === 'neon') {
+      // SUCCESS: This is an actual database-created record - safe to access id
+      const dbRecord = result as any;
       validCount++;
-      insertedIds.push(newLead.id);
-      insertedLeads.push(newLead);
+      insertedIds.push(dbRecord.id);
+      insertedLeads.push(dbRecord);
+    } else if (result._dbSource === 'failed') {
+      // FAILURE: Database INSERT failed - track for error reporting
+      failedInserts.push({
+        lead_id: leadId,
+        business_name: bizName,
+        error: result._error,
+      });
+      console.error(`Batch import: Failed to insert lead ${leadId} (${bizName}): ${result._error}`);
+    } else {
+      // memory_only or other non-db source - do not count as successfully persisted
+      console.warn(`Batch import: Lead ${leadId} (${bizName}) saved to memory only, not persisted to Neon`);
     }
   }
 
@@ -1698,17 +1720,19 @@ export async function batchImportDbLeads(
     id: inMemoryActivities.length + 1,
     activityType: 'lead_imported',
     title: `Batch Import Completed: ${importMeta.fileName}`,
-    description: `Successfully imported ${validCount} new contractor leads (${duplicatesCount} duplicates skipped).`,
-    metadata: { validCount, duplicatesCount, fileName: importMeta.fileName },
+    description: `Successfully imported ${validCount} new contractor leads to Neon (${duplicatesCount} duplicates skipped, ${failedInserts.length} failures).`,
+    metadata: { validCount, duplicatesCount, failedCount: failedInserts.length, fileName: importMeta.fileName },
     createdAt: new Date(),
   });
 
   return {
-    success: true,
+    success: failedInserts.length === 0 && validCount > 0,
     validCount,
     duplicatesCount,
+    failedCount: failedInserts.length,
     insertedCount: insertedIds.length,
     leads: insertedLeads,
+    failures: failedInserts,
   };
 }
 
