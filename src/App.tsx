@@ -291,11 +291,16 @@ export function App() {
     setCurrentTab('leads');
   };
 
-  const handleClearAllLeads = () => {
-    clearAllLeads();
+  const handleClearAllLeads = async () => {
+    await clearAllLeads();
     setLeads([]);
     setActivities([]);
     setSelectedLead(null);
+    // Force re-fetch from Neon to ensure UI reflects database state
+    setTimeout(() => {
+      const freshLeads = getLeads();
+      setLeads(freshLeads);
+    }, 500);
   };
 
   // Full-Screen Client Portal Override (Strict Multi-Tenant Isolation from Agency Suite)

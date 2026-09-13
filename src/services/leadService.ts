@@ -294,13 +294,33 @@ export function saveLeads(leads: Lead[]): void {
   }
 }
 
-export function clearAllLeads(): void {
+export async function clearAllLeads(): Promise<void> {
+  // Clear localStorage first
   saveLeads([]);
   try {
     localStorage.setItem(ACTIVITIES_KEY, JSON.stringify([]));
     localStorage.setItem(IMPORT_HISTORY_KEY, JSON.stringify([]));
   } catch (e) {
-    console.error('Error clearing leads', e);
+    console.error('Error clearing localStorage leads', e);
+  }
+  
+  // ALSO clear Neon database via API endpoint
+  // This fixes the bug where \"Clear All\" only wiped localStorage but Neon kept everything
+  try {
+    const response = await fetch('/api/leads?method=truncate', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    
+    if (response.ok) {
+      console.log('Successfully cleared all leads from Neon database');
+    } else {
+      const errorData = await response.json().catch(() => ({}));
+      console.warn('Failed to clear Neon database:', errorData?.error || response.statusText);
+    }
+  } catch (err: any) {
+    console.error('Error clearing Neon database:', err?.message);
+    // Don't throw - localStorage was cleared successfully, DB failure is non-fatal
   }
 }
 

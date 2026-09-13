@@ -23,6 +23,8 @@ import {
   updateDbAgencySettings,
   getDbSystemHealth,
   batchImportDbLeads,
+  truncateAllLeads,
+  deleteAllDbLeads,
 } from '../db/repository.js';
 
 const router = express.Router();
@@ -173,6 +175,31 @@ router.delete('/leads/:id', async (req: Request, res: Response) => {
     return res.json({ success: true, lead: deleted });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
+  }
+});
+
+// 8b. Leads: DELETE ALL / TRUNCATE - Full database wipe endpoint
+// This is the ONLY way to completely clear all leads from Neon
+router.delete('/leads', async (req: Request, res: Response) => {
+  try {
+    const useTruncate = req.query.method === 'truncate';
+    let result;
+    
+    if (useTruncate) {
+      // TRUNCATE is faster and CASCADE deletes related records
+      result = await truncateAllLeads();
+    } else {
+      // Standard DELETE respects foreign keys but may fail if constraints exist
+      result = await deleteAllDbLeads();
+    }
+    
+    if (result.success) {
+      return res.json(result);
+    } else {
+      return res.status(500).json(result);
+    }
+  } catch (err: any) {
+    return res.status(500).json({ success: false, error: err.message });
   }
 });
 
