@@ -21,7 +21,6 @@ import {
   detectColumnMapping,
   analyzeImportRows,
   convertRowsToLeads,
-  generateTest500LeadDataset,
   downloadDatasetAsXlsx,
   ColumnMapping,
   ImportPreviewResult,
@@ -183,29 +182,14 @@ export const ImportLeadsPage: React.FC<ImportLeadsPageProps> = ({
   };
 
   const handleDownloadSampleFile = () => {
-    const dataset = generateTest500LeadDataset();
-    downloadDatasetAsXlsx(dataset, '500-lead.xlsx');
+    // Removed: generateTest500LeadDataset() - test data generator disabled
+    alert('Test data generator has been disabled. Please upload your own CSV/Excel files.');
   };
 
   const handleLoadSample500 = () => {
-    setIsProcessing(true);
-    const dataset = generateTest500LeadDataset();
-    const headers = Object.keys(dataset[0] || {});
-    setRawHeaders(headers);
-    setRawRows(dataset);
-    setFileName('500-lead.xlsx');
-
-    const detectedMappings: ColumnMapping[] = headers.map((col) => {
-      const det = detectColumnMapping(col);
-      return {
-        rawColumn: col,
-        mappedField: det.field,
-        confidence: det.confidence,
-      };
-    });
-    setMappings(detectedMappings);
+    // Removed: generateTest500LeadDataset() - test data generator disabled
+    alert('Test data generator has been disabled. Please upload your own CSV/Excel files.');
     setIsProcessing(false);
-    setStep(2);
   };
 
   const handleMappingChange = (rawCol: string, mappedField: any) => {
@@ -460,21 +444,22 @@ export const ImportLeadsPage: React.FC<ImportLeadsPageProps> = ({
               </div>
             </div>
 
-            {/* 500-Lead Dataset */}
-            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* 500-Lead Dataset - DISABLED */}
+            <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 opacity-50">
               <div className="space-y-1">
                 <div className="text-xs font-bold text-white flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-amber-400" />
-                  <span>Standard 500-Lead Acceptance Test Dataset</span>
+                  <span>Standard 500-Lead Acceptance Test Dataset (DISABLED)</span>
                 </div>
                 <p className="text-xs text-slate-400 max-w-xl">
-                  Comprehensive 500 contractor records across plumbers, roofers, and HVAC trades with PageSpeed scores, GMB ratings, and ad pixel status.
+                  Test data generator has been disabled. Please upload your own CSV/Excel files.
                 </p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   onClick={handleDownloadSampleFile}
                   className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5"
+                  disabled
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Download .xlsx</span>
@@ -482,6 +467,7 @@ export const ImportLeadsPage: React.FC<ImportLeadsPageProps> = ({
                 <button
                   onClick={handleLoadSample500}
                   className="px-3.5 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center gap-1.5"
+                  disabled
                 >
                   <Upload className="w-3.5 h-3.5" />
                   <span>Load 500 Leads</span>

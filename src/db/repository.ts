@@ -34,115 +34,21 @@ let inMemoryIntegrations: any[] = [
 
 let isInitialized = false;
 
+// DISABLED: initInMemoryDefaults() - was seeding fake CCB data into memory
+// This function populated inMemoryLeads with 202 fabricated OREGON_CCB_LEADS records
+// causing duplicate check false positives and data contamination
 export function initInMemoryDefaults() {
+  // No-op: disabled to prevent fake seed data contamination
+  // All legitimate data should come from Neon database or user imports
+  return;
+  
+  /* Original implementation removed:
   if (isInitialized && inMemoryLeads.length > 0) return;
-
   // 1. Seed Leads from OREGON_CCB_LEADS
   inMemoryLeads = OREGON_CCB_LEADS.map((l, idx) => {
-    const leadNumericId = idx + 1;
-    const notes = (l.notes || []).map((n: any, nIdx: number) => ({
-      id: leadNumericId * 1000 + nIdx + 1,
-      organizationId: 1,
-      leadId: leadNumericId,
-      authorName: n.author || 'Sophia',
-      content: n.content,
-      noteType: n.activity_type || 'General',
-      visibility: 'Internal',
-      createdAt: n.timestamp ? new Date(n.timestamp) : new Date(),
-    }));
-
-    const statusHistory = (l.stage_history || []).map((h: any, hIdx: number) => ({
-      id: leadNumericId * 1000 + hIdx + 1,
-      leadId: leadNumericId,
-      previousStatus: h.previous_stage || 'New Lead',
-      newStatus: h.new_stage || l.pipeline_stage || 'New Lead',
-      changedBy: h.changed_by || 'Sophia (AI Sales Rep)',
-      reason: h.reason || 'Pipeline progression',
-      createdAt: h.timestamp ? new Date(h.timestamp) : new Date(),
-    }));
-
-    const audits = [
-      {
-        id: leadNumericId,
-        leadId: leadNumericId,
-        gmbStatus: l.gmb_status || 'Established',
-        googleRating: l.gmb_rating ? String(l.gmb_rating) : '4.5',
-        reviewCount: l.gmb_review_count || 12,
-        websiteStatus: l.website_status || 'Active',
-        mobileScore: l.score_breakdown?.website_opportunity ? Math.max(25, 100 - (l.score_breakdown.website_opportunity * 4)) : 45,
-        desktopScore: 68,
-        performanceScore: 55,
-        cms: 'WordPress',
-        metaPixelDetected: l.meta_pixel_status === 'Installed',
-        googleAdsDetected: l.google_ads_status === 'Active',
-        auditSummary: l.opportunity_angle || 'Verified Oregon contractor profile with growth opportunities.',
-        createdAt: new Date(),
-      }
-    ];
-
-    const scores = [
-      {
-        id: leadNumericId,
-        leadId: leadNumericId,
-        totalScore: l.lead_score || 75,
-        gmbScore: l.score_breakdown?.gmb_opportunity || 12,
-        websiteScore: l.score_breakdown?.website_opportunity || 12,
-        technicalScore: l.score_breakdown?.seo_opportunity || 8,
-        adsScore: l.score_breakdown?.google_ads_opportunity || 8,
-        opportunityScore: 25,
-        contactScore: l.score_breakdown?.contactability || 8,
-        reasoning: l.opportunity_angle || 'Automated multi-factor audit calculation.',
-        createdAt: new Date(),
-      }
-    ];
-
-    return {
-      id: leadNumericId,
-      leadId: l.lead_id,
-      organizationId: 1,
-      businessName: l.business_name,
-      contactName: l.contact_name || l.business_name,
-      phone: l.phone || '',
-      phoneE164: l.phone_e164 || l.phone || '',
-      email: l.email || '',
-      website: l.website || '',
-      industry: 'Contractor',
-      serviceCategory: 'Construction',
-      niche: l.niche || 'General Contractor',
-      address: l.address || '',
-      city: l.city || 'Portland',
-      county: l.county || 'Multnomah',
-      stateRegion: l.state || 'OR',
-      country: l.country || 'USA',
-      postalCode: l.postal_code || '',
-      latitude: (l as any).latitude ? String((l as any).latitude) : null,
-      longitude: (l as any).longitude ? String((l as any).longitude) : null,
-      googleMapsUrl: l.google_maps_url || '',
-      googlePlaceId: null,
-      leadSource: 'Oregon CCB Registry',
-      leadStatus: l.pipeline_stage || 'New Lead',
-      leadScore: l.lead_score || 75,
-      estimatedRetainer: l.estimated_retainer || 2500,
-      estimatedValue: (l.estimated_retainer || 2500) * 12,
-      assignedTo: l.owner || 'Sophia (AI Sales Rep)',
-      assignedUserId: null,
-      ccbLicenseNumber: l.lead_id.replace('CCB-', ''),
-      isHotTarget: l.is_hot_target !== undefined ? l.is_hot_target : (l.lead_score >= 80),
-      doNotContact: false,
-      opportunityAngle: l.opportunity_angle || 'Local Search & Website Optimization',
-      recommendedService: l.recommended_service || 'SEO & GMB Optimization',
-      rawPayload: l,
-      createdAt: l.created_at ? new Date(l.created_at) : new Date(),
-      updatedAt: l.updated_at ? new Date(l.updated_at) : new Date(),
-      archivedAt: null,
-      deletedAt: null,
-      // Nested collections attached
-      audits,
-      scores,
-      notes,
-      calls: [],
-      emails: [],
-      sms: [],
+    ... (removed 100+ lines of seed logic)
+  */
+}
       tasks: ((l as any).tasks || []).map((t: any, tIdx: number) => ({
         id: leadNumericId * 1000 + tIdx + 1,
         leadId: leadNumericId,
@@ -376,75 +282,15 @@ export async function initDatabaseDefaults() {
     const leadCountResult = await db.select({ count: sql<number>`count(*)` }).from(schema.leads);
     const count = Number(leadCountResult[0]?.count || 0);
 
-    if (count === 0 && OREGON_CCB_LEADS.length > 0) {
-      console.log(`[Database Seed] Seeding initial CCB contractor leads to Cloud SQL...`);
-      const batch = OREGON_CCB_LEADS.slice(0, 60);
-      for (const l of batch) {
-        try {
-          const [insertedLead] = await db
-            .insert(schema.leads)
-            .values({
-              leadId: l.lead_id,
-              organizationId: orgId,
-              businessName: l.business_name,
-              contactName: l.contact_name || l.business_name,
-              phone: l.phone || '',
-              phoneE164: l.phone_e164 || l.phone || '',
-              email: l.email || '',
-              website: l.website || '',
-              industry: 'Contractor',
-              niche: l.niche || 'General Contractor',
-              address: l.address || '',
-              city: l.city || 'Portland',
-              county: l.county || 'Multnomah',
-              stateRegion: l.state || 'OR',
-              postalCode: l.postal_code || '',
-              latitude: (l as any).latitude ? String((l as any).latitude) : null,
-              longitude: (l as any).longitude ? String((l as any).longitude) : null,
-              googleMapsUrl: l.google_maps_url || '',
-              leadStatus: l.pipeline_stage || 'New Lead',
-              leadScore: l.lead_score || 75,
-              estimatedRetainer: l.estimated_retainer || 2500,
-              isHotTarget: l.is_hot_target || (l.lead_score >= 80),
-              opportunityAngle: l.opportunity_angle || 'Local Search & Website Optimization',
-              recommendedService: l.recommended_service || 'SEO & GMB Optimization',
-              rawPayload: l,
-            })
-            .onConflictDoNothing()
-            .returning();
-
-          if (insertedLead) {
-            await db.insert(schema.leadAudits).values({
-              leadId: insertedLead.id,
-              gmbStatus: l.gmb_status || 'Established',
-              googleRating: l.gmb_rating ? String(l.gmb_rating) : '4.5',
-              reviewCount: l.gmb_review_count || 10,
-              websiteStatus: l.website_status || 'Active',
-              mobileScore: 45,
-              desktopScore: 68,
-              performanceScore: 55,
-              cms: 'WordPress',
-              metaPixelDetected: l.meta_pixel_status === 'Installed',
-              googleAdsDetected: l.google_ads_status === 'Active',
-              auditSummary: l.opportunity_angle || 'Verified contractor with immediate growth opportunities.',
-            });
-
-            await db.insert(schema.leadScores).values({
-              leadId: insertedLead.id,
-              totalScore: l.lead_score || 75,
-              gmbScore: 12,
-              websiteScore: 12,
-              technicalScore: 8,
-              adsScore: 10,
-              opportunityScore: 25,
-              contactScore: 8,
-              reasoning: l.opportunity_angle || 'Automated multi-factor audit calculation.',
-            });
-          }
-        } catch (itemErr) {
-          // ignore single item insert error
-        }
-      }
+    // DISABLED: Auto-seeding fake CCB leads on empty database
+    // This was creating fabricated data with hardcoded ratings/scores that contaminated production data
+    // if (count === 0 && OREGON_CCB_LEADS.length > 0) {
+    //   console.log(`[Database Seed] Seeding initial CCB contractor leads to Cloud SQL...`);
+    //   ... (removed seeding logic)
+    // }
+    
+    if (count === 0) {
+      console.log('[Database Seed] No auto-seeding performed. Database is empty and ready for legitimate user imports.');
     }
 
     console.log('[Cloud SQL Init] Database defaults confirmed operational.');
