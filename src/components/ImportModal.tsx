@@ -26,6 +26,7 @@ import {
 } from '../services/importService';
 import { Lead, PipelineStage } from '../types';
 import { OREGON_CCB_LEADS } from '../data/ccbLeadsData';
+import { REPAIRED_LEADS_CSV, REPAIRED_LEADS_DATA } from '../data/repairedLeads';
 import * as XLSX from 'xlsx';
 
 interface ImportModalProps {
@@ -53,6 +54,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   const [importedLeads, setImportedLeads] = useState<Lead[]>([]);
   const [inputMode, setInputMode] = useState<'upload' | 'paste'>('upload');
   const [pastedContent, setPastedContent] = useState<string>('');
+  const [copiedRepaired, setCopiedRepaired] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
@@ -188,6 +190,44 @@ export const ImportModal: React.FC<ImportModalProps> = ({
       };
     });
     downloadDatasetAsXlsx(exportData, 'oregon_ccb_contractor_leads.xlsx');
+  };
+
+  const handleLoadRepairedLeads = () => {
+    setIsProcessing(true);
+    const headers = Object.keys(REPAIRED_LEADS_DATA[0] || {});
+    setRawHeaders(headers);
+    setRawRows(REPAIRED_LEADS_DATA);
+    setFileName('repaired_leads.csv');
+
+    const detectedMappings: ColumnMapping[] = headers.map((col) => {
+      const det = detectColumnMapping(col);
+      return {
+        rawColumn: col,
+        mappedField: det.field,
+        confidence: det.confidence,
+      };
+    });
+    setMappings(detectedMappings);
+    setIsProcessing(false);
+    setStep(2);
+  };
+
+  const handleDownloadRepairedCSV = () => {
+    const blob = new Blob([REPAIRED_LEADS_CSV], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'repaired_leads.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleCopyRepairedCSV = () => {
+    navigator.clipboard.writeText(REPAIRED_LEADS_CSV);
+    setCopiedRepaired(true);
+    setTimeout(() => setCopiedRepaired(false), 2000);
   };
 
   const handleMappingChange = (rawCol: string, mappedField: any) => {
@@ -411,6 +451,53 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   </div>
                 </div>
               )}
+
+              {/* Repaired Upload Table (One Peak Construction & Boz Electric) */}
+              <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-emerald-400" />
+                    <span>Repaired Upload Table (One Peak &amp; Boz Electric)</span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-bold">
+                      Repaired &amp; Ready
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-300 max-w-lg">
+                    Full clean dataset with normalized headers, un-truncated business names, valid 10-digit callable phones (fixed scientific notation), verified emails, addresses, GMB reviews &amp; ratings.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    onClick={handleCopyRepairedCSV}
+                    className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5 border border-slate-700"
+                  >
+                    {copiedRepaired ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        <span className="text-emerald-400">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Copy CSV</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    onClick={handleDownloadRepairedCSV}
+                    className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5 border border-slate-700"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download CSV</span>
+                  </button>
+                  <button
+                    onClick={handleLoadRepairedLeads}
+                    className="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Load Repaired Table</span>
+                  </button>
+                </div>
+              </div>
 
               {/* Attached Oregon CCB Contractor Leads (202 Verified Records) */}
               <div className="p-4 rounded-xl bg-indigo-950/40 border border-indigo-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

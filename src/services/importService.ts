@@ -35,6 +35,7 @@ const ALIASES: Partial<Record<keyof Lead, string[]>> = {
   business_name: [
     'business name',
     'businessname',
+    'business n',
     'gmb name',
     'gmbname',
     'company',
@@ -47,14 +48,14 @@ const ALIASES: Partial<Record<keyof Lead, string[]>> = {
     'contractor',
     'firm',
   ],
-  contact_name: ['contact name', 'contactname', 'contact', 'owner', 'decision maker', 'full name', 'lead contact', 'principal'],
+  contact_name: ['contact name', 'contactname', 'contact n', 'contact', 'owner', 'decision maker', 'full name', 'lead contact', 'principal'],
   phone: ['phone', 'gmb phone', 'gmbphone', 'telephone', 'mobile', 'cell', 'contact number', 'phone number', 'tel', 'phone_number'],
   email: ['email', 'email address', 'contact email', 'e-mail'],
-  website: ['website', 'gmb website', 'gmbwebsite', 'url', 'domain', 'web', 'site', 'website url', 'homepage'],
+  website: ['website', 'website u', 'website url', 'gmb website', 'gmbwebsite', 'url', 'domain', 'web', 'site', 'homepage'],
   address: ['address', 'gmb address', 'gmbaddress', 'street address', 'street', 'location'],
   city: ['city', 'town', 'municipality'],
   state: ['state', 'region', 'province', 'st'],
-  postal_code: ['zip', 'zipcode', 'postal code', 'postalcode', 'postal', 'postcode'],
+  postal_code: ['zip', 'zipcode', 'postal code', 'postalcode', 'postal coc', 'postal cod', 'postal', 'postcode'],
   country: ['country', 'nation'],
   niche: [
     'niche',
@@ -70,15 +71,17 @@ const ALIASES: Partial<Record<keyof Lead, string[]>> = {
     'business type',
     'sector',
     'trade',
+    'niche / ind',
+    'niche ind',
   ],
-  gmb_status: ['gmb', 'gmb status', 'google business profile', 'gbp status', 'google my business'],
-  gmb_rating: ['rating', 'gmb rating', 'gmbrating', 'google rating', 'stars', 'review score'],
-  gmb_review_count: ['reviews', 'gmb reviews', 'gmbreviews', 'review count', 'total reviews', 'number of reviews', 'gmb review count'],
+  gmb_status: ['gmb status', 'gmb statu', 'google business profile', 'gbp status', 'google my business', 'gmb'],
+  gmb_rating: ['rating', 'gmb rating', 'gmb ratin', 'gmbrating', 'google rating', 'stars', 'review score'],
+  gmb_review_count: ['reviews', 'gmb reviews', 'gmb revie', 'gmbreviews', 'review count', 'total reviews', 'number of reviews', 'gmb review count'],
   gmb_url: ['gmb url', 'gmburl', 'gbp url', 'google business url'],
-  google_maps_url: ['google maps', 'maps url', 'google maps url', 'gmb maps url', 'gmbmapsurl', 'map url', 'place url', 'maps link'],
-  pagespeed_score: ['pagespeed', 'pagespeed score', 'website score', 'speed score', 'performance score', 'website audit'],
+  google_maps_url: ['google maps', 'maps url', 'google maps url', 'google ma', 'gmb maps url', 'gmbmapsurl', 'map url', 'place url', 'maps link'],
+  pagespeed_score: ['pagespeed', 'pagespeed score', 'pagespeec', 'website score', 'speed score', 'performance score', 'website audit'],
   cms: ['cms', 'platform', 'technology', 'web engine'],
-  google_ads_status: ['google ads', 'ads', 'ppc', 'google ads status', 'search ads'],
+  google_ads_status: ['google ads', 'google ad', 'google ad:', 'google ads status', 'ads', 'ppc', 'search ads'],
   meta_pixel_status: ['meta pixel', 'facebook pixel', 'pixel', 'meta pixel status', 'pixel status'],
   seo_status: ['seo', 'seo status', 'seo audit', 'technical seo'],
   // remaining fields
@@ -111,8 +114,8 @@ const ALIASES: Partial<Record<keyof Lead, string[]>> = {
 };
 
 export function detectColumnMapping(columnName: string): { field: keyof Lead | 'ignore'; confidence: number } {
-  const clean = columnName.trim().toLowerCase().replace(/[_\-\.]+/g, ' ');
-  const cleanNoSpaces = columnName.trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+  const clean = columnName.trim().toLowerCase().replace(/[_\-\.:\/]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const cleanNoSpaces = clean.replace(/[^a-z0-9]/g, '');
 
   // PASS 1 — Exact matching: Iterate through ALL fields/aliases first
   for (const [field, aliases] of Object.entries(ALIASES)) {
@@ -123,8 +126,19 @@ export function detectColumnMapping(columnName: string): { field: keyof Lead | '
 
   // PASS 2 — Partial matching: Only if PASS 1 found no exact match
   for (const [field, aliases] of Object.entries(ALIASES)) {
-    if (aliases.some((alias) => clean.includes(alias) || alias.includes(clean))) {
-      return { field: field as keyof Lead, confidence: 0.88 };
+    for (const alias of aliases) {
+      if (alias.length < 3) {
+        // Very short 1-2 char aliases (like 'st') must match whole words only
+        const wordRegex = new RegExp('(?:^|\\s+)' + alias + '(?:$|\\s+)');
+        if (wordRegex.test(clean)) {
+          return { field: field as keyof Lead, confidence: 0.88 };
+        }
+      } else if (alias === 'gmb') {
+        // Skip bare 'gmb' prefix in partial matching so it doesn't steal gmb_rating or gmb_review_count
+        continue;
+      } else if (clean.includes(alias) || alias.includes(clean)) {
+        return { field: field as keyof Lead, confidence: 0.88 };
+      }
     }
   }
 
@@ -143,7 +157,7 @@ export function parseTextToRawData(text: string): { headers: string[]; rows: Rec
     try {
       const parsed = JSON.parse(trimmed);
       if (Array.isArray(parsed) && parsed.length > 0) {
-        const headers = Object.keys(parsed[0] || {});
+        const headers = Object.keys(parsed[0] || {}).filter((h) => h.trim().length > 0);
         return { headers, rows: parsed };
       }
     } catch (e) {
@@ -189,7 +203,9 @@ export function parseTextToRawData(text: string): { headers: string[]; rows: Rec
     return values;
   };
 
-  const rawHeaders = parseLine(firstLine).map((h) => h.replace(/^["']|["']$/g, '').trim());
+  const rawHeaders = parseLine(firstLine)
+    .map((h) => h.replace(/^["']|["']$/g, '').trim())
+    .filter((h) => h.length > 0);
   const rows: Record<string, any>[] = [];
 
   for (let i = 1; i < lines.length; i++) {
@@ -225,7 +241,9 @@ export function parseFileToRawData(file: File): Promise<{ headers: string[]; row
           return resolve({ headers: [], rows: [] });
         }
 
-        const headers = Object.keys(json[0] || {});
+        const headers = Object.keys(json[0] || {}).filter(
+          (h) => h.trim().length > 0 && !h.startsWith('__EMPTY')
+        );
         resolve({ headers, rows: json });
       } catch (err) {
         reject(err);
@@ -370,7 +388,18 @@ export function convertRowsToLeads(
     });
 
     const businessName = leadPartial.business_name || row['businessName'] || row['gmbName'] || row['Business Name'] || `Imported Business #${idx + 1}`;
-    const phone = leadPartial.phone || row['phone'] || row['gmbPhone'] || row['Phone'] || 'Not provided';
+    const rawPhone = leadPartial.phone || row['phone'] || row['gmbPhone'] || row['Phone'];
+    let phone = 'Not provided';
+    if (rawPhone !== undefined && rawPhone !== null && String(rawPhone).trim() !== '') {
+      let strPhone = String(rawPhone).trim();
+      const sciMatch = strPhone.match(/^(\d+(?:\.\d+)?)[eE]\+(\d+)$/);
+      if (sciMatch) {
+        const base = parseFloat(sciMatch[1]);
+        const exp = parseInt(sciMatch[2], 10);
+        strPhone = Math.round(base * Math.pow(10, exp)).toString();
+      }
+      phone = strPhone;
+    }
     const email = leadPartial.email || row['email'] || row['Email'] || 'Not provided';
     const website = leadPartial.website || row['gmbWebsite'] || row['website'] || row['Website'] || 'Not provided';
     const niche = leadPartial.niche || row['gmbCategory'] || row['endorsementText'] || row['licenseType'] || 'Local Business';
