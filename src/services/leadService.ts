@@ -9,11 +9,9 @@ import {
 } from '../types';
 import { calculateLeadScore } from './scoringService';
 import { calculateMultiDimensionalScores } from './leadIntelligenceService';
-import { OREGON_CCB_LEADS } from '../data/ccbLeadsData';
 
-const STORAGE_KEY = 'mca_leads_v3';
-const ACTIVITIES_KEY = 'mca_activities_v2';
-const IMPORT_HISTORY_KEY = 'mca_import_history_v2';
+// NEON POSTGRESQL IS THE SINGLE SOURCE OF TRUTH
+// No localStorage, no seed data, no fallbacks
 
 // Cloud SQL Database Synchronization State
 let isDbSyncing = false;
@@ -63,11 +61,11 @@ export function mapDbLeadToModel(dbLead: any): Lead {
     email: dbLead.email || raw.email || 'Not provided',
     website: dbLead.website || raw.website || 'Not provided',
     address: dbLead.address || raw.address || '',
-    city: dbLead.city || raw.city || 'Portland',
-    county: dbLead.county || raw.county || 'Multnomah',
-    state: dbLead.stateRegion || dbLead.state || raw.state || 'OR',
+    city: dbLead.city || raw.city || null,
+    county: dbLead.county || raw.county || null,
+    state: dbLead.stateRegion || dbLead.state || raw.state || null,
     country: dbLead.country || raw.country || 'USA',
-    postal_code: dbLead.postalCode || dbLead.postal_code || raw.postal_code || '',
+    postal_code: dbLead.postalCode || dbLead.postal_code || raw.postal_code || null,
     niche: dbLead.niche || raw.niche || 'General Contractor',
     gmb_status: dbLead.gmbStatus || dbLead.gmb_status || raw.gmb_status || 'Established',
     gmb_rating: dbLead.googleRating ? Number(dbLead.googleRating) : (dbLead.gmb_rating || raw.gmb_rating || 4.5),
@@ -122,7 +120,7 @@ export function mapDbLeadToModel(dbLead: any): Lead {
 }
 
 export async function syncWithDatabase(): Promise<Lead[]> {
-  if (isDbSyncing) return getLeads();
+  if (isDbSyncing) return [];
   isDbSyncing = true;
   dbSyncStatus = 'syncing';
 
@@ -133,194 +131,47 @@ export async function syncWithDatabase(): Promise<Lead[]> {
       dbSyncStatus = 'connected';
     }
 
-    // Safely sync user leads from database, strictly excluding seeded Oregon CCB records
-    const res = await bgApiCall('/api/leads?limit=300');
+    // Fetch ALL leads from Neon database - single source of truth
+    const res = await bgApiCall('/api/leads?limit=1000');
     if (res && Array.isArray(res.leads)) {
-      const seedIds = new Set(OREGON_CCB_LEADS.map((s) => s.lead_id));
-      const dbUserLeads = res.leads
-        .filter((l: any) => {
-          const id = l.leadId || l.lead_id;
-          return !seedIds.has(id);
-        })
-        .map((l: any) => mapDbLeadToModel(l));
-
-      const local = getLeads();
-      const dbIds = new Set(dbUserLeads.map((l) => l.lead_id));
-      const localOnly = local.filter((l) => !dbIds.has(l.lead_id) && !seedIds.has(l.lead_id));
-      const merged = [...dbUserLeads, ...localOnly];
-      saveLeads(merged);
-      return merged;
+      const dbLeads = res.leads.map((l: any) => mapDbLeadToModel(l));
+      return dbLeads;
     }
   } catch (err) {
     dbSyncStatus = 'offline';
   } finally {
     isDbSyncing = false;
   }
-  return getLeads();
-}
-
-export function loadCCBLeads(): Lead[] {
-  const preparedLeads: Lead[] = OREGON_CCB_LEADS.map((l) => ({
-    ...l,
-    stage_history: l.stage_history || [
-      {
-        id: `sh-init-${l.lead_id}`,
-        previous_stage: 'Initial Import',
-        new_stage: l.pipeline_stage || 'New Lead',
-        timestamp: l.created_at || new Date().toISOString(),
-        changed_by: 'Sophia (AI Sales Rep)',
-        reason: 'Initial dataset import & categorization',
-      },
-    ],
-  }));
-
-  saveLeads(preparedLeads);
-
-  addImportHistory({
-    id: `imp-${Date.now()}`,
-    file_name: 'raw_ccb_leads.csv (Oregon CCB)',
-    imported_date: new Date().toLocaleDateString(),
-    rows_count: preparedLeads.length,
-    valid_count: preparedLeads.length,
-    duplicates_count: 0,
-    rejected_count: 0,
-    imported_by: 'Sophia (AI Sales Rep)',
-    status: 'Completed',
-  });
-
-  addActivity({
-    id: `act-batch-ccb`,
-    activity_id: `act-batch-ccb`,
-    lead_id: 'batch-ccb',
-    lead_name: 'Oregon CCB Contractors',
-    timestamp: new Date().toISOString(),
-    type: 'lead_imported',
-    activity_type: 'lead_imported',
-    channel: 'SYSTEM',
-    title: 'CCB Contractor Dataset Loaded',
-    description: `Loaded ${preparedLeads.length} Oregon CCB contractor leads with 0–100 scoring, gap analysis, and Sophia AI sales intelligence.`,
-    author: 'Sophia',
-    source: 'Sophia (AI)',
-  });
-
-  return preparedLeads;
-}
-
-export function getLeads(): Lead[] {
-  try {
-    let raw = localStorage.getItem(STORAGE_KEY);
-    if (raw === null) {
-      // Check legacy storage key but exclude the 202 CCB contractor records
-      const legacyRaw = localStorage.getItem('mca_leads_v2');
-      if (legacyRaw) {
-        try {
-          const legacyParsed = JSON.parse(legacyRaw);
-          if (Array.isArray(legacyParsed)) {
-            const seedIds = new Set(OREGON_CCB_LEADS.map((s) => s.lead_id));
-            const userImported = legacyParsed.filter(
-              (l: Lead) => !seedIds.has(l.lead_id)
-            );
-            if (userImported.length > 0) {
-              saveLeads(userImported);
-              raw = JSON.stringify(userImported);
-            }
-          }
-        } catch (_) {}
-      }
-    }
-
-    if (raw !== null) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        if (parsed.length === 0) {
-          return [];
-        }
-        const seenIds = new Set<string>();
-        let hadDuplicates = false;
-
-        const sanitized = parsed.map((lead: Lead, idx: number) => {
-          let currentId = lead.lead_id;
-          if (!currentId || seenIds.has(currentId)) {
-            hadDuplicates = true;
-            const licType = lead.original_data?.licenseType || lead.tags?.find((t) => t.startsWith('Type:'))?.replace('Type: ', '').trim() || idx;
-            currentId = currentId ? `${currentId}-${licType}` : `MCA-LEAD-${idx}`;
-            if (seenIds.has(currentId)) {
-              currentId = `${currentId}-${idx}`;
-            }
-          }
-          seenIds.add(currentId);
-
-          const leadWithUniqueId = currentId !== lead.lead_id ? { ...lead, lead_id: currentId } : lead;
-
-          if (!leadWithUniqueId.intelligence || !leadWithUniqueId.priority_tier || !leadWithUniqueId.overall_priority_score) {
-            const intel = calculateMultiDimensionalScores(leadWithUniqueId);
-            return {
-              ...leadWithUniqueId,
-              intelligence: leadWithUniqueId.intelligence || intel,
-              overall_priority_score: leadWithUniqueId.overall_priority_score ?? intel.overall_priority_score,
-              priority_tier: leadWithUniqueId.priority_tier || intel.priority_tier,
-              opportunity_score: leadWithUniqueId.opportunity_score ?? intel.opportunity_score,
-              service_match_score: leadWithUniqueId.service_match_score ?? intel.service_match_score,
-              revenue_potential_score: leadWithUniqueId.revenue_potential_score ?? intel.revenue_potential_score,
-              contactability_score: leadWithUniqueId.contactability_score ?? intel.contactability_score,
-              buying_intent_score: leadWithUniqueId.buying_intent_score ?? intel.buying_intent_score,
-              data_confidence_score: leadWithUniqueId.data_confidence_score ?? intel.data_confidence_score,
-              lead_temperature: leadWithUniqueId.lead_temperature || intel.lead_temperature,
-            };
-          }
-          return leadWithUniqueId;
-        });
-
-        if (hadDuplicates) {
-          saveLeads(sanitized);
-        }
-
-        return sanitized;
-      }
-    }
-  } catch (e) {
-    console.error('Error reading leads from localStorage', e);
-  }
-
-  // Do not auto-populate with initial 202 records on load
   return [];
 }
 
-export function saveLeads(leads: Lead[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(leads));
-  } catch (e) {
-    console.error('Error saving leads to localStorage', e);
-  }
+// DEPRECATED: loadCCBLeads() - Seed data removed. Neon is single source of truth.
+// This function no longer loads any seed data into the system.
+export function loadCCBLeads(): Lead[] {
+  // No seed data - return empty array
+  // All leads must come from user imports or manual creation via Neon database
+  return [];
 }
 
+// REMOVED: getLeads() - All data must come from Neon via syncWithDatabase()
+// REMOVED: saveLeads() - All persistence must go to Neon via API
+
 export async function clearAllLeads(): Promise<void> {
-  // Clear localStorage first
-  saveLeads([]);
-  try {
-    localStorage.setItem(ACTIVITIES_KEY, JSON.stringify([]));
-    localStorage.setItem(IMPORT_HISTORY_KEY, JSON.stringify([]));
-  } catch (e) {
-    console.error('Error clearing localStorage leads', e);
-  }
-  
-  // ALSO clear Neon database via API endpoint
-  // This fixes the bug where \"Clear All\" only wiped localStorage but Neon kept everything
+  // Clear Neon database - single source of truth
   try {
     const response = await fetch('/api/leads?method=truncate', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
     });
     
-    if (response.ok) {
-      console.log('Successfully cleared all leads from Neon database');
-    } else {
+    if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      console.warn('Failed to clear Neon database:', errorData?.error || response.statusText);
+      throw new Error(errorData?.error || `Failed to clear leads (HTTP ${response.status})`);
     }
+    console.log('Successfully cleared all leads from Neon database');
   } catch (err: any) {
     console.error('Error clearing Neon database:', err?.message);
-    // Don't throw - localStorage was cleared successfully, DB failure is non-fatal
+    throw err;
   }
 }
 
@@ -344,7 +195,7 @@ export async function addLead(lead: Lead): Promise<Lead> {
     ],
   };
 
-  // Direct persistence to PostgreSQL database
+  // Direct persistence to Neon PostgreSQL database - single source of truth
   const res = await fetch('/api/leads', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -361,7 +212,7 @@ export async function addLead(lead: Lead): Promise<Lead> {
       niche: preparedLead.niche,
       address: preparedLead.address,
       city: preparedLead.city,
-      county: preparedLead.county || 'Multnomah',
+      county: preparedLead.county,
       state: preparedLead.state,
       postal_code: preparedLead.postal_code,
       country: preparedLead.country || 'USA',
@@ -393,9 +244,6 @@ export async function addLead(lead: Lead): Promise<Lead> {
   const data = await res.json();
   if (data.lead && data.lead._dbSource === 'neon') {
     const persistedLead = mapDbLeadToModel(data.lead);
-    const current = getLeads();
-    const updated = [persistedLead, ...current.filter((l) => l.lead_id !== persistedLead.lead_id)];
-    saveLeads(updated);
 
     addActivity({
       id: `act-${Date.now()}`,
@@ -413,150 +261,118 @@ export async function addLead(lead: Lead): Promise<Lead> {
     });
 
     return persistedLead;
-  } else if (data.lead && data.lead._dbSource === 'memory_only') {
-    const current = getLeads();
-    const updated = [preparedLead, ...current.filter((l) => l.lead_id !== preparedLead.lead_id)];
-    saveLeads(updated);
-
-    addActivity({
-      id: `act-${Date.now()}`,
-      activity_id: `act-${Date.now()}`,
-      lead_id: preparedLead.lead_id,
-      lead_name: preparedLead.business_name,
-      timestamp,
-      type: 'lead_created',
-      activity_type: 'lead_created',
-      channel: 'SYSTEM',
-      title: 'Lead Created in MCA Suite',
-      description: `Added ${preparedLead.business_name} with initial opportunity score of ${preparedLead.lead_score}/100.`,
-      author: 'Agency User',
-      source: 'Agency User',
-    });
-
-    return preparedLead;
   } else {
     throw new Error(data.error || 'Database persistence failed');
   }
 }
 
-export function updateLead(leadId: string, updates: Partial<Lead>): Lead | null {
-  const current = getLeads();
-  const idx = current.findIndex((l) => l.lead_id === leadId);
-  if (idx === -1) return null;
-
-  const previous = current[idx];
+export async function updateLead(leadId: string, updates: Partial<Lead>): Promise<Lead | null> {
   const timestamp = new Date().toISOString();
 
-  let stageHistory = previous.stage_history || [];
-  if (updates.pipeline_stage && updates.pipeline_stage !== previous.pipeline_stage) {
-    const historyEntry: PipelineStageHistoryEntry = {
-      id: `sh-${Date.now()}`,
-      previous_stage: previous.pipeline_stage,
-      new_stage: updates.pipeline_stage,
-      timestamp,
-      changed_by: updates.owner || 'Agency User',
-      reason: `Moved from "${previous.pipeline_stage}" to "${updates.pipeline_stage}"`,
-    };
-    stageHistory = [historyEntry, ...stageHistory];
+  // Update in Neon PostgreSQL database - single source of truth
+  const res = await fetch(`/api/leads/${encodeURIComponent(leadId)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updates),
+  });
+
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    console.error('Failed to update lead:', errorData);
+    return null;
   }
 
-  const updatedLead: Lead = {
-    ...previous,
-    ...updates,
-    stage_history: stageHistory,
-    updated_at: timestamp,
-  };
+  const data = await res.json();
+  if (data.lead && data.lead._dbSource === 'neon') {
+    const updatedLead = mapDbLeadToModel(data.lead);
 
-  current[idx] = updatedLead;
-  saveLeads(current);
-
-  // Background Cloud SQL persistence
-  bgApiCall(`/api/leads/${encodeURIComponent(leadId)}`, 'PUT', updates);
-
-  if (updates.pipeline_stage && updates.pipeline_stage !== previous.pipeline_stage) {
-    addActivity({
-      id: `act-${Date.now()}`,
-      activity_id: `act-${Date.now()}`,
-      lead_id: leadId,
-      lead_name: updatedLead.business_name,
-      timestamp,
-      type: 'pipeline_stage_changed',
-      activity_type: 'pipeline_stage_changed',
-      channel: 'PIPELINE',
-      title: `Pipeline Stage Changed`,
-      description: `Pipeline stage moved from "${previous.pipeline_stage}" to "${updates.pipeline_stage}".`,
-      author: 'Sophia (AI)',
-      source: 'Sophia (AI)',
-      metadata: {
-        previous_stage: previous.pipeline_stage,
-        new_stage: updates.pipeline_stage,
-      },
-    });
-
-    if (updates.pipeline_stage === 'Audit Sent') {
+    if (updates.pipeline_stage) {
       addActivity({
-        id: `act-audit-${Date.now()}`,
-        activity_id: `act-audit-${Date.now()}`,
+        id: `act-${Date.now()}`,
+        activity_id: `act-${Date.now()}`,
         lead_id: leadId,
         lead_name: updatedLead.business_name,
         timestamp,
-        type: 'audit_sent',
-        activity_type: 'audit_sent',
-        channel: 'EMAIL',
-        title: 'Audit Sent to Client',
-        description: `Digital presence audit for ${updatedLead.business_name} delivered.`,
+        type: 'pipeline_stage_changed',
+        activity_type: 'pipeline_stage_changed',
+        channel: 'PIPELINE',
+        title: `Pipeline Stage Changed`,
+        description: `Pipeline stage moved to "${updates.pipeline_stage}".`,
         author: 'Sophia (AI)',
         source: 'Sophia (AI)',
+        metadata: {
+          new_stage: updates.pipeline_stage,
+        },
       });
-    } else if (updates.pipeline_stage === 'Proposal Sent') {
+
+      if (updates.pipeline_stage === 'Audit Sent') {
+        addActivity({
+          id: `act-audit-${Date.now()}`,
+          activity_id: `act-audit-${Date.now()}`,
+          lead_id: leadId,
+          lead_name: updatedLead.business_name,
+          timestamp,
+          type: 'audit_sent',
+          activity_type: 'audit_sent',
+          channel: 'EMAIL',
+          title: 'Audit Sent to Client',
+          description: `Digital presence audit for ${updatedLead.business_name} delivered.`,
+          author: 'Sophia (AI)',
+          source: 'Sophia (AI)',
+        });
+      } else if (updates.pipeline_stage === 'Proposal Sent') {
+        addActivity({
+          id: `act-prop-${Date.now()}`,
+          activity_id: `act-prop-${Date.now()}`,
+          lead_id: leadId,
+          lead_name: updatedLead.business_name,
+          timestamp,
+          type: 'proposal_sent',
+          activity_type: 'proposal_sent',
+          channel: 'EMAIL',
+          title: 'Proposal Sent to Client',
+          description: `Client proposal with recommended retainer of $${updatedLead.estimated_retainer?.toLocaleString() || '1,800'}/mo submitted.`,
+          author: 'Sophia (AI)',
+          source: 'Sophia (AI)',
+        });
+      }
+    } else if (updates.ai_enrichment) {
       addActivity({
-        id: `act-prop-${Date.now()}`,
-        activity_id: `act-prop-${Date.now()}`,
+        id: `act-${Date.now()}`,
+        activity_id: `act-${Date.now()}`,
         lead_id: leadId,
         lead_name: updatedLead.business_name,
         timestamp,
-        type: 'proposal_sent',
-        activity_type: 'proposal_sent',
-        channel: 'EMAIL',
-        title: 'Proposal Sent to Client',
-        description: `Client proposal with recommended retainer of $${updatedLead.estimated_retainer?.toLocaleString() || '1,800'}/mo submitted.`,
+        type: 'ai_analysis_generated',
+        activity_type: 'ai_analysis_generated',
+        channel: 'AI_CALL',
+        title: 'Sophia AI Outreach Strategy Generated',
+        description: `Sophia analyzed ${updatedLead.business_name}: Recommended ${updatedLead.recommended_service} with $${updatedLead.estimated_retainer?.toLocaleString()}/mo retainer potential.`,
+        author: 'Sophia (AI Sales Rep)',
+        source: 'Sophia (AI)',
+      });
+    } else if (updates.lead_score !== undefined) {
+      addActivity({
+        id: `act-${Date.now()}`,
+        activity_id: `act-${Date.now()}`,
+        lead_id: leadId,
+        lead_name: updatedLead.business_name,
+        timestamp,
+        type: 'score_updated',
+        activity_type: 'score_updated',
+        channel: 'SYSTEM',
+        title: 'Lead Score Recalculated',
+        description: `Score updated to ${updates.lead_score}/100.`,
         author: 'Sophia (AI)',
         source: 'Sophia (AI)',
       });
     }
-  } else if (updates.ai_enrichment && !previous.ai_enrichment) {
-    addActivity({
-      id: `act-${Date.now()}`,
-      activity_id: `act-${Date.now()}`,
-      lead_id: leadId,
-      lead_name: updatedLead.business_name,
-      timestamp,
-      type: 'ai_analysis_generated',
-      activity_type: 'ai_analysis_generated',
-      channel: 'AI_CALL',
-      title: 'Sophia AI Outreach Strategy Generated',
-      description: `Sophia analyzed ${updatedLead.business_name}: Recommended ${updatedLead.recommended_service} with $${updatedLead.estimated_retainer?.toLocaleString()}/mo retainer potential.`,
-      author: 'Sophia (AI Sales Rep)',
-      source: 'Sophia (AI)',
-    });
-  } else if (updates.lead_score !== undefined && updates.lead_score !== previous.lead_score) {
-    addActivity({
-      id: `act-${Date.now()}`,
-      activity_id: `act-${Date.now()}`,
-      lead_id: leadId,
-      lead_name: updatedLead.business_name,
-      timestamp,
-      type: 'score_updated',
-      activity_type: 'score_updated',
-      channel: 'SYSTEM',
-      title: 'Lead Score Recalculated',
-      description: `Score updated from ${previous.lead_score} → ${updates.lead_score}/100.`,
-      author: 'Sophia (AI)',
-      source: 'Sophia (AI)',
-    });
+
+    return updatedLead;
   }
 
-  return updatedLead;
+  return null;
+}  return updatedLead;
 }
 
 export function deleteLead(leadId: string): boolean {
