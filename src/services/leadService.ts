@@ -153,17 +153,8 @@ export function loadCCBLeads(): Lead[] {
   return [];
 }
 
-// DEPRECATED: getLeads() - No longer used. All data comes from Neon via syncWithDatabase().
-// This function is kept for backward compatibility but returns empty array.
-export function getLeads(): Lead[] {
-  // Return empty - all leads must come from Neon database via API
-  return [];
-}
-
-// DEPRECATED: saveLeads() - No longer persists anywhere. Neon is single source of truth.
-export function saveLeads(leads: Lead[]): void {
-  // Do nothing - all persistence goes to Neon database via API
-}
+// REMOVED: getLeads() - All data must come from Neon via syncWithDatabase()
+// REMOVED: saveLeads() - All persistence must go to Neon via API
 
 export async function clearAllLeads(): Promise<void> {
   // Clear Neon database - single source of truth
