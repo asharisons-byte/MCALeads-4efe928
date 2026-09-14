@@ -9,7 +9,6 @@ import {
 } from '../types';
 import { calculateLeadScore } from './scoringService';
 import { calculateMultiDimensionalScores } from './leadIntelligenceService';
-import { OREGON_CCB_LEADS } from '../data/ccbLeadsData';
 
 const STORAGE_KEY = 'mca_leads_v3';
 const ACTIVITIES_KEY = 'mca_activities_v2';
@@ -133,20 +132,13 @@ export async function syncWithDatabase(): Promise<Lead[]> {
       dbSyncStatus = 'connected';
     }
 
-    // Safely sync user leads from database, strictly excluding seeded Oregon CCB records
+    // Sync user leads from Neon database
     const res = await bgApiCall('/api/leads?limit=300');
     if (res && Array.isArray(res.leads)) {
-      const seedIds = new Set(OREGON_CCB_LEADS.map((s) => s.lead_id));
-      const dbUserLeads = res.leads
-        .filter((l: any) => {
-          const id = l.leadId || l.lead_id;
-          return !seedIds.has(id);
-        })
-        .map((l: any) => mapDbLeadToModel(l));
-
+      const dbUserLeads = res.leads.map((l: any) => mapDbLeadToModel(l));
       const local = getLeads();
       const dbIds = new Set(dbUserLeads.map((l) => l.lead_id));
-      const localOnly = local.filter((l) => !dbIds.has(l.lead_id) && !seedIds.has(l.lead_id));
+      const localOnly = local.filter((l) => !dbIds.has(l.lead_id));
       const merged = [...dbUserLeads, ...localOnly];
       saveLeads(merged);
       return merged;
@@ -159,71 +151,21 @@ export async function syncWithDatabase(): Promise<Lead[]> {
   return getLeads();
 }
 
-export function loadCCBLeads(): Lead[] {
-  const preparedLeads: Lead[] = OREGON_CCB_LEADS.map((l) => ({
-    ...l,
-    stage_history: l.stage_history || [
-      {
-        id: `sh-init-${l.lead_id}`,
-        previous_stage: 'Initial Import',
-        new_stage: l.pipeline_stage || 'New Lead',
-        timestamp: l.created_at || new Date().toISOString(),
-        changed_by: 'Sophia (AI Sales Rep)',
-        reason: 'Initial dataset import & categorization',
-      },
-    ],
-  }));
-
-  saveLeads(preparedLeads);
-
-  addImportHistory({
-    id: `imp-${Date.now()}`,
-    file_name: 'raw_ccb_leads.csv (Oregon CCB)',
-    imported_date: new Date().toLocaleDateString(),
-    rows_count: preparedLeads.length,
-    valid_count: preparedLeads.length,
-    duplicates_count: 0,
-    rejected_count: 0,
-    imported_by: 'Sophia (AI Sales Rep)',
-    status: 'Completed',
-  });
-
-  addActivity({
-    id: `act-batch-ccb`,
-    activity_id: `act-batch-ccb`,
-    lead_id: 'batch-ccb',
-    lead_name: 'Oregon CCB Contractors',
-    timestamp: new Date().toISOString(),
-    type: 'lead_imported',
-    activity_type: 'lead_imported',
-    channel: 'SYSTEM',
-    title: 'CCB Contractor Dataset Loaded',
-    description: `Loaded ${preparedLeads.length} Oregon CCB contractor leads with 0–100 scoring, gap analysis, and Sophia AI sales intelligence.`,
-    author: 'Sophia',
-    source: 'Sophia (AI)',
-  });
-
-  return preparedLeads;
-}
+// REMOVED: loadCCBLeads() - was seeding fabricated Oregon CCB data
+// All leads must now come from user imports or Neon database only
 
 export function getLeads(): Lead[] {
   try {
     let raw = localStorage.getItem(STORAGE_KEY);
     if (raw === null) {
-      // Check legacy storage key but exclude the 202 CCB contractor records
+      // Check legacy storage key for user-imported leads
       const legacyRaw = localStorage.getItem('mca_leads_v2');
       if (legacyRaw) {
         try {
           const legacyParsed = JSON.parse(legacyRaw);
           if (Array.isArray(legacyParsed)) {
-            const seedIds = new Set(OREGON_CCB_LEADS.map((s) => s.lead_id));
-            const userImported = legacyParsed.filter(
-              (l: Lead) => !seedIds.has(l.lead_id)
-            );
-            if (userImported.length > 0) {
-              saveLeads(userImported);
-              raw = JSON.stringify(userImported);
-            }
+            saveLeads(legacyParsed);
+            raw = JSON.stringify(legacyParsed);
           }
         } catch (_) {}
       }
