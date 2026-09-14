@@ -1,7 +1,52 @@
-```
+```gitignore
 # Dependencies
 node_modules/
+.pnpm-store/
+.npm/
+.yarn/
+.bazel/
 
-# Package lock files
-.package-lock.json
+# Build outputs
+dist/
+build/
+coverage/
+.eslintcache
+.next/
+.nuxt/
+public/dist/
+release/
+
+# TypeScript
+*.tsbuildinfo
+*.js.map
+*.ts.map
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+```
+
+Wait, let me reconsider. The only modified file is `src/services/leadService.ts`, which appears to be a TypeScript source file. There are no build artifacts, dependency directories, or temporary files in the changes. This should result in an empty .gitignore.
+
+```gitignore
+
 ```
