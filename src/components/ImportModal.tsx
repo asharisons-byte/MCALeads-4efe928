@@ -33,7 +33,6 @@ import {
   ImportPreviewResult,
 } from '../services/importService';
 import { Lead, PipelineStage } from '../types';
-import { OREGON_CCB_LEADS } from '../data/ccbLeadsData';
 import * as XLSX from 'xlsx';
 
 interface ImportModalProps {
@@ -65,7 +64,6 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   const [googleSheetUrl, setGoogleSheetUrl] = useState<string>('');
   const [sheetError, setSheetError] = useState<string | null>(null);
   const [pastedContent, setPastedContent] = useState<string>('');
-  const [copiedRepaired, setCopiedRepaired] = useState<boolean>(false);
   const [showConverterModal, setShowConverterModal] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -189,25 +187,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
     alert('Test data generator has been disabled. Please upload your own CSV/Excel files.');
   };
 
-  const handleLoadAttachedCCBLeads = () => {
-    setIsProcessing(true);
-    setStep(5);
-    setImportProgress(25);
-    setTimeout(() => {
-      setImportProgress(65);
-      setTimeout(() => {
-        setImportProgress(100);
-        setImportedLeads(OREGON_CCB_LEADS);
-        setIsProcessing(false);
-        setStep(6);
-        onImportComplete(OREGON_CCB_LEADS, 'raw_ccb_leads.csv (Oregon CCB)', OREGON_CCB_LEADS.length);
-      }, 300);
-    }, 300);
-  };
 
-  const handleDownloadCCBLeads = () => {
-    const exportData = OREGON_CCB_LEADS.map((l) => {
-      const orig = l.original_data || {};
       return {
         licenseNumber: orig.licenseNumber || l.lead_id.replace('CCB-', ''),
         licenseType: orig.licenseType || '',
@@ -230,43 +210,13 @@ export const ImportModal: React.FC<ImportModalProps> = ({
     downloadDatasetAsXlsx(exportData, 'oregon_ccb_contractor_leads.xlsx');
   };
 
-  const handleLoadRepairedLeads = () => {
-    setIsProcessing(true);
-    const headers = Object.keys(REPAIRED_LEADS_DATA[0] || {});
-    setRawHeaders(headers);
-    setRawRows(REPAIRED_LEADS_DATA);
-    setFileName('repaired_leads.csv');
-
-    const detectedMappings: ColumnMapping[] = headers.map((col) => {
-      const det = detectColumnMapping(col);
-      return {
-        rawColumn: col,
-        mappedField: det.field,
-        confidence: det.confidence,
-      };
     });
     setMappings(detectedMappings);
     setIsProcessing(false);
     setStep(2);
   };
 
-  const handleDownloadRepairedCSV = () => {
-    const blob = new Blob([REPAIRED_LEADS_CSV], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'repaired_leads.csv');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
 
-  const handleCopyRepairedCSV = () => {
-    navigator.clipboard.writeText(REPAIRED_LEADS_CSV);
-    setCopiedRepaired(true);
-    setTimeout(() => setCopiedRepaired(false), 2000);
-  };
 
   const handleMappingChange = (rawCol: string, mappedField: any) => {
     setMappings((prev) =>

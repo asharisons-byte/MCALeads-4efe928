@@ -13,10 +13,6 @@ import { calculateMultiDimensionalScores } from './leadIntelligenceService';
 // NEON POSTGRESQL IS THE SINGLE SOURCE OF TRUTH
 // No localStorage, no seed data, no fallbacks
 
-const STORAGE_KEY = 'mca_leads_v3';
-const ACTIVITIES_KEY = 'mca_activities_v2';
-const IMPORT_HISTORY_KEY = 'mca_import_history_v2';
-
 // Cloud SQL Database Synchronization State
 let isDbSyncing = false;
 let lastDbSyncTime: string | null = null;
@@ -161,14 +157,12 @@ export function loadCCBLeads(): Lead[] {
 // This function is kept for backward compatibility but returns empty array.
 export function getLeads(): Lead[] {
   // Return empty - all leads must come from Neon database via API
-  // localStorage is no longer a data source
   return [];
 }
 
-// DEPRECATED: saveLeads() - No longer persists to localStorage. Neon is single source of truth.
+// DEPRECATED: saveLeads() - No longer persists anywhere. Neon is single source of truth.
 export function saveLeads(leads: Lead[]): void {
   // Do nothing - all persistence goes to Neon database via API
-  // localStorage is no longer used for lead storage
 }
 
 export async function clearAllLeads(): Promise<void> {

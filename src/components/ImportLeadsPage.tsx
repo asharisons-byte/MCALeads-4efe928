@@ -26,7 +26,6 @@ import {
   ImportPreviewResult,
 } from '../services/importService';
 import { Lead, PipelineStage } from '../types';
-import { OREGON_CCB_LEADS } from '../data/ccbLeadsData';
 import * as XLSX from 'xlsx';
 
 interface ImportLeadsPageProps {
