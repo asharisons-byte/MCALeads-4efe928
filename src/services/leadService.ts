@@ -10,11 +10,11 @@ import {
 import { calculateLeadScore } from './scoringService';
 import { calculateMultiDimensionalScores } from './leadIntelligenceService';
 
-const STORAGE_KEY = 'mca_leads_v3';
-const ACTIVITIES_KEY = 'mca_activities_v2';
-const IMPORT_HISTORY_KEY = 'mca_import_history_v2';
+// NEON-ONLY ARCHITECTURE: All lead data must come from Neon PostgreSQL API.
+// No localStorage, sessionStorage, IndexedDB, or in-memory persistence is allowed for lead data.
+// Temporary React state may exist only for UI rendering cache after fetching from Neon.
 
-// Cloud SQL Database Synchronization State
+// Database Synchronization State
 let isDbSyncing = false;
 let lastDbSyncTime: string | null = null;
 let dbSyncStatus: 'connected' | 'syncing' | 'offline' = 'connected';
@@ -24,14 +24,12 @@ export function getDatabaseSyncStatus() {
     status: dbSyncStatus,
     lastSync: lastDbSyncTime,
     isSyncing: isDbSyncing,
-    engine: 'Cloud SQL PostgreSQL 16',
-    region: 'europe-west3',
-    tier: 'Enterprise Database Foundation',
+    engine: 'Neon PostgreSQL',
   };
 }
 
-// Background API helper that never throws or blocks UI execution
-async function bgApiCall(endpoint: string, method = 'GET', data?: any): Promise<any> {
+// API helper that communicates with Neon backend
+async function apiCall(endpoint: string, method = 'GET', data?: any): Promise<any> {
   try {
     const res = await fetch(endpoint, {
       method,
@@ -43,11 +41,14 @@ async function bgApiCall(endpoint: string, method = 'GET', data?: any): Promise<
       lastDbSyncTime = new Date().toISOString();
       return await res.json();
     }
-  } catch (e) {
-    // Graceful offline fallback
+    // On HTTP error, update status but throw for caller to handle
     dbSyncStatus = 'offline';
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.error || `HTTP ${res.status}`);
+  } catch (e: any) {
+    dbSyncStatus = 'offline';
+    throw e;
   }
-  return null;
 }
 
 export function mapDbLeadToModel(dbLead: any): Lead {
