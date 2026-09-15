@@ -187,37 +187,6 @@ export const ImportModal: React.FC<ImportModalProps> = ({
     alert('Test data generator has been disabled. Please upload your own CSV/Excel files.');
   };
 
-
-      return {
-        licenseNumber: orig.licenseNumber || l.lead_id.replace('CCB-', ''),
-        licenseType: orig.licenseType || '',
-        businessName: l.business_name,
-        trade: l.niche,
-        city: l.city,
-        county: orig.county || '',
-        state: l.state,
-        zip: l.postal_code,
-        phone: l.phone,
-        website: l.website,
-        ccbStatus: orig.status || l.gmb_status,
-        gmbRating: l.gmb_rating,
-        gmbReviews: l.gmb_review_count,
-        leadScore: l.lead_score,
-        recommendedService: l.recommended_service,
-        estimatedRetainer: l.estimated_retainer,
-      };
-    });
-    downloadDatasetAsXlsx(exportData, 'oregon_ccb_contractor_leads.xlsx');
-  };
-
-    });
-    setMappings(detectedMappings);
-    setIsProcessing(false);
-    setStep(2);
-  };
-
-
-
   const handleMappingChange = (rawCol: string, mappedField: any) => {
     setMappings((prev) =>
       prev.map((m) => (m.rawColumn === rawCol ? { ...m, mappedField } : m))

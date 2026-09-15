@@ -1,12 +1,1 @@
-```
-# Dependencies
-node_modules/
-
-# Build artifacts
-dist/
-
-# Environment
-.env
-.env.local
-*.env.*
-```
+Nothing should be ignored based on the provided file changes. The modification of 'src/components/ImportModal.tsx' is a source code file that should be tracked in version control. No build artifacts, dependencies, or temporary files are present in the changes.
