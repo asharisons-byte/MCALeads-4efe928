@@ -13,6 +13,10 @@ import { calculateMultiDimensionalScores } from './leadIntelligenceService';
 // NEON POSTGRESQL IS THE SINGLE SOURCE OF TRUTH
 // No localStorage, no seed data, no fallbacks
 
+// Constants for localStorage keys (fallback only)
+const ACTIVITIES_KEY = 'mca_leads_activities';
+const IMPORT_HISTORY_KEY = 'mca_leads_import_history';
+
 // Cloud SQL Database Synchronization State
 let isDbSyncing = false;
 let lastDbSyncTime: string | null = null;

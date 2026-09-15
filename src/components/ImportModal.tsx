@@ -65,6 +65,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   const [sheetError, setSheetError] = useState<string | null>(null);
   const [pastedContent, setPastedContent] = useState<string>('');
   const [showConverterModal, setShowConverterModal] = useState<boolean>(false);
+  const [copiedRepaired, setCopiedRepaired] = useState<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -75,6 +76,41 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   }, [isOpen, initialMode]);
 
   if (!isOpen) return null;
+
+  // Handler functions for repaired CSV and CCB leads
+  const handleCopyRepairedCSV = () => {
+    if (importedLeads.length === 0) return;
+    const ws = XLSX.utils.json_to_sheet(importedLeads);
+    const csv = XLSX.utils.sheet_to_csv(ws);
+    navigator.clipboard.writeText(csv).then(() => {
+      setCopiedRepaired(true);
+      setTimeout(() => setCopiedRepaired(false), 2000);
+    });
+  };
+
+  const handleDownloadRepairedCSV = () => {
+    downloadDatasetAsXlsx(importedLeads, 'repaired_leads.xlsx');
+  };
+
+  const handleLoadRepairedLeads = () => {
+    onImportComplete(importedLeads, fileName, importedLeads.length);
+    onClose();
+  };
+
+  const handleDownloadCCBLeads = () => {
+    // Export existing leads as CCB leads
+    if (existingLeads.length > 0) {
+      downloadDatasetAsXlsx(existingLeads, 'ccb_leads_export.xlsx');
+    }
+  };
+
+  const handleLoadAttachedCCBLeads = () => {
+    // Load existing leads into the import modal
+    if (existingLeads.length > 0) {
+      setImportedLeads(existingLeads);
+      setStep(6);
+    }
+  };
 
   const handleFetchGoogleSheet = async () => {
     if (!googleSheetUrl.trim()) return;
