@@ -145,6 +145,39 @@ export async function syncWithDatabase(): Promise<Lead[]> {
   return [];
 }
 
+// Get all leads from Neon database
+export async function getLeads(): Promise<Lead[]> {
+  try {
+    const res = await fetch('/api/leads?limit=1000');
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.leads)) {
+        return data.leads.map((l: any) => mapDbLeadToModel(l));
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching leads:', err);
+  }
+  return [];
+}
+
+// Save leads to Neon database (bulk operation)
+export async function saveLeads(leads: Lead[]): Promise<void> {
+  try {
+    const response = await fetch('/api/leads/bulk', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ leads }),
+    });
+    if (!response.ok) {
+      throw new Error('Failed to save leads');
+    }
+  } catch (err) {
+    console.error('Error saving leads:', err);
+    throw err;
+  }
+}
+
 // DEPRECATED: loadCCBLeads() - Seed data removed. Neon is single source of truth.
 // This function no longer loads any seed data into the system.
 export function loadCCBLeads(): Lead[] {
