@@ -2353,6 +2353,8 @@ var TelnyxVoiceProvider = class {
     const fromNumber = params.from || this.defaultFromNumber;
     if (this.apiKey) {
       try {
+        console.log("[TELNYX] Outbound request started");
+        console.log("[TELNYX] Destination validated:", params.to);
         const response = await fetch("https://api.telnyx.com/v2/calls", {
           method: "POST",
           headers: {
@@ -2371,25 +2373,31 @@ var TelnyxVoiceProvider = class {
         });
         if (response.ok) {
           const data = await response.json();
+          const providerCallId = data.data?.call_control_id;
+          console.log("[TELNYX] API request accepted");
+          console.log("[TELNYX] call_control_id received:", providerCallId);
+          if (!providerCallId) {
+            throw new Error("Telnyx API did not return call_control_id");
+          }
           return {
-            providerCallId: data.data?.call_control_id || `telnyx_${Date.now()}`,
-            status: "CALLING"
+            providerCallId,
+            status: "INITIATING"
           };
         }
-        console.warn("Telnyx API call non-OK, falling back to simulated session:", response.status);
+        const errorText = await response.text().catch(() => "Unknown error");
+        console.error("[TELNYX] API error:", response.status, errorText);
+        throw new Error(`Telnyx API returned HTTP ${response.status}`);
       } catch (err) {
-        console.warn("Telnyx connection error, falling back to resilient simulated session:", err);
+        console.error("[TELNYX] Call initiation failed:", err.message);
+        throw err;
       }
     }
-    const providerCallId = `tlnx_sim_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    return {
-      providerCallId,
-      status: "CALLING"
-    };
+    throw new Error("TELNYX_API_KEY not configured. Real calling unavailable.");
   }
   async terminateCall(providerCallId) {
-    if (this.apiKey && !providerCallId.startsWith("tlnx_sim_")) {
+    if (this.apiKey && providerCallId) {
       try {
+        console.log("[TELNYX] Hangup request for call:", providerCallId);
         await fetch(`https://api.telnyx.com/v2/calls/${providerCallId}/actions/hangup`, {
           method: "POST",
           headers: {
@@ -2397,14 +2405,17 @@ var TelnyxVoiceProvider = class {
             Authorization: `Bearer ${this.apiKey}`
           }
         });
+        console.log("[TELNYX] Hangup command sent successfully");
+        return { success: true, status: "COMPLETED" };
       } catch (e) {
-        console.warn("Telnyx terminateCall error:", e);
+        console.error("[TELNYX] Hangup error:", e.message);
+        throw e;
       }
     }
-    return { success: true, status: "COMPLETED" };
+    throw new Error("Cannot terminate call: missing API key or call ID");
   }
   async getCallStatus(providerCallId) {
-    if (this.apiKey && !providerCallId.startsWith("tlnx_sim_")) {
+    if (this.apiKey && providerCallId) {
       try {
         const res = await fetch(`https://api.telnyx.com/v2/calls/${providerCallId}`, {
           headers: { Authorization: `Bearer ${this.apiKey}` }
@@ -2412,14 +2423,16 @@ var TelnyxVoiceProvider = class {
         if (res.ok) {
           const data = await res.json();
           const telnyxState = data.data?.call_leg_state || data.data?.status;
+          console.log("[TELNYX] Call status:", telnyxState);
           return {
             status: this.mapTelnyxState(telnyxState)
           };
         }
       } catch (e) {
+        console.warn("[TELNYX] Status check error:", e.message);
       }
     }
-    return { status: "CONNECTED" };
+    return { status: "UNKNOWN" };
   }
   mapTelnyxState(state) {
     switch (state?.toLowerCase()) {
@@ -2520,7 +2533,7 @@ var TelephonyServerManager = class {
       phoneNumber: params.phoneNumber,
       direction: "OUTBOUND",
       callType: params.callType || "Outbound Call",
-      status: "PREPARING",
+      status: "INITIATING",
       duration: 0,
       startedAt: now,
       isMuted: false,
@@ -2532,27 +2545,7 @@ var TelephonyServerManager = class {
       estimatedRetainer: params.estimatedRetainer
     };
     this.activeCalls.set(callId, session);
-    if (result.providerCallId.startsWith("tlnx_sim_")) {
-      setTimeout(() => {
-        const s = this.activeCalls.get(callId);
-        if (s && s.status === "PREPARING") {
-          s.status = "CALLING";
-        }
-      }, 800);
-      setTimeout(() => {
-        const s = this.activeCalls.get(callId);
-        if (s && (s.status === "CALLING" || s.status === "PREPARING")) {
-          s.status = "RINGING";
-        }
-      }, 2400);
-      setTimeout(() => {
-        const s = this.activeCalls.get(callId);
-        if (s && (s.status === "RINGING" || s.status === "CALLING")) {
-          s.status = "CONNECTED";
-          s.connectedAt = Date.now();
-        }
-      }, 4600);
-    }
+    console.log("[TELNYX] Call session created:", callId, "providerCallId:", result.providerCallId);
     return session;
   }
   getCallSession(callId) {
@@ -2568,13 +2561,20 @@ var TelephonyServerManager = class {
   async endCall(callId, params) {
     const session = this.activeCalls.get(callId);
     if (!session) return void 0;
-    await this.voiceProvider.terminateCall(session.providerCallId);
+    try {
+      await this.voiceProvider.terminateCall(session.providerCallId);
+      console.log("[TELNYX] Call terminated successfully:", callId);
+    } catch (e) {
+      console.error("[TELNYX] End call error:", e.message);
+    }
     session.status = "COMPLETED";
     session.endedAt = Date.now();
     if (params?.duration !== void 0) {
       session.duration = params.duration;
     } else if (session.connectedAt) {
       session.duration = Math.floor((session.endedAt - session.connectedAt) / 1e3);
+    } else {
+      session.duration = Math.floor((session.endedAt - session.startedAt) / 1e3);
     }
     if (params?.outcome) session.outcome = params.outcome;
     if (params?.notes) session.notes = params.notes;
@@ -2633,6 +2633,93 @@ var TelephonyServerManager = class {
   }
   getHistory() {
     return [...this.callHistory];
+  }
+  /**
+   * Update active call state from Telnyx webhook events
+   * This synchronizes real Telnyx call lifecycle into the in-memory session
+   */
+  updateCallStateFromWebhook(params) {
+    const { providerCallId, eventType, payload } = params;
+    let foundSession;
+    let foundCallId;
+    const callIds = Array.from(this.activeCalls.keys());
+    for (const callId of callIds) {
+      const session = this.activeCalls.get(callId);
+      if (session && session.providerCallId === providerCallId) {
+        foundSession = session;
+        foundCallId = callId;
+        break;
+      }
+    }
+    if (!foundSession || !foundCallId) {
+      console.log("[TELNYX WEBHOOK] No active session found for providerCallId:", providerCallId);
+      return void 0;
+    }
+    const now = Date.now();
+    switch (eventType) {
+      case "call.initiated":
+        console.log("[TELNYX WEBHOOK] event=call.initiated callId=", foundCallId);
+        foundSession.status = "INITIATING";
+        break;
+      case "call.ringing":
+        console.log("[TELNYX WEBHOOK] event=call.ringing callId=", foundCallId);
+        foundSession.status = "RINGING";
+        if (!foundSession.startedAt) {
+          foundSession.startedAt = now;
+        }
+        break;
+      case "call.answered":
+        console.log("[TELNYX WEBHOOK] event=call.answered callId=", foundCallId);
+        foundSession.status = "CONNECTED";
+        if (!foundSession.connectedAt) {
+          foundSession.connectedAt = now;
+        }
+        break;
+      case "call.hangup":
+      case "call.completed":
+        console.log("[TELNYX WEBHOOK] event=call.hangup callId=", foundCallId);
+        foundSession.status = "COMPLETED";
+        foundSession.endedAt = now;
+        if (foundSession.connectedAt && foundSession.endedAt) {
+          foundSession.duration = Math.floor((foundSession.endedAt - foundSession.connectedAt) / 1e3);
+        } else if (foundSession.startedAt && foundSession.endedAt) {
+          foundSession.duration = 0;
+        }
+        const hangupCause = payload?.hangup_cause || payload?.cause;
+        if (hangupCause && hangupCause !== "NORMAL_CLEARING") {
+          foundSession.outcome = `Hangup: ${hangupCause}`;
+        }
+        break;
+      case "call.busy":
+        console.log("[TELNYX WEBHOOK] event=call.busy callId=", foundCallId);
+        foundSession.status = "BUSY";
+        foundSession.endedAt = now;
+        foundSession.duration = 0;
+        foundSession.outcome = "Busy";
+        break;
+      case "call.no_answer":
+        console.log("[TELNYX WEBHOOK] event=call.no_answer callId=", foundCallId);
+        foundSession.status = "NO_ANSWER";
+        foundSession.endedAt = now;
+        foundSession.duration = 0;
+        foundSession.outcome = "No Answer";
+        break;
+      case "call.failed":
+      case "call.rejected":
+        console.log("[TELNYX WEBHOOK] event=call.failed callId=", foundCallId);
+        foundSession.status = "FAILED";
+        foundSession.endedAt = now;
+        foundSession.duration = 0;
+        foundSession.outcome = payload?.error_message || "Call Failed";
+        break;
+      default:
+        console.log("[TELNYX WEBHOOK] unhandled event=", eventType, "callId=", foundCallId);
+    }
+    if (["COMPLETED", "FAILED", "NO_ANSWER", "BUSY"].includes(foundSession.status)) {
+      this.activeCalls.delete(foundCallId);
+      this.callHistory.unshift(foundSession);
+    }
+    return foundSession;
   }
 };
 var telephonyManager = new TelephonyServerManager();
@@ -3353,6 +3440,22 @@ router2.post("/webhooks/telnyx/voice", async (req, res) => {
               call_outcome: "Ringing / In Progress"
             });
           }
+          if (callControlId) {
+            telephonyManager.updateCallStateFromWebhook({
+              providerCallId: callControlId,
+              eventType,
+              payload
+            });
+          }
+          break;
+        case "call.ringing":
+          if (callControlId) {
+            telephonyManager.updateCallStateFromWebhook({
+              providerCallId: callControlId,
+              eventType,
+              payload
+            });
+          }
           break;
         case "call.answered":
           if (leadId) {
@@ -3362,6 +3465,13 @@ router2.post("/webhooks/telnyx/voice", async (req, res) => {
               title: "Call Answered by Prospect",
               description: `Telnyx Call Connected to ${payload.to || "prospect"}`,
               metadata: { callControlId }
+            });
+          }
+          if (callControlId) {
+            telephonyManager.updateCallStateFromWebhook({
+              providerCallId: callControlId,
+              eventType,
+              payload
             });
           }
           break;
@@ -3377,8 +3487,27 @@ router2.post("/webhooks/telnyx/voice", async (req, res) => {
               call_outcome: hangupCause === "NORMAL_CLEARING" ? "Call Completed" : `Hangup (${hangupCause})`
             });
           }
+          if (callControlId) {
+            telephonyManager.updateCallStateFromWebhook({
+              providerCallId: callControlId,
+              eventType,
+              payload
+            });
+          }
           break;
         }
+        case "call.busy":
+        case "call.no_answer":
+        case "call.failed":
+        case "call.rejected":
+          if (callControlId) {
+            telephonyManager.updateCallStateFromWebhook({
+              providerCallId: callControlId,
+              eventType,
+              payload
+            });
+          }
+          break;
         case "call.recording.saved": {
           const recordingUrl = payload.recording_urls?.mp3 || payload.public_recording_urls?.mp3;
           if (recordingUrl && callControlId) {
@@ -5837,10 +5966,14 @@ app.post("/api/telephony/calls/start", async (req, res) => {
       opportunity,
       estimatedRetainer
     });
+    console.log("[TELEPHONY] Call started:", session.callId, "status:", session.status);
     res.json({ success: true, session });
   } catch (err) {
-    console.error("Telephony start call error:", err);
-    res.status(500).json({ error: "Unable to connect the call. Please check the number and try again." });
+    console.error("Telephony start call error:", err.message);
+    res.status(500).json({
+      error: err.message || "Unable to connect the call. Please check credentials and try again.",
+      details: process.env.NODE_ENV === "development" ? err.message : void 0
+    });
   }
 });
 app.get("/api/telephony/calls/:id/status", (req, res) => {

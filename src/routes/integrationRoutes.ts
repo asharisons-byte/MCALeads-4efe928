@@ -22,6 +22,7 @@ import {
   addDbLeadCall,
 } from '../db/repository.js';
 import { GoogleGenAI } from '@google/genai';
+import { telephonyManager } from '../../telephony-server.js';
 
 const router = express.Router();
 
@@ -487,6 +488,25 @@ router.post('/webhooks/telnyx/voice', async (req: Request, res: Response) => {
               call_outcome: 'Ringing / In Progress',
             });
           }
+          // Update telephonyManager active session
+          if (callControlId) {
+            telephonyManager.updateCallStateFromWebhook({
+              providerCallId: callControlId,
+              eventType,
+              payload,
+            });
+          }
+          break;
+
+        case 'call.ringing':
+          // Update telephonyManager active session
+          if (callControlId) {
+            telephonyManager.updateCallStateFromWebhook({
+              providerCallId: callControlId,
+              eventType,
+              payload,
+            });
+          }
           break;
 
         case 'call.answered':
@@ -497,6 +517,14 @@ router.post('/webhooks/telnyx/voice', async (req: Request, res: Response) => {
               title: 'Call Answered by Prospect',
               description: `Telnyx Call Connected to ${payload.to || 'prospect'}`,
               metadata: { callControlId },
+            });
+          }
+          // Update telephonyManager active session - this sets connectedAt and starts the timer
+          if (callControlId) {
+            telephonyManager.updateCallStateFromWebhook({
+              providerCallId: callControlId,
+              eventType,
+              payload,
             });
           }
           break;
@@ -513,8 +541,30 @@ router.post('/webhooks/telnyx/voice', async (req: Request, res: Response) => {
               call_outcome: hangupCause === 'NORMAL_CLEARING' ? 'Call Completed' : `Hangup (${hangupCause})`,
             });
           }
+          // Update telephonyManager active session - this calculates final duration and moves to history
+          if (callControlId) {
+            telephonyManager.updateCallStateFromWebhook({
+              providerCallId: callControlId,
+              eventType,
+              payload,
+            });
+          }
           break;
         }
+
+        case 'call.busy':
+        case 'call.no_answer':
+        case 'call.failed':
+        case 'call.rejected':
+          // Update telephonyManager for failure states
+          if (callControlId) {
+            telephonyManager.updateCallStateFromWebhook({
+              providerCallId: callControlId,
+              eventType,
+              payload,
+            });
+          }
+          break;
 
         case 'call.recording.saved': {
           const recordingUrl = payload.recording_urls?.mp3 || payload.public_recording_urls?.mp3;

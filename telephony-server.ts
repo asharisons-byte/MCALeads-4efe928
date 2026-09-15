@@ -408,6 +408,119 @@ class TelephonyServerManager {
   public getHistory(): ServerCallSession[] {
     return [...this.callHistory];
   }
+
+  /**
+   * Update active call state from Telnyx webhook events
+   * This synchronizes real Telnyx call lifecycle into the in-memory session
+   */
+  public updateCallStateFromWebhook(params: {
+    providerCallId: string;
+    eventType: string;
+    payload?: Record<string, any>;
+  }): ServerCallSession | undefined {
+    const { providerCallId, eventType, payload } = params;
+
+    // Find the matching session by providerCallId
+    let foundSession: ServerCallSession | undefined;
+    let foundCallId: string | undefined;
+
+    // Iterate over activeCalls Map to find matching providerCallId
+    const callIds = Array.from(this.activeCalls.keys());
+    for (const callId of callIds) {
+      const session = this.activeCalls.get(callId);
+      if (session && session.providerCallId === providerCallId) {
+        foundSession = session;
+        foundCallId = callId;
+        break;
+      }
+    }
+
+    if (!foundSession || !foundCallId) {
+      console.log('[TELNYX WEBHOOK] No active session found for providerCallId:', providerCallId);
+      return undefined;
+    }
+
+    const now = Date.now();
+
+    switch (eventType) {
+      case 'call.initiated':
+        console.log('[TELNYX WEBHOOK] event=call.initiated callId=', foundCallId);
+        foundSession.status = 'INITIATING';
+        break;
+
+      case 'call.ringing':
+        console.log('[TELNYX WEBHOOK] event=call.ringing callId=', foundCallId);
+        foundSession.status = 'RINGING';
+        if (!foundSession.startedAt) {
+          foundSession.startedAt = now;
+        }
+        break;
+
+      case 'call.answered':
+        console.log('[TELNYX WEBHOOK] event=call.answered callId=', foundCallId);
+        foundSession.status = 'CONNECTED';
+        // Set connectedAt ONLY on actual answer - this starts the duration timer
+        if (!foundSession.connectedAt) {
+          foundSession.connectedAt = now;
+        }
+        break;
+
+      case 'call.hangup':
+      case 'call.completed':
+        console.log('[TELNYX WEBHOOK] event=call.hangup callId=', foundCallId);
+        foundSession.status = 'COMPLETED';
+        foundSession.endedAt = now;
+        // Calculate final duration from connectedAt if available
+        if (foundSession.connectedAt && foundSession.endedAt) {
+          foundSession.duration = Math.floor((foundSession.endedAt - foundSession.connectedAt) / 1000);
+        } else if (foundSession.startedAt && foundSession.endedAt) {
+          // Fallback: if no connectedAt (unanswered), duration is 0 or time from start to end
+          foundSession.duration = 0;
+        }
+        // Extract hangup cause if available
+        const hangupCause = payload?.hangup_cause || payload?.cause;
+        if (hangupCause && hangupCause !== 'NORMAL_CLEARING') {
+          foundSession.outcome = `Hangup: ${hangupCause}`;
+        }
+        break;
+
+      case 'call.busy':
+        console.log('[TELNYX WEBHOOK] event=call.busy callId=', foundCallId);
+        foundSession.status = 'BUSY';
+        foundSession.endedAt = now;
+        foundSession.duration = 0;
+        foundSession.outcome = 'Busy';
+        break;
+
+      case 'call.no_answer':
+        console.log('[TELNYX WEBHOOK] event=call.no_answer callId=', foundCallId);
+        foundSession.status = 'NO_ANSWER';
+        foundSession.endedAt = now;
+        foundSession.duration = 0;
+        foundSession.outcome = 'No Answer';
+        break;
+
+      case 'call.failed':
+      case 'call.rejected':
+        console.log('[TELNYX WEBHOOK] event=call.failed callId=', foundCallId);
+        foundSession.status = 'FAILED';
+        foundSession.endedAt = now;
+        foundSession.duration = 0;
+        foundSession.outcome = payload?.error_message || 'Call Failed';
+        break;
+
+      default:
+        console.log('[TELNYX WEBHOOK] unhandled event=', eventType, 'callId=', foundCallId);
+    }
+
+    // If call ended, move to history
+    if (['COMPLETED', 'FAILED', 'NO_ANSWER', 'BUSY'].includes(foundSession.status)) {
+      this.activeCalls.delete(foundCallId);
+      this.callHistory.unshift(foundSession);
+    }
+
+    return foundSession;
+  }
 }
 
 export const telephonyManager = new TelephonyServerManager();
