@@ -1,4 +1,4 @@
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { Lead, PipelineStage } from '../types';
 import { calculateLeadScore } from './scoringService';
 
@@ -296,13 +296,27 @@ export function parseFileToRawData(file: File): Promise<{ headers: string[]; row
 
     // 3. Spreadsheet file handling (.xlsx, .xls, .csv)
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        const json: Record<string, any>[] = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(data);
+        const worksheet = workbook.worksheets[0];
+        const json: Record<string, any>[] = [];
+        
+        worksheet.eachRow((row, rowNumber) => {
+          if (rowNumber === 1) return; // Skip header row
+          const rowData: Record<string, any> = {};
+          row.eachCell((cell, colNumber) => {
+            const header = worksheet.getRow(1).getCell(colNumber).value as string;
+            if (header && header.trim().length > 0) {
+              rowData[header] = cell.value || '';
+            }
+          });
+          if (Object.keys(rowData).length > 0) {
+            json.push(rowData);
+          }
+        });
 
         if (!json || json.length === 0) {
           return resolve({ headers: [], rows: [] });
@@ -618,7 +632,7 @@ export function convertRowsToLeads(
 /**
  * Download dataset as XLSX file - utility for exporting leads
  */
-export function downloadDatasetAsXlsx(leads: any[], filename: string = 'export.xlsx'): void {
+export async function downloadDatasetAsXlsx(leads: any[], filename: string = 'export.xlsx'): Promise<void> {
   // Convert leads to worksheet format
   const worksheetData = leads.map((lead) => ({
     'Business Name': lead.business_name || lead.businessName || '',
@@ -635,8 +649,24 @@ export function downloadDatasetAsXlsx(leads: any[], filename: string = 'export.x
     'Pipeline Stage': lead.pipeline_stage || lead.leadStatus || '',
   }));
 
-  const ws = XLSX.utils.json_to_sheet(worksheetData);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Leads');
-  XLSX.writeFile(wb, filename);
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Leads');
+  
+  // Add headers
+  worksheet.columns = Object.keys(worksheetData[0] || {}).map(key => ({ header: key, key }));
+  
+  // Add rows
+  worksheetData.forEach(row => {
+    worksheet.addRow(row);
+  });
+
+  // Generate and download
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
