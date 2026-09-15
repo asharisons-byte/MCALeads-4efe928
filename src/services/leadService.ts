@@ -372,7 +372,6 @@ export async function updateLead(leadId: string, updates: Partial<Lead>): Promis
   }
 
   return null;
-}  return updatedLead;
 }
 
 export function deleteLead(leadId: string): boolean {

@@ -612,3 +612,31 @@ export function convertRowsToLeads(
       score_breakdown: scoring.breakdown,
       is_hot_target: scoring.isHot,
     } as Lead;
+  });
+}
+
+/**
+ * Download dataset as XLSX file - utility for exporting leads
+ */
+export function downloadDatasetAsXlsx(leads: any[], filename: string = 'export.xlsx'): void {
+  // Convert leads to worksheet format
+  const worksheetData = leads.map((lead) => ({
+    'Business Name': lead.business_name || lead.businessName || '',
+    'Contact Name': lead.contact_name || lead.contactName || '',
+    Phone: lead.phone || '',
+    Email: lead.email || '',
+    Website: lead.website || '',
+    Address: lead.address || '',
+    City: lead.city || '',
+    State: lead.state || lead.stateRegion || '',
+    'Postal Code': lead.postal_code || lead.postalCode || '',
+    Niche: lead.niche || '',
+    'Lead Score': lead.lead_score || lead.leadScore || 0,
+    'Pipeline Stage': lead.pipeline_stage || lead.leadStatus || '',
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(worksheetData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Leads');
+  XLSX.writeFile(wb, filename);
+}
