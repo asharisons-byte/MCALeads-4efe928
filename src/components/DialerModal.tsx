@@ -228,31 +228,27 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     if (!hasPhoneNumber) return;
 
     setCallDuration(0);
-    setCallState('PREPARING');
+    setCallState('INITIATING');
     setSelectedOutcome(null);
 
     const callType: CallType = activeLead ? 'Outbound Call' : 'Manual Call';
-    const result = await TelephonyService.startCall({
-      lead: activeLead,
-      phoneNumber,
-      callType,
-    });
+    try {
+      const result = await TelephonyService.startCall({
+        lead: activeLead,
+        phoneNumber,
+        callType,
+      });
 
-    if (result.success) {
-      setActiveCallRecord(result.callRecord);
-      setCallState(result.session.status || 'PREPARING');
-
-      // If simulated provider auto-advances in frontend as backup
-      setTimeout(() => {
-        setCallState((current) => (current === 'PREPARING' ? 'CALLING' : current));
-      }, 800);
-      setTimeout(() => {
-        setCallState((current) => (current === 'CALLING' ? 'RINGING' : current));
-      }, 2400);
-      setTimeout(() => {
-        setCallState((current) => (current === 'RINGING' ? 'CONNECTED' : current));
-      }, 4800);
-    } else {
+      if (result.success) {
+        setActiveCallRecord(result.callRecord);
+        // Use the actual status from backend - no simulation
+        setCallState(result.session.status || 'INITIATING');
+        console.log('[DIALER] Call initiated, waiting for Telnyx webhook state updates');
+      } else {
+        setCallState('FAILED');
+      }
+    } catch (err: any) {
+      console.error('[DIALER] Call start failed:', err.message);
       setCallState('FAILED');
     }
   };

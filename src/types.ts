@@ -541,6 +541,7 @@ export type ViewFilterType =
 
 export type CallState =
   | 'IDLE'
+  | 'INITIATING'
   | 'PREPARING'
   | 'QUEUED'
   | 'CALLING'

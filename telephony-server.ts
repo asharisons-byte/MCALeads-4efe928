@@ -42,6 +42,9 @@ export class TelnyxVoiceProvider implements VoiceProvider {
     // If Telnyx API key is present in environment, call the real Telnyx Call Control v2 API
     if (this.apiKey) {
       try {
+        console.log('[TELNYX] Outbound request started');
+        console.log('[TELNYX] Destination validated:', params.to);
+        
         const response = await fetch('https://api.telnyx.com/v2/calls', {
           method: 'POST',
           headers: {
@@ -61,28 +64,37 @@ export class TelnyxVoiceProvider implements VoiceProvider {
 
         if (response.ok) {
           const data = await response.json();
+          const providerCallId = data.data?.call_control_id;
+          console.log('[TELNYX] API request accepted');
+          console.log('[TELNYX] call_control_id received:', providerCallId);
+          
+          if (!providerCallId) {
+            throw new Error('Telnyx API did not return call_control_id');
+          }
+          
           return {
-            providerCallId: data.data?.call_control_id || `telnyx_${Date.now()}`,
-            status: 'CALLING',
+            providerCallId,
+            status: 'INITIATING',
           };
         }
-        console.warn('Telnyx API call non-OK, falling back to simulated session:', response.status);
-      } catch (err) {
-        console.warn('Telnyx connection error, falling back to resilient simulated session:', err);
+        
+        const errorText = await response.text().catch(() => 'Unknown error');
+        console.error('[TELNYX] API error:', response.status, errorText);
+        throw new Error(`Telnyx API returned HTTP ${response.status}`);
+      } catch (err: any) {
+        console.error('[TELNYX] Call initiation failed:', err.message);
+        throw err;
       }
     }
 
-    // Secure Simulated Telnyx Session (for sandboxed dev/preview environments without live SIP trunks)
-    const providerCallId = `tlnx_sim_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    return {
-      providerCallId,
-      status: 'CALLING',
-    };
+    // No API key configured - cannot place real calls
+    throw new Error('TELNYX_API_KEY not configured. Real calling unavailable.');
   }
 
   public async terminateCall(providerCallId: string): Promise<{ success: boolean; status: string }> {
-    if (this.apiKey && !providerCallId.startsWith('tlnx_sim_')) {
+    if (this.apiKey && providerCallId) {
       try {
+        console.log('[TELNYX] Hangup request for call:', providerCallId);
         await fetch(`https://api.telnyx.com/v2/calls/${providerCallId}/actions/hangup`, {
           method: 'POST',
           headers: {
@@ -90,15 +102,18 @@ export class TelnyxVoiceProvider implements VoiceProvider {
             Authorization: `Bearer ${this.apiKey}`,
           },
         });
-      } catch (e) {
-        console.warn('Telnyx terminateCall error:', e);
+        console.log('[TELNYX] Hangup command sent successfully');
+        return { success: true, status: 'COMPLETED' };
+      } catch (e: any) {
+        console.error('[TELNYX] Hangup error:', e.message);
+        throw e;
       }
     }
-    return { success: true, status: 'COMPLETED' };
+    throw new Error('Cannot terminate call: missing API key or call ID');
   }
 
   public async getCallStatus(providerCallId: string): Promise<{ status: string; duration?: number }> {
-    if (this.apiKey && !providerCallId.startsWith('tlnx_sim_')) {
+    if (this.apiKey && providerCallId) {
       try {
         const res = await fetch(`https://api.telnyx.com/v2/calls/${providerCallId}`, {
           headers: { Authorization: `Bearer ${this.apiKey}` },
@@ -106,15 +121,17 @@ export class TelnyxVoiceProvider implements VoiceProvider {
         if (res.ok) {
           const data = await res.json();
           const telnyxState = data.data?.call_leg_state || data.data?.status;
+          console.log('[TELNYX] Call status:', telnyxState);
           return {
             status: this.mapTelnyxState(telnyxState),
           };
         }
-      } catch (e) {
-        // fallback
+      } catch (e: any) {
+        console.warn('[TELNYX] Status check error:', e.message);
       }
     }
-    return { status: 'CONNECTED' };
+    // Return a safe default - caller should handle unknown state
+    return { status: 'UNKNOWN' };
   }
 
   private mapTelnyxState(state: string): string {
@@ -246,6 +263,8 @@ class TelephonyServerManager {
     estimatedRetainer?: number;
   }): Promise<ServerCallSession> {
     const callId = `call_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    
+    // Initiate real Telnyx call - will throw if API key not configured
     const result = await this.voiceProvider.initiateCall({
       to: params.phoneNumber,
       callId,
@@ -262,7 +281,7 @@ class TelephonyServerManager {
       phoneNumber: params.phoneNumber,
       direction: 'OUTBOUND',
       callType: params.callType || 'Outbound Call',
-      status: 'PREPARING',
+      status: 'INITIATING',
       duration: 0,
       startedAt: now,
       isMuted: false,
@@ -275,32 +294,7 @@ class TelephonyServerManager {
     };
 
     this.activeCalls.set(callId, session);
-
-    // Auto-advance states realistically in simulation mode:
-    // PREPARING (0-800ms) -> CALLING (800-2400ms) -> RINGING (2400-4500ms) -> CONNECTED
-    if (result.providerCallId.startsWith('tlnx_sim_')) {
-      setTimeout(() => {
-        const s = this.activeCalls.get(callId);
-        if (s && s.status === 'PREPARING') {
-          s.status = 'CALLING';
-        }
-      }, 800);
-
-      setTimeout(() => {
-        const s = this.activeCalls.get(callId);
-        if (s && (s.status === 'CALLING' || s.status === 'PREPARING')) {
-          s.status = 'RINGING';
-        }
-      }, 2400);
-
-      setTimeout(() => {
-        const s = this.activeCalls.get(callId);
-        if (s && (s.status === 'RINGING' || s.status === 'CALLING')) {
-          s.status = 'CONNECTED';
-          s.connectedAt = Date.now();
-        }
-      }, 4600);
-    }
+    console.log('[TELNYX] Call session created:', callId, 'providerCallId:', result.providerCallId);
 
     return session;
   }
@@ -315,6 +309,8 @@ class TelephonyServerManager {
     if (session.status === 'CONNECTED' && session.connectedAt && !session.isOnHold) {
       session.duration = Math.floor((Date.now() - session.connectedAt) / 1000);
     }
+    
+    // For INITIATING/RINGING states, we don't auto-advance - webhook updates will handle state changes
 
     return session;
   }
@@ -326,7 +322,13 @@ class TelephonyServerManager {
     const session = this.activeCalls.get(callId);
     if (!session) return undefined;
 
-    await this.voiceProvider.terminateCall(session.providerCallId);
+    try {
+      await this.voiceProvider.terminateCall(session.providerCallId);
+      console.log('[TELNYX] Call terminated successfully:', callId);
+    } catch (e: any) {
+      console.error('[TELNYX] End call error:', e.message);
+      // Continue with local cleanup even if Telnyx hangup fails
+    }
 
     session.status = 'COMPLETED';
     session.endedAt = Date.now();
@@ -334,6 +336,9 @@ class TelephonyServerManager {
       session.duration = params.duration;
     } else if (session.connectedAt) {
       session.duration = Math.floor((session.endedAt - session.connectedAt) / 1000);
+    } else {
+      // If no connectedAt, calculate from startedAt
+      session.duration = Math.floor((session.endedAt - session.startedAt) / 1000);
     }
     if (params?.outcome) session.outcome = params.outcome;
     if (params?.notes) session.notes = params.notes;

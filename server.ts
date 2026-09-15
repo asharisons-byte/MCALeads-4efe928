@@ -2405,10 +2405,14 @@ app.post('/api/telephony/calls/start', async (req, res) => {
       estimatedRetainer,
     });
 
+    console.log('[TELEPHONY] Call started:', session.callId, 'status:', session.status);
     res.json({ success: true, session });
   } catch (err: any) {
-    console.error('Telephony start call error:', err);
-    res.status(500).json({ error: 'Unable to connect the call. Please check the number and try again.' });
+    console.error('Telephony start call error:', err.message);
+    res.status(500).json({ 
+      error: err.message || 'Unable to connect the call. Please check credentials and try again.',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 });
 
