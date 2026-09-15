@@ -33,7 +33,6 @@ import {
   ImportPreviewResult,
 } from '../services/importService';
 import { Lead, PipelineStage } from '../types';
-import * as XLSX from 'xlsx';
 
 interface ImportModalProps {
   isOpen: boolean;
@@ -78,18 +77,29 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   if (!isOpen) return null;
 
   // Handler functions for repaired CSV and CCB leads
-  const handleCopyRepairedCSV = () => {
+  const handleCopyRepairedCSV = async () => {
     if (importedLeads.length === 0) return;
-    const ws = XLSX.utils.json_to_sheet(importedLeads);
-    const csv = XLSX.utils.sheet_to_csv(ws);
-    navigator.clipboard.writeText(csv).then(() => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Leads');
+    
+    // Add headers from first lead object keys
+    const headers = Object.keys(importedLeads[0] || {});
+    worksheet.columns = headers.map(key => ({ header: key, key }));
+    
+    // Add rows
+    importedLeads.forEach(lead => {
+      worksheet.addRow(lead);
+    });
+    
+    const csv = await workbook.csv.writeBuffer();
+    navigator.clipboard.writeText(csv.toString()).then(() => {
       setCopiedRepaired(true);
       setTimeout(() => setCopiedRepaired(false), 2000);
     });
   };
 
-  const handleDownloadRepairedCSV = () => {
-    downloadDatasetAsXlsx(importedLeads, 'repaired_leads.xlsx');
+  const handleDownloadRepairedCSV = async () => {
+    await downloadDatasetAsXlsx(importedLeads, 'repaired_leads.xlsx');
   };
 
   const handleLoadRepairedLeads = () => {
@@ -97,10 +107,10 @@ export const ImportModal: React.FC<ImportModalProps> = ({
     onClose();
   };
 
-  const handleDownloadCCBLeads = () => {
+  const handleDownloadCCBLeads = async () => {
     // Export existing leads as CCB leads
     if (existingLeads.length > 0) {
-      downloadDatasetAsXlsx(existingLeads, 'ccb_leads_export.xlsx');
+      await downloadDatasetAsXlsx(existingLeads, 'ccb_leads_export.xlsx');
     }
   };
 
