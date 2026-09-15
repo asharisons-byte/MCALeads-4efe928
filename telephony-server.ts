@@ -227,7 +227,7 @@ export interface ServerCallSession {
 }
 
 class TelephonyServerManager {
-  private activeCalls = new Map<string, ServerCallSession>();
+  public activeCalls = new Map<string, ServerCallSession>();
   private callHistory: ServerCallSession[] = [];
   public voiceProvider: VoiceProvider;
 
@@ -276,8 +276,9 @@ class TelephonyServerManager {
 
     this.activeCalls.set(callId, session);
 
-    // Auto-advance states realistically in simulation mode:
+    // For simulated calls only (no real Telnyx API key), auto-advance states for demo/testing:
     // PREPARING (0-800ms) -> CALLING (800-2400ms) -> RINGING (2400-4500ms) -> CONNECTED
+    // Real Telnyx calls rely on webhook events (call.initiated, call.ringing, call.answered, call.hangup)
     if (result.providerCallId.startsWith('tlnx_sim_')) {
       setTimeout(() => {
         const s = this.activeCalls.get(callId);
