@@ -1,1 +1,7 @@
-Nothing should be ignored based on the provided file changes, as they only include source code files (.js and .ts) without any build artifacts, dependencies, or temporary files.
+```
+# Build artifacts
+dist/
+*.js
+*.css
+*.map
+```

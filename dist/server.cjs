@@ -3343,18 +3343,41 @@ router2.post("/webhooks/telnyx/voice", async (req, res) => {
     }
     try {
       switch (eventType) {
-        case "call.initiated":
+        case "call.initiated": {
+          const session = Array.from(telephonyManager.activeCalls.values()).find(
+            (s) => s.providerCallId === callControlId
+          );
+          if (session) {
+            session.status = "INITIATING";
+          }
           if (leadId) {
             await addDbLeadCall(leadId, {
               phone: payload.to || "",
               external_call_id: callControlId,
-              status: "Calling",
+              status: "Initiating",
               duration_seconds: 0,
-              call_outcome: "Ringing / In Progress"
+              call_outcome: "Call Initiated"
             });
           }
           break;
-        case "call.answered":
+        }
+        case "call.ringing": {
+          const session = Array.from(telephonyManager.activeCalls.values()).find(
+            (s) => s.providerCallId === callControlId
+          );
+          if (session) {
+            session.status = "RINGING";
+          }
+          break;
+        }
+        case "call.answered": {
+          const session = Array.from(telephonyManager.activeCalls.values()).find(
+            (s) => s.providerCallId === callControlId
+          );
+          if (session) {
+            session.status = "CONNECTED";
+            session.connectedAt = Date.now();
+          }
           if (leadId) {
             await db.insert(activities).values({
               leadId: Number(leadId),
@@ -3365,9 +3388,18 @@ router2.post("/webhooks/telnyx/voice", async (req, res) => {
             });
           }
           break;
+        }
         case "call.hangup": {
           const durationSec = payload.duration_seconds || payload.call_duration_secs || 0;
           const hangupCause = payload.hangup_cause || "NORMAL_CLEARING";
+          const session = Array.from(telephonyManager.activeCalls.values()).find(
+            (s) => s.providerCallId === callControlId
+          );
+          if (session) {
+            session.status = "ENDED";
+            session.endedAt = Date.now();
+            session.duration = Math.floor((session.endedAt - (session.connectedAt || session.startedAt)) / 1e3);
+          }
           if (leadId) {
             await addDbLeadCall(leadId, {
               phone: payload.to || "",
