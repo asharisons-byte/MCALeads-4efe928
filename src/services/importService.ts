@@ -612,3 +612,5 @@ export function convertRowsToLeads(
       score_breakdown: scoring.breakdown,
       is_hot_target: scoring.isHot,
     } as Lead;
+  });
+}
