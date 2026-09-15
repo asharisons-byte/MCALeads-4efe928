@@ -22,6 +22,7 @@ import {
   addDbLeadCall,
 } from '../db/repository.js';
 import { GoogleGenAI } from '@google/genai';
+import { telephonyManager } from '../../telephony-server.js';
 
 const router = express.Router();
 
@@ -474,22 +475,47 @@ router.post('/webhooks/telnyx/voice', async (req: Request, res: Response) => {
       // safe fallback
     }
 
-    // Handle Call Control Events
+    // Handle Call Control Events - Synchronize with telephonyManager.activeCalls
     try {
       switch (eventType) {
-        case 'call.initiated':
+        case 'call.initiated': {
+          // Find call by providerCallId (call_control_id)
+          const session = Array.from(telephonyManager.activeCalls.values()).find(
+            (s) => s.providerCallId === callControlId
+          );
+          if (session) {
+            session.status = 'INITIATING';
+          }
           if (leadId) {
             await addDbLeadCall(leadId, {
               phone: payload.to || '',
               external_call_id: callControlId,
-              status: 'Calling',
+              status: 'Initiating',
               duration_seconds: 0,
-              call_outcome: 'Ringing / In Progress',
+              call_outcome: 'Call Initiated',
             });
           }
           break;
+        }
 
-        case 'call.answered':
+        case 'call.ringing': {
+          const session = Array.from(telephonyManager.activeCalls.values()).find(
+            (s) => s.providerCallId === callControlId
+          );
+          if (session) {
+            session.status = 'RINGING';
+          }
+          break;
+        }
+
+        case 'call.answered': {
+          const session = Array.from(telephonyManager.activeCalls.values()).find(
+            (s) => s.providerCallId === callControlId
+          );
+          if (session) {
+            session.status = 'CONNECTED';
+            session.connectedAt = Date.now();
+          }
           if (leadId) {
             await db.insert(schema.activities).values({
               leadId: Number(leadId),
@@ -500,10 +526,19 @@ router.post('/webhooks/telnyx/voice', async (req: Request, res: Response) => {
             });
           }
           break;
+        }
 
         case 'call.hangup': {
           const durationSec = payload.duration_seconds || payload.call_duration_secs || 0;
           const hangupCause = payload.hangup_cause || 'NORMAL_CLEARING';
+          const session = Array.from(telephonyManager.activeCalls.values()).find(
+            (s) => s.providerCallId === callControlId
+          );
+          if (session) {
+            session.status = 'ENDED';
+            session.endedAt = Date.now();
+            session.duration = Math.floor((session.endedAt - (session.connectedAt || session.startedAt)) / 1000);
+          }
           if (leadId) {
             await addDbLeadCall(leadId, {
               phone: payload.to || '',

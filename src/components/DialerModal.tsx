@@ -242,16 +242,8 @@ export const DialerModal: React.FC<DialerModalProps> = ({
       setActiveCallRecord(result.callRecord);
       setCallState(result.session.status || 'PREPARING');
 
-      // If simulated provider auto-advances in frontend as backup
-      setTimeout(() => {
-        setCallState((current) => (current === 'PREPARING' ? 'CALLING' : current));
-      }, 800);
-      setTimeout(() => {
-        setCallState((current) => (current === 'CALLING' ? 'RINGING' : current));
-      }, 2400);
-      setTimeout(() => {
-        setCallState((current) => (current === 'RINGING' ? 'CONNECTED' : current));
-      }, 4800);
+      // Real Telnyx PSTN calls: state transitions are driven by webhook events (call.initiated, call.ringing, call.answered, call.hangup)
+      // Frontend polling via getCallStatus will receive state updates from telephonyManager.activeCalls synchronized by webhooks
     } else {
       setCallState('FAILED');
     }
