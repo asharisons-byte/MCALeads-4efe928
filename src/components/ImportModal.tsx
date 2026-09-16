@@ -20,6 +20,7 @@ import {
   Table,
   ExternalLink,
 } from 'lucide-react';
+import * as ExcelJS from 'exceljs';
 import { ExcelColumnConverterModal } from './ExcelColumnConverterModal';
 import {
   parseFileToRawData,

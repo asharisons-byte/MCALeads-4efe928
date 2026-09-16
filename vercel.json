@@ -1,9 +1,0 @@
-{
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index.ts"
-    }
-  ],
-  "installCommand": "npm install --include=optional --force"
-}

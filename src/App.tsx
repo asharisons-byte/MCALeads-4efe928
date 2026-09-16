@@ -85,23 +85,26 @@ export function App() {
 
   // Load initial data from localStorage and sync with Cloud SQL PostgreSQL
   useEffect(() => {
-    const loadedLeads = getLeads();
-    setLeads(loadedLeads);
-    const loadedActivities = getActivities();
-    setActivities(loadedActivities);
+    async function initData() {
+      const loadedLeads = await getLeads();
+      setLeads(loadedLeads);
+      const loadedActivities = getActivities();
+      setActivities(loadedActivities);
 
-    // Synchronize state with Cloud SQL PostgreSQL
-    syncWithDatabase().then((dbLeads) => {
-      if (dbLeads && dbLeads.length > 0) {
-        setLeads(dbLeads);
+      // Synchronize state with Cloud SQL PostgreSQL
+      syncWithDatabase().then((dbLeads) => {
+        if (dbLeads && dbLeads.length > 0) {
+          setLeads(dbLeads);
+        }
+      });
+
+      // Restore active client portal session if one exists
+      const activePortalSession = getCurrentClientPortalSession();
+      if (activePortalSession && activePortalSession.user) {
+        setClientPortalActiveUser(activePortalSession.user);
       }
-    });
-
-    // Restore active client portal session if one exists
-    const activePortalSession = getCurrentClientPortalSession();
-    if (activePortalSession && activePortalSession.user) {
-      setClientPortalActiveUser(activePortalSession.user);
     }
+    initData();
   }, []);
 
   // Global search filtering
