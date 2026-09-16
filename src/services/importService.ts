@@ -277,8 +277,8 @@ export function parseFileToRawData(file: File): Promise<{ headers: string[]; row
       return;
     }
 
-    // 2. Plain Text file handling (.txt)
-    if (lowerName.endsWith('.txt') || file.type.startsWith('text/plain')) {
+    // 2. CSV / Plain Text file handling (.csv, .txt)
+    if (lowerName.endsWith('.csv') || lowerName.endsWith('.txt') || file.type === 'text/csv' || file.type.startsWith('text/plain')) {
       const textReader = new FileReader();
       textReader.onload = (e) => {
         try {
@@ -294,7 +294,7 @@ export function parseFileToRawData(file: File): Promise<{ headers: string[]; row
       return;
     }
 
-    // 3. Spreadsheet file handling (.xlsx, .xls, .csv)
+    // 3. Spreadsheet file handling (.xlsx, .xls)
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
