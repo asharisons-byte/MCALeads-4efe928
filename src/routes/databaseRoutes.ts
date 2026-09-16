@@ -157,6 +157,22 @@ router.post('/leads', async (req: Request, res: Response) => {
   }
 });
 
+// 6b. Leads: Bulk Create/Update
+router.post('/leads/bulk', async (req: Request, res: Response) => {
+  try {
+    const { leads } = req.body;
+    if (!Array.isArray(leads)) {
+      return res.status(400).json({ error: 'leads must be an array' });
+    }
+    for (const lead of leads) {
+      await createDbLead(lead);
+    }
+    return res.status(200).json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // 7. Leads: Update
 router.put('/leads/:id', async (req: Request, res: Response) => {
   try {
