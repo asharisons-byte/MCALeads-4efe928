@@ -148,7 +148,6 @@ app.use('/api', databaseRoutes);
 
 // Mount Phase 5C Real Integrations, Webhook Endpoints & System Activation
 app.use('/api', integrationRoutes);
-app.use(integrationRoutes);
 
 // Lazy initialization for Gemini client
 let geminiClient: GoogleGenAI | null = null;
