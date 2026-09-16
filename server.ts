@@ -171,7 +171,6 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
-    hasGeminiKey: !!process.env.GEMINI_API_KEY,
   });
 });
 
