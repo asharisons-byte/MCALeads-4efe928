@@ -238,6 +238,12 @@ class TelephonyServerManager {
     estimatedRetainer?: number;
   }): Promise<ServerCallSession> {
     const callId = `call_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    
+    // Validate configuration
+    if (!process.env.TELNYX_CONNECTION_ID) {
+        throw new Error('TELNYX_CONNECTION_ID is not configured');
+    }
+
     const result = await this.voiceProvider.initiateCall({
       to: params.phoneNumber,
       callId,
@@ -254,7 +260,7 @@ class TelephonyServerManager {
       phoneNumber: params.phoneNumber,
       direction: 'OUTBOUND',
       callType: params.callType || 'Outbound Call',
-      status: 'PREPARING',
+      status: 'INITIATING',
       duration: 0,
       startedAt: now,
       isMuted: false,
@@ -267,34 +273,7 @@ class TelephonyServerManager {
     };
 
     this.activeCalls.set(callId, session);
-
-    // For simulated calls only (no real Telnyx API key), auto-advance states for demo/testing:
-    // PREPARING (0-800ms) -> CALLING (800-2400ms) -> RINGING (2400-4500ms) -> CONNECTED
-    // Real Telnyx calls rely on webhook events (call.initiated, call.ringing, call.answered, call.hangup)
-    if (result.providerCallId.startsWith('tlnx_sim_')) {
-      setTimeout(() => {
-        const s = this.activeCalls.get(callId);
-        if (s && s.status === 'PREPARING') {
-          s.status = 'CALLING';
-        }
-      }, 800);
-
-      setTimeout(() => {
-        const s = this.activeCalls.get(callId);
-        if (s && (s.status === 'CALLING' || s.status === 'PREPARING')) {
-          s.status = 'RINGING';
-        }
-      }, 2400);
-
-      setTimeout(() => {
-        const s = this.activeCalls.get(callId);
-        if (s && (s.status === 'RINGING' || s.status === 'CALLING')) {
-          s.status = 'CONNECTED';
-          s.connectedAt = Date.now();
-        }
-      }, 4600);
-    }
-
+    
     return session;
   }
 

@@ -148,29 +148,56 @@ router.post('/telnyx/voice/calls', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/telnyx/sms/send', async (req: Request, res: Response) => {
-  const { leadId, to, text } = req.body;
-  if (!leadId || !to || !text) {
-      return res.status(400).json({ error: 'Missing leadId, to, or text' });
+router.post('/telephony/sms/send', async (req: Request, res: Response) => {
+  const { leadId, phone, message } = req.body;
+  if (!leadId || !phone || !message) {
+    return res.status(400).json({ error: 'Lead ID, phone number, and message are required' });
   }
-  
+
   try {
-    const result = await telephonyManager.voiceProvider.sendSms({
-        to,
-        text
-    });
-    
-    if (result.success) {
-        res.json({
-            success: true,
-            messageId: result.messageId,
-            status: result.status
-        });
-    } else {
-        res.status(500).json({ error: result.error });
+    // 1. Check Opt-Out Status in Database (authoritative)
+    const suppressionExists = await db.select().from(schema.smsMessages)
+      .where(sql`${schema.smsMessages.leadId} = ${leadId} AND ${schema.smsMessages.status} = 'OPTED_OUT'`)
+      .limit(1);
+
+    if (suppressionExists.length > 0) {
+      return res.status(403).json({ error: 'Lead has opted out of SMS communication.' });
     }
-  } catch (err: any) {
-    res.status(500).json({ error: err.message });
+
+    // 2. Dispatch via TelnyxProvider
+    const messagingProfileId = process.env.TELNYX_MESSAGING_PROFILE_ID;
+    if (!messagingProfileId) {
+        return res.status(503).json({ error: 'Telnyx SMS is not configured (missing messaging profile ID).' });
+    }
+
+    const result = await telephonyManager.voiceProvider.sendSms({
+        to: phone,
+        text: message,
+    });
+
+    if (!result.success) {
+        return res.status(502).json({ success: false, status: 'PROVIDER_ERROR', error: result.error });
+    }
+
+    // 3. Persist in Core Database
+    const savedSms = await addDbLeadSms(Number(leadId), {
+        phone,
+        message,
+        direction: 'Outbound',
+        status: 'Sent',
+        provider: 'Telnyx Messaging v2',
+        external_message_id: result.messageId,
+    });
+
+    return res.json({
+      success: true,
+      messageId: result.messageId,
+      status: 'Sent',
+      sms: savedSms,
+    });
+  } catch (error: any) {
+    console.error('SMS send error:', error);
+    return res.status(500).json({ error: 'Failed to send SMS', details: error.message });
   }
 });
 
@@ -815,69 +842,7 @@ Return JSON:
 // 5. TELNYX SMS OUTBOUND DISPATCH
 // ========================================================
 
-router.post('/integrations/sms/send', async (req: Request, res: Response) => {
-  try {
-    const { leadId, phone, message } = req.body;
-    if (!phone || !message) {
-      return res.status(400).json({ error: 'Phone number and message text are required' });
-    }
-
-    const apiKey = process.env.TELNYX_API_KEY;
-    const fromNumber = process.env.TELNYX_FROM_NUMBER || '+15035550199';
-    let externalMessageId = `tlnx_sim_${Date.now()}`;
-    let deliveryStatus = 'Simulated Delivery';
-
-    if (apiKey) {
-      try {
-        const telnyxRes = await fetch('https://api.telnyx.com/v2/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            from: fromNumber,
-            to: phone,
-            text: message,
-          }),
-        });
-        if (telnyxRes.ok) {
-          const telnyxData = await telnyxRes.json();
-          externalMessageId = telnyxData.data?.id || externalMessageId;
-          deliveryStatus = telnyxData.data?.to?.[0]?.status || 'Queued';
-        } else {
-          const errData = await telnyxRes.json().catch(() => ({}));
-          console.warn('Telnyx SMS error response:', errData);
-          deliveryStatus = 'Failed (Telnyx error)';
-        }
-      } catch (err: any) {
-        console.warn('Telnyx SMS network error, falling back:', err.message);
-      }
-    }
-
-    // Persist SMS in Core Database
-    let recordedSms = null;
-    if (leadId) {
-      recordedSms = await addDbLeadSms(leadId, {
-        phone,
-        message,
-        direction: 'Outbound',
-        status: deliveryStatus.includes('Failed') ? 'Failed' : 'Sent',
-        provider: 'Telnyx Messaging v2',
-      });
-    }
-
-    return res.json({
-      success: !deliveryStatus.includes('Failed'),
-      messageId: externalMessageId,
-      status: deliveryStatus,
-      sms: recordedSms,
-    });
-  } catch (error: any) {
-    console.error('SMS send error:', error);
-    return res.status(500).json({ error: 'Failed to send SMS', details: error.message });
-  }
-});
+// Removed: duplicate/competing SMS implementation
 
 // ========================================================
 // 6. GMAIL OUTBOUND DISPATCH & DRAFT
