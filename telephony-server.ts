@@ -41,43 +41,35 @@ export class TelnyxVoiceProvider implements VoiceProvider {
 
     // If Telnyx API key is present in environment, call the real Telnyx Call Control v2 API
     if (this.apiKey) {
-      try {
-        const response = await fetch('https://api.telnyx.com/v2/calls', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${this.apiKey}`,
-          },
-          body: JSON.stringify({
-            to: params.to,
-            from: fromNumber,
-            connection_id: process.env.TELNYX_CONNECTION_ID,
-            custom_headers: [
-              { name: 'X-MCA-Call-ID', value: params.callId },
-            ],
-            client_state: Buffer.from(JSON.stringify({ callId: params.callId })).toString('base64'),
-          }),
-        });
+      const response = await fetch('https://api.telnyx.com/v2/calls', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          to: params.to,
+          from: fromNumber,
+          connection_id: process.env.TELNYX_CONNECTION_ID,
+          custom_headers: [
+            { name: 'X-MCA-Call-ID', value: params.callId },
+          ],
+          client_state: Buffer.from(JSON.stringify({ callId: params.callId })).toString('base64'),
+        }),
+      });
 
-        if (response.ok) {
-          const data = await response.json();
-          return {
-            providerCallId: data.data?.call_control_id || `telnyx_${Date.now()}`,
-            status: 'CALLING',
-          };
-        }
-        console.warn('Telnyx API call non-OK, falling back to simulated session:', response.status);
-      } catch (err) {
-        console.warn('Telnyx connection error, falling back to resilient simulated session:', err);
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          providerCallId: data.data?.call_control_id,
+          status: 'CALLING',
+        };
       }
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(`Telnyx API Error: ${response.status} - ${JSON.stringify(errData)}`);
     }
-
-    // Secure Simulated Telnyx Session (for sandboxed dev/preview environments without live SIP trunks)
-    const providerCallId = `tlnx_sim_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    return {
-      providerCallId,
-      status: 'CALLING',
-    };
+    
+    throw new Error('TELNYX_API_KEY is not configured on the server.');
   }
 
   public async terminateCall(providerCallId: string): Promise<{ success: boolean; status: string }> {

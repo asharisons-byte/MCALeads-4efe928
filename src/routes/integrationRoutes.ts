@@ -2,6 +2,9 @@ import express, { Request, Response } from 'express';
 import { db, getDatabaseDetails } from '../db/index.js';
 import * as schema from '../db/schema.js';
 import { eq, desc, sql } from 'drizzle-orm';
+import Telnyx from 'telnyx';
+
+const telnyx = new Telnyx(process.env.TELNYX_API_KEY || '');
 import {
   saveDbAiContent,
   getDbAiContentForLead,
@@ -80,6 +83,96 @@ function recordLocalAutomationRun(run: any) {
 // ========================================================
 // 1. INTEGRATION STATUS & DIAGNOSTICS
 // ========================================================
+
+router.get('/telnyx/health', async (req: Request, res: Response) => {
+  const config = {
+    // Configuration check
+    configured: {
+      apiKey: !!process.env.TELNYX_API_KEY,
+      voiceApplicationId: !!process.env.TELNYX_VOICE_APPLICATION_ID,
+      messagingProfileId: !!process.env.TELNYX_MESSAGING_PROFILE_ID,
+      connectionId: !!process.env.TELNYX_CONNECTION_ID,
+      publicKey: !!process.env.TELNYX_PUBLIC_KEY,
+      fromNumber: !!process.env.TELNYX_FROM_NUMBER,
+    },
+    // Connectivity/Health check
+    connectivity: {
+      apiReachable: false,
+    },
+  };
+  
+  if (config.configured.apiKey) {
+    try {
+      const response = await fetch('https://api.telnyx.com/v2/phone_numbers', {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${process.env.TELNYX_API_KEY}`,
+          },
+      });
+      config.connectivity.apiReachable = response.ok;
+    } catch(e) {
+      config.connectivity.apiReachable = false;
+    }
+  }
+  
+  res.json(config);
+});
+
+router.post('/telnyx/voice/calls', async (req: Request, res: Response) => {
+  const { leadId, to } = req.body;
+  if (!leadId || !to) {
+      return res.status(400).json({ error: 'Missing leadId or to' });
+  }
+  
+  try {
+    const lead = await getDbLeadById(leadId);
+    
+    const session = await telephonyManager.startCall({
+      phoneNumber: to,
+      leadId: leadId,
+      businessName: lead?.business_name,
+      contactName: lead?.contact_name,
+      leadScore: lead?.lead_score,
+      opportunity: lead?.opportunity_angle,
+      estimatedRetainer: lead?.estimated_retainer,
+    });
+    
+    res.json({
+        success: true,
+        callControlId: session.providerCallId,
+        callSessionId: session.callId,
+        status: 'initiated'
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post('/telnyx/sms/send', async (req: Request, res: Response) => {
+  const { leadId, to, text } = req.body;
+  if (!leadId || !to || !text) {
+      return res.status(400).json({ error: 'Missing leadId, to, or text' });
+  }
+  
+  try {
+    const result = await telephonyManager.voiceProvider.sendSms({
+        to,
+        text
+    });
+    
+    if (result.success) {
+        res.json({
+            success: true,
+            messageId: result.messageId,
+            status: result.status
+        });
+    } else {
+        res.status(500).json({ error: result.error });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.get('/integrations/status', async (req: Request, res: Response) => {
   try {
@@ -438,11 +531,33 @@ router.post('/integrations/test/:service', async (req: Request, res: Response) =
   }
 });
 
+const verifyTelnyxSignature = (req: Request, res: Response) => {
+  const sig = req.headers['telnyx-signature-ed25519'] as string;
+  const time = req.headers['telnyx-timestamp'] as string;
+  const publicKey = process.env.TELNYX_PUBLIC_KEY;
+
+  if (!publicKey) {
+    console.warn('TELNYX_PUBLIC_KEY missing, webhook unverified');
+    return true; // Bypass for now but log it
+  }
+
+  try {
+    return telnyx.webhooks.constructEvent(JSON.stringify(req.body), sig, time, publicKey);
+  } catch (err) {
+    console.error('Webhook verification failed:', err);
+    return false;
+  }
+};
+
 // ========================================================
 // 3. TELNYX VOICE WEBHOOK ENDPOINT
 // ========================================================
 
 router.post('/webhooks/telnyx/voice', async (req: Request, res: Response) => {
+  if (!verifyTelnyxSignature(req, res)) {
+    return res.status(401).json({ error: 'Webhook signature verification failed' });
+  }
+  
   try {
     const event = req.body;
     const eventType = event.data?.event_type || event.event_type || 'call.unknown';
@@ -611,6 +726,10 @@ ${transcription}`,
 // ========================================================
 
 router.post('/webhooks/telnyx/sms', async (req: Request, res: Response) => {
+  if (!verifyTelnyxSignature(req, res)) {
+    return res.status(401).json({ error: 'Webhook signature verification failed' });
+  }
+
   try {
     const event = req.body;
     const eventType = event.data?.event_type || 'message.received';

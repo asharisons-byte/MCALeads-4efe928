@@ -138,7 +138,7 @@ async function generateAiContent(
   return null;
 }
 
-const app = express();
+export const app = express();
 const PORT = 3000;
 
 app.use(express.json({ limit: '10mb' }));
@@ -3353,5 +3353,3 @@ async function startServer() {
 if (process.env.VERCEL !== '1') {
   startServer();
 }
-
-export { app };
