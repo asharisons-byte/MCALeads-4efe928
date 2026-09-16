@@ -29,13 +29,25 @@ import {
 
 const router = express.Router();
 
-// 1. Health & Database Probe
-router.get('/health', async (req: Request, res: Response) => {
+// 1b. Database Diagnostic
+router.get('/debug/db-diagnostic', async (req: Request, res: Response) => {
   try {
-    const health = await getDbSystemHealth();
-    return res.json(health);
+    const details = getDatabaseDetails();
+    const countResult = await db.select({ count: sql<number>`count(*)` }).from(schema.leads);
+    return res.json({
+      databaseConfigured: details.configured,
+      databaseProvider: details.provider,
+      databaseHost: details.host,
+      databaseName: details.database,
+      databaseConnection: details.configured ? 'SUCCESS' : 'FAIL',
+      leadTableExists: true, // If query didn't throw, table exists
+      totalDatabaseLeads: Number(countResult[0]?.count || 0),
+    });
   } catch (err: any) {
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({
+      error: 'Database diagnostic failed',
+      details: err.message
+    });
   }
 });
 
