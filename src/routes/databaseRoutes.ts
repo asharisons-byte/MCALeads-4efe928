@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
-import { getDatabaseDetails } from '../db/index.js';
+import { getDatabaseDetails, db, schema } from '../db/index.js';
+import { sql } from 'drizzle-orm';
 import {
   initDatabaseDefaults,
   getDbLeads,
