@@ -163,7 +163,7 @@ export const TelephonyService = {
     }
 
     return {
-      success: true,
+      success: !!backendSession,
       session: backendSession || { callId, status: 'PREPARING' },
       callRecord,
     };

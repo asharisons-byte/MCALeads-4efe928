@@ -1,6 +1,7 @@
 // Secure Telephony Architecture & Telnyx Provider Preparation
 // Backend-only implementation - credentials never exposed to client
 import { addDbLeadCall } from './src/db/repository.js';
+import { validateAndNormalizePhone } from './src/services/messagingService.js';
 
 export interface VoiceProvider {
   id: string;
@@ -38,6 +39,7 @@ export class TelnyxVoiceProvider implements VoiceProvider {
     metadata?: Record<string, any>;
   }): Promise<{ providerCallId: string; status: string }> {
     const fromNumber = params.from || this.defaultFromNumber;
+    const normalizedTo = validateAndNormalizePhone(params.to);
 
     // If Telnyx API key is present in environment, call the real Telnyx Call Control v2 API
     if (this.apiKey) {
@@ -48,7 +50,7 @@ export class TelnyxVoiceProvider implements VoiceProvider {
           Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          to: params.to,
+          to: normalizedTo,
           from: fromNumber,
           connection_id: process.env.TELNYX_CONNECTION_ID,
           custom_headers: [
