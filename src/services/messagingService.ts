@@ -11,7 +11,7 @@ import {
 } from '../types';
 import { getAgencyConfig } from './agencyConfig.js';
 import { addActivity, updateLead, getLeads } from './leadService.js';
-import { saveCommunication } from './communicationService';
+import { saveCommunication } from './communicationService.js';
 
 const SMS_STORAGE_KEY = 'mca_sms_messages_v1';
 const OPTOUT_STORAGE_KEY = 'mca_sms_optout_registry_v1';
