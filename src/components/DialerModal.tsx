@@ -236,15 +236,24 @@ export const DialerModal: React.FC<DialerModalProps> = ({
 
     // 1. Try WebRTC
     try {
-      await TelnyxWebRTCService.init();
-      setIsWebRTCConnected(true);
+      // Initialize TelnyxRTC
+      const client = await TelnyxWebRTCService.init();
+      
+      // Handle call
       await TelnyxWebRTCService.makeCall(
         phoneNumber, 
-        '+14052853816', 
-        (state) => setCallState(state), 
+        '+14052853816', // Ensure this is a valid caller ID
+        (state) => {
+            // Map Telnyx state to UI state
+            if (state === 'CONNECTED') setCallState('CONNECTED');
+            else if (state === 'RINGING') setCallState('RINGING');
+            else if (state === 'ENDED') setCallState('COMPLETED');
+            else setCallState(state as CallState);
+        }, 
         remoteAudioRef.current!
       );
-      setCallState('CONNECTED'); // Should be more granular based on Telnyx events, but this is a start
+      
+      setIsWebRTCConnected(true);
       return;
     } catch (e) {
       console.warn('[WebRTC] Connection failed, falling back to PSTN:', e);
@@ -456,7 +465,7 @@ ${callScript.closing}
                 </h2>
                 <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                   <span className={`w-1.5 h-1.5 rounded-full ${isWebRTCConnected ? 'bg-emerald-400' : 'bg-slate-400'} animate-pulse`} />
-                  {isWebRTCConnected ? 'WebRTC Connected' : 'PSTN Mode'}
+                  {isWebRTCConnected ? 'WebRTC Registered' : 'PSTN Fallback Mode'}
                 </span>
               </div>
               <p className="text-[11px] text-slate-400">
@@ -1333,6 +1342,7 @@ ${callScript.closing}
             </p>
 
             <div className="flex items-center justify-end gap-2.5 pt-2">
+              <audio ref={remoteAudioRef} />
               <button
                 onClick={() => setShowDoNotContactConfirm(false)}
                 className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
