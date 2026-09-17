@@ -118,6 +118,7 @@ export const DialerModal: React.FC<DialerModalProps> = ({
   const statusPollingRef = useRef<NodeJS.Timeout | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
   const [isWebRTCConnected, setIsWebRTCConnected] = useState(false);
+  const [webRTCStatus, setWebRTCStatus] = useState<string>('Idle');
 
   // When initial lead or phone changes
   useEffect(() => {
@@ -232,35 +233,48 @@ export const DialerModal: React.FC<DialerModalProps> = ({
 
     setCallDuration(0);
     setCallState('PREPARING');
+    setWebRTCStatus('Initializing WebRTC...');
     setSelectedOutcome(null);
 
     // 1. Try WebRTC
     try {
-      // Initialize TelnyxRTC
+      setWebRTCStatus('Registering...');
       const client = await TelnyxWebRTCService.init();
       
-      // Handle call
+      setWebRTCStatus('Starting WebRTC call...');
       await TelnyxWebRTCService.makeCall(
         phoneNumber, 
-        '+14052853816', // Ensure this is a valid caller ID
+        '+14052853816', 
         (state) => {
-            // Map Telnyx state to UI state
-            if (state === 'CONNECTED') setCallState('CONNECTED');
-            else if (state === 'RINGING') setCallState('RINGING');
-            else if (state === 'ENDED') setCallState('COMPLETED');
-            else setCallState(state as CallState);
+            console.log(`[MCA WebRTC] State: ${state}`);
+            if (state === 'CONNECTED') {
+                setCallState('CONNECTED');
+                setWebRTCStatus('Connected');
+            } else if (state === 'RINGING') {
+                setCallState('RINGING');
+                setWebRTCStatus('Ringing...');
+            } else if (state === 'ENDED') {
+                setCallState('COMPLETED');
+                setWebRTCStatus('Ended');
+            } else {
+                setWebRTCStatus(state);
+            }
         }, 
         remoteAudioRef.current!
       );
       
       setIsWebRTCConnected(true);
       return;
-    } catch (e) {
-      console.warn('[WebRTC] Connection failed, falling back to PSTN:', e);
+    } catch (e: any) {
+      console.error('[MCA WebRTC ERROR] Fallback triggered:', e);
+      setWebRTCStatus(`Failed: ${e.message || 'Error'}`);
       setIsWebRTCConnected(false);
+      // Wait for user to see the error
+      await new Promise(r => setTimeout(r, 1000));
     }
 
     // 2. Fallback to PSTN
+    setWebRTCStatus('PSTN Fallback');
     const callType: CallType = activeLead ? 'Outbound Call' : 'Manual Call';
     const result = await TelephonyService.startCall({
       lead: activeLead,
@@ -465,7 +479,7 @@ ${callScript.closing}
                 </h2>
                 <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                   <span className={`w-1.5 h-1.5 rounded-full ${isWebRTCConnected ? 'bg-emerald-400' : 'bg-slate-400'} animate-pulse`} />
-                  {isWebRTCConnected ? 'WebRTC Registered' : 'PSTN Fallback Mode'}
+                  {isWebRTCConnected ? `WebRTC: ${webRTCStatus}` : webRTCStatus.startsWith('Failed') ? `PSTN Fallback (${webRTCStatus})` : 'PSTN Fallback Mode'}
                 </span>
               </div>
               <p className="text-[11px] text-slate-400">

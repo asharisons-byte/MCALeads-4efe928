@@ -8,23 +8,25 @@ export const TelnyxWebRTCService = {
     if (this.client) return this.client;
 
     try {
+      console.log('[MCA WebRTC] Requesting token...');
       const response = await fetch('/api/telephony/webrtc/token');
-      if (!response.ok) throw new Error('Failed to fetch WebRTC credentials');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to fetch WebRTC credentials: ${errorData.details || response.statusText}`);
+      }
       const { sipUsername, sipPassword, connectionId } = await response.json();
+      console.log('[MCA WebRTC] Received credentials. Connecting...');
 
       this.client = new TelnyxRTC({
         login: sipUsername,
         password: sipPassword,
-        // connection_id is not a top-level IClientOptions property; 
-        // anonymous_login handles specific connection targeting if needed.
-        // For standard SIP auth, login/password suffice.
       });
 
       await this.client.connect();
-      console.log('[Telnyx WebRTC] Client connected and registered');
+      console.log('[MCA WebRTC] Client registered');
       return this.client;
     } catch (error) {
-      console.error('[Telnyx WebRTC] Initialization failed:', error);
+      console.error('[MCA WebRTC ERROR] stage=initialization', error);
       throw error;
     }
   },
@@ -32,11 +34,13 @@ export const TelnyxWebRTCService = {
   async makeCall(destinationNumber: string, callerNumber: string, onStateChange: (state: string) => void, audioRef: HTMLAudioElement) {
     if (!this.client) await this.init();
     
+    console.log(`[MCA WebRTC] Originating call to ${destinationNumber}`);
     // @ts-ignore - SDK API
     this.currentCall = await this.client.newCall({
       destinationNumber,
       callerNumber,
     });
+    console.log('[MCA WebRTC] Call object created');
 
     this.currentCall.on('ringing', () => onStateChange('RINGING'));
     this.currentCall.on('answered', () => onStateChange('CONNECTED'));
