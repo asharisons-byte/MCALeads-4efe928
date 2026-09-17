@@ -129,16 +129,16 @@ export function App() {
   // Lead CRUD handlers
   const handleAddLead = async (newLead: Lead) => {
     const saved = await addLead(newLead);
-    setLeads(getLeads());
+    setLeads(await getLeads());
     setActivities(getActivities());
     setSelectedLead(saved);
     return saved;
   };
 
-  const handleUpdateLead = (leadId: string, updates: Partial<Lead>) => {
+  const handleUpdateLead = async (leadId: string, updates: Partial<Lead>) => {
     const updated = updateLead(leadId, updates);
     if (updated) {
-      setLeads(getLeads());
+      setLeads(await getLeads());
       setActivities(getActivities());
       if (selectedLead && selectedLead.lead_id === leadId) {
         setSelectedLead(updated);
