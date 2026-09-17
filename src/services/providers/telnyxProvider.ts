@@ -1,7 +1,7 @@
 import Telnyx from 'telnyx';
 
 const apiKey = process.env.TELNYX_API_KEY || '';
-const telnyx = apiKey ? new Telnyx(apiKey) : null;
+const telnyx = apiKey ? new Telnyx({ apiKey }) : null;
 
 export const TelnyxProvider = {
   isConfigured: () => !!telnyx,
@@ -9,8 +9,7 @@ export const TelnyxProvider = {
   async sendSms(params: { to: string; content: string; messagingProfileId: string }) {
     if (!telnyx) throw new Error('TELNYX_API_KEY is not configured');
     
-    return await telnyx.messages.create({
-      from: process.env.TELNYX_FROM_NUMBER,
+    return await telnyx.messages.sendNumberPool({
       to: params.to,
       text: params.content,
       messaging_profile_id: params.messagingProfileId,
@@ -20,7 +19,7 @@ export const TelnyxProvider = {
   async startCall(params: { to: string; connectionId: string; clientState: string }) {
     if (!telnyx) throw new Error('TELNYX_API_KEY is not configured');
     
-    return await telnyx.calls.create({
+    return await telnyx.calls.dial({
       connection_id: params.connectionId,
       to: params.to,
       from: process.env.TELNYX_FROM_NUMBER,
@@ -31,27 +30,6 @@ export const TelnyxProvider = {
   async hangupCall(callControlId: string) {
     if (!telnyx) throw new Error('TELNYX_API_KEY is not configured');
     
-    return await telnyx.callControl.calls.hangup(callControlId);
-  },
-
-  async muteCall(callControlId: string, muted: boolean) {
-    if (!telnyx) throw new Error('TELNYX_API_KEY is not configured');
-    
-    if (muted) {
-        return await telnyx.callControl.calls.mute(callControlId);
-    } else {
-        return await telnyx.callControl.calls.unmute(callControlId);
-    }
-  },
-
-  async holdCall(callControlId: string, hold: boolean) {
-    if (!telnyx) throw new Error('TELNYX_API_KEY is not configured');
-    
-    // Telnyx Call Control hold/resume implementation
-    if (hold) {
-        return await telnyx.callControl.calls.hold(callControlId);
-    } else {
-        return await telnyx.callControl.calls.unhold(callControlId);
-    }
+    return await telnyx.calls.actions.hangup(callControlId, {});
   },
 };

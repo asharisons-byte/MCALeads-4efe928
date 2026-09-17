@@ -2,9 +2,9 @@ import express, { Request, Response } from 'express';
 import { db, getDatabaseDetails } from '../db/index.js';
 import * as schema from '../db/schema.js';
 import { eq, desc, sql } from 'drizzle-orm';
-import Telnyx from 'telnyx';
+import { Telnyx } from 'telnyx';
 
-const telnyx = new Telnyx(process.env.TELNYX_API_KEY || '');
+const telnyx = new Telnyx({ apiKey: process.env.TELNYX_API_KEY || '' });
 import {
   saveDbAiContent,
   getDbAiContentForLead,
@@ -558,18 +558,19 @@ router.post('/integrations/test/:service', async (req: Request, res: Response) =
   }
 });
 
-const verifyTelnyxSignature = (req: Request, res: Response) => {
+const verifyTelnyxSignature = async (req: Request, res: Response) => {
   const sig = req.headers['telnyx-signature-ed25519'] as string;
   const time = req.headers['telnyx-timestamp'] as string;
-  const publicKey = process.env.TELNYX_PUBLIC_KEY;
-
-  if (!publicKey) {
-    console.warn('TELNYX_PUBLIC_KEY missing, webhook unverified');
-    return true; // Bypass for now but log it
-  }
+  
+  // Create a record of headers
+  const headers: Record<string, string> = {
+    'telnyx-signature-ed25519': sig,
+    'telnyx-timestamp': time
+  };
 
   try {
-    return telnyx.webhooks.constructEvent(JSON.stringify(req.body), sig, time, publicKey);
+    await telnyx.webhooks.unwrap(JSON.stringify(req.body), { headers });
+    return true;
   } catch (err) {
     console.error('Webhook verification failed:', err);
     return false;
@@ -581,7 +582,7 @@ const verifyTelnyxSignature = (req: Request, res: Response) => {
 // ========================================================
 
 router.post('/webhooks/telnyx/voice', async (req: Request, res: Response) => {
-  if (!verifyTelnyxSignature(req, res)) {
+  if (!(await verifyTelnyxSignature(req, res))) {
     return res.status(401).json({ error: 'Webhook signature verification failed' });
   }
   

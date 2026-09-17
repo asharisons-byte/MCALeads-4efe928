@@ -473,7 +473,7 @@ export function saveExecutiveAlerts(alerts: ExecutiveAlert[]): void {
   }
 }
 
-export function getExecutiveAlerts(): ExecutiveAlert[] {
+export async function getExecutiveAlerts(): Promise<ExecutiveAlert[]> {
   try {
     const raw = localStorage.getItem(ALERTS_STORAGE_KEY);
     if (raw) {
@@ -483,7 +483,7 @@ export function getExecutiveAlerts(): ExecutiveAlert[] {
   } catch (e) {
     console.error('Failed to load executive alerts:', e);
   }
-  const leads = getLeads();
+  const leads = await getLeads();
   const clients = getClients();
   const followUps = getFollowUpTasks();
   const proposals = getProposals();
@@ -492,8 +492,8 @@ export function getExecutiveAlerts(): ExecutiveAlert[] {
   return alerts;
 }
 
-export function dismissExecutiveAlert(alertId: string): ExecutiveAlert[] {
-  const alerts = getExecutiveAlerts();
+export async function dismissExecutiveAlert(alertId: string): Promise<ExecutiveAlert[]> {
+  const alerts = await getExecutiveAlerts();
   const updated = alerts.map((a) =>
     a.alert_id === alertId ? { ...a, resolved: true, status: 'Resolved' as const } : a
   );

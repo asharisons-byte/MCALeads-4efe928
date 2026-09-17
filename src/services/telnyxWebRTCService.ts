@@ -13,9 +13,11 @@ export const TelnyxWebRTCService = {
       const { sipUsername, sipPassword, connectionId } = await response.json();
 
       this.client = new TelnyxRTC({
-        sip_user: sipUsername,
+        login: sipUsername,
         password: sipPassword,
-        connection_id: connectionId,
+        // connection_id is not a top-level IClientOptions property; 
+        // anonymous_login handles specific connection targeting if needed.
+        // For standard SIP auth, login/password suffice.
       });
 
       await this.client.connect();

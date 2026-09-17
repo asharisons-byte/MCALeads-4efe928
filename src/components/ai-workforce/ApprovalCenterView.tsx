@@ -57,8 +57,8 @@ export const ApprovalCenterView: React.FC<ApprovalCenterViewProps> = ({
   const pendingApprovals = approvals.filter((a) => a.status === 'Pending');
   const historyApprovals = approvals.filter((a) => a.status !== 'Pending');
 
-  const handleApprove = (approval: AIApproval) => {
-    approveAIApproval(approval.approval_id, 'MCA Lead Agency Staff');
+  const handleApprove = async (approval: AIApproval) => {
+    await approveAIApproval(approval.approval_id, 'MCA Lead Agency Staff');
     onApprovalsUpdated();
   };
 
@@ -70,9 +70,9 @@ export const ApprovalCenterView: React.FC<ApprovalCenterViewProps> = ({
     setEditNotes('');
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!editingApproval) return;
-    editAndApproveAIApproval(
+    await editAndApproveAIApproval(
       editingApproval.approval_id,
       {
         ...editingApproval.proposed_content,

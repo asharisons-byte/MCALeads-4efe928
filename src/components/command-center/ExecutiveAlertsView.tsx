@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AlertTriangle,
   ShieldAlert,
@@ -26,11 +26,15 @@ export const ExecutiveAlertsView: React.FC<ExecutiveAlertsViewProps> = ({
   onOpenLead,
   onStartCall,
 }) => {
-  const [alerts, setAlerts] = useState<ExecutiveAlert[]>(getExecutiveAlerts());
+  const [alerts, setAlerts] = useState<ExecutiveAlert[]>([]);
   const [severityFilter, setSeverityFilter] = useState<'All' | 'Critical' | 'High' | 'Medium' | 'Low'>('All');
 
-  const handleDismiss = (id: string) => {
-    const updated = dismissExecutiveAlert(id);
+  useEffect(() => {
+    getExecutiveAlerts().then(setAlerts);
+  }, []);
+
+  const handleDismiss = async (id: string) => {
+    const updated = await dismissExecutiveAlert(id);
     setAlerts([...updated]);
   };
 

@@ -1154,7 +1154,7 @@ export async function executeAgentTask(
 // Human Approval Decision Handlers
 // ----------------------------------------------------------------------------
 
-export function approveAIApproval(approvalId: string, reviewerName = 'Marketing Charm Agency Staff'): AIApproval | null {
+export async function approveAIApproval(approvalId: string, reviewerName = 'Marketing Charm Agency Staff'): Promise<AIApproval | null> {
   const approvals = getAIApprovals();
   const idx = approvals.findIndex((a) => a.approval_id === approvalId);
   if (idx === -1) return null;
@@ -1178,7 +1178,7 @@ export function approveAIApproval(approvalId: string, reviewerName = 'Marketing 
   }
 
   // Execute external draft if applicable
-  executeApprovedAction(updated);
+  await executeApprovedAction(updated);
 
   // Save final approved version
   saveOutputVersion({
@@ -1260,12 +1260,12 @@ export function rejectAIApproval(approvalId: string, reason: string, reviewerNam
   return updated;
 }
 
-export function editAndApproveAIApproval(
+export async function editAndApproveAIApproval(
   approvalId: string,
   editedContent: Record<string, any>,
   notes: string,
   reviewerName = 'Marketing Charm Agency Staff'
-): AIApproval | null {
+): Promise<AIApproval | null> {
   const approvals = getAIApprovals();
   const idx = approvals.findIndex((a) => a.approval_id === approvalId);
   if (idx === -1) return null;
@@ -1322,7 +1322,7 @@ export function editAndApproveAIApproval(
     rating: 3,
   });
 
-  executeApprovedAction(updated);
+  await executeApprovedAction(updated);
 
   logAIActivity({
     agent_id: app.agent_id,
@@ -1337,10 +1337,10 @@ export function editAndApproveAIApproval(
   return updated;
 }
 
-function executeApprovedAction(approval: AIApproval): void {
+async function executeApprovedAction(approval: AIApproval): Promise<void> {
   try {
     const payload = approval.current_content || approval.proposed_content;
-    const leads = getLeads();
+    const leads = await getLeads();
     const lead = leads.find((l) => l.lead_id === approval.related_entity_id);
 
     if (approval.action_type === 'Email Ready to Send' && lead) {

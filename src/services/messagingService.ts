@@ -260,14 +260,14 @@ export function calculateSmsSegments(text: string): { characterCount: number; se
 /**
  * Detect appropriate SMS type based on CRM history & pipeline stage
  */
-export function detectSMSType(lead: Lead, activities?: ActivityEvent[], messages?: SMSMessage[]): SMSType {
+export async function detectSMSType(lead: Lead, activities?: ActivityEvent[], messages?: SMSMessage[]): Promise<SMSType> {
   const stage = lead.pipeline_stage || 'New Lead';
 
   if (stage === 'Audit Sent') return 'Audit Follow-Up';
   if (stage === 'Proposal Sent') return 'Proposal Follow-Up';
   if (stage === 'Archived') return 'Re-Engagement';
 
-  const leadMessages = messages || getSMSMessages(lead.lead_id);
+  const leadMessages = messages || await getSMSMessages(lead.lead_id);
   if (leadMessages.length > 0) {
     const hasOutbound = leadMessages.some((m) => m.direction === 'OUTBOUND');
     const hasInbound = leadMessages.some((m) => m.direction === 'INBOUND');
@@ -310,14 +310,14 @@ export function detectSMSPersonalizationLevel(lead: Lead): PersonalizationLevel 
 /**
  * Storage for SMS Messages
  */
-export function getSMSMessages(leadId?: string): SMSMessage[] {
+export async function getSMSMessages(leadId?: string): Promise<SMSMessage[]> {
   try {
     const raw = localStorage.getItem(SMS_STORAGE_KEY);
     let messages: SMSMessage[] = raw ? JSON.parse(raw) : [];
 
     if (messages.length === 0) {
       // Seed sample initial SMS conversations if empty for rich preview
-      messages = seedInitialSMSMessages();
+      messages = await seedInitialSMSMessages();
       saveAllSMSMessages(messages);
     }
 
@@ -331,8 +331,8 @@ export function getSMSMessages(leadId?: string): SMSMessage[] {
   }
 }
 
-export function saveSMSMessage(msg: SMSMessage): SMSMessage {
-  const all = getSMSMessages();
+export async function saveSMSMessage(msg: SMSMessage): Promise<SMSMessage> {
+  const all = await getSMSMessages();
   const idx = all.findIndex((m) => m.sms_id === msg.sms_id);
   const updatedMsg: SMSMessage = {
     ...msg,
@@ -349,8 +349,8 @@ export function saveSMSMessage(msg: SMSMessage): SMSMessage {
   return updatedMsg;
 }
 
-export function deleteSMSMessage(smsId: string): void {
-  const all = getSMSMessages();
+export async function deleteSMSMessage(smsId: string): Promise<void> {
+  const all = await getSMSMessages();
   const filtered = all.filter((m) => m.sms_id !== smsId);
   saveAllSMSMessages(filtered);
 }
@@ -378,7 +378,7 @@ export async function generateSophiaSMS(
   source: string;
 }> {
   const agencyConfig = getAgencyConfig();
-  const smsType = options.smsType || detectSMSType(lead);
+  const smsType = options.smsType || await detectSMSType(lead);
   const personalizationLevel = options.personalizationLevel || detectSMSPersonalizationLevel(lead);
 
   try {
@@ -624,7 +624,7 @@ export async function receiveInboundSMS(options: ReceiveSMSOptions): Promise<{
   stageChanged?: boolean;
 }> {
   const { leadId, content, fromNumber, replyToId } = options;
-  const leads = getLeads();
+  const leads = await getLeads();
   const lead = leads.find((l) => l.lead_id === leadId);
   const timestamp = new Date().toISOString();
 
@@ -635,7 +635,7 @@ export async function receiveInboundSMS(options: ReceiveSMSOptions): Promise<{
   const isOptOut = optOutCheck.isOptOut;
 
   // Analyze reply with Sophia
-  const history = getSMSMessages(leadId);
+  const history = await getSMSMessages(leadId);
   const analysis = await analyzeSophiaReply(content, lead, history);
 
   const smsId = `sms-in-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
@@ -887,8 +887,8 @@ function fallbackLocalReplyAnalysis(replyText: string, lead?: Lead): SophiaReply
 /**
  * Seed realistic initial SMS messages across top leads for an immediate working state
  */
-function seedInitialSMSMessages(): SMSMessage[] {
-  const leads = getLeads();
+async function seedInitialSMSMessages(): Promise<SMSMessage[]> {
+  const leads = await getLeads();
   const sampleLead = leads[0];
   if (!sampleLead) return [];
 

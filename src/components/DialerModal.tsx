@@ -238,7 +238,12 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     try {
       await TelnyxWebRTCService.init();
       setIsWebRTCConnected(true);
-      await TelnyxWebRTCService.makeCall(phoneNumber, '+14052853816', remoteAudioRef.current!);
+      await TelnyxWebRTCService.makeCall(
+        phoneNumber, 
+        '+14052853816', 
+        (state) => setCallState(state), 
+        remoteAudioRef.current!
+      );
       setCallState('CONNECTED'); // Should be more granular based on Telnyx events, but this is a start
       return;
     } catch (e) {

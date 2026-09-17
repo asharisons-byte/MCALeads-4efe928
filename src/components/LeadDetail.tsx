@@ -84,6 +84,7 @@ interface LeadDetailProps {
   onUpdateLead: (leadId: string, updates: Partial<Lead>) => void;
   onAddNote: (leadId: string, content: string, activityType: LeadNote['activity_type']) => void;
   onDeleteNote: (leadId: string, noteId: string) => void;
+  leads: Lead[];
 }
 
 export const LeadDetail: React.FC<LeadDetailProps> = ({
@@ -92,6 +93,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
   onUpdateLead,
   onAddNote,
   onDeleteNote,
+  leads,
 }) => {
   const [activeTab, setActiveTab] = useState<
     | 'lead_intelligence'
@@ -194,14 +196,14 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
   };
 
   // Schedule Follow-Up
-  const handleScheduleFollowUp = (data: {
+  const handleScheduleFollowUp = async (data: {
     date: string;
     time?: string;
     type: string;
     priority: 'High' | 'Medium' | 'Low';
     note?: string;
   }) => {
-    const createdFollowUp = scheduleFollowUp(lead.lead_id, data);
+    const createdFollowUp = await scheduleFollowUp(lead.lead_id, data);
     if (createdFollowUp) {
       onUpdateLead(lead.lead_id, { upcoming_follow_up: createdFollowUp });
       setActivities(getLeadActivities(lead.lead_id, lead));
@@ -1333,7 +1335,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
           isOpen={isDialerOpen}
           initialLead={lead}
           initialPhoneNumber={lead.phone}
-          allLeads={getLeads()}
+          allLeads={leads}
           onClose={() => {
             setIsDialerOpen(false);
             setActivities(getLeadActivities(lead.lead_id, lead));
@@ -1395,7 +1397,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
       {/* PHASE 3C: Audit Generation Modal */}
       {isAuditGenModalOpen && (
         <AuditGenerationModal
-          leads={getLeads()}
+          leads={leads}
           initialLead={lead}
           onClose={() => setIsAuditGenModalOpen(false)}
           onAuditGenerated={(newAudit) => {
@@ -1408,7 +1410,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
       {/* PHASE 3C: Proposal Creation Modal */}
       {isProposalCreateModalOpen && (
         <ProposalCreationModal
-          leads={getLeads()}
+          leads={leads}
           initialLead={lead}
           initialAudit={selectedAuditForModal || undefined}
           onClose={() => setIsProposalCreateModalOpen(false)}

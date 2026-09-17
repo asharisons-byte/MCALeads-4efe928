@@ -417,7 +417,7 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
       setCompletedRecord(newRecord);
 
       // 3. Write CRM Note
-      addNoteToLead(lead.lead_id, postAnalysis.crm_notes, 'Call Log', 'Sophia (AI Sales Rep)', true);
+      await addNoteToLead(lead.lead_id, postAnalysis.crm_notes, 'Call Log', 'Sophia (AI Sales Rep)', true);
 
       // 4. Update Activity Timeline
       addActivity({

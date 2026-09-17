@@ -62,6 +62,7 @@ import { Lead, ActivityEvent, PipelineStage, CallRecord } from './types';
 export function App() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [activities, setActivities] = useState<ActivityEvent[]>([]);
+  const [smsCount, setSmsCount] = useState(0);
   const [currentTab, setCurrentTab] = useState<NavigationItem>('command_center');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -90,6 +91,8 @@ export function App() {
       setLeads(loadedLeads);
       const loadedActivities = getActivities();
       setActivities(loadedActivities);
+      const messages = await getSMSMessages();
+      setSmsCount(messages.length);
 
       // Synchronize state with Cloud SQL PostgreSQL
       syncWithDatabase().then((dbLeads) => {
@@ -143,24 +146,24 @@ export function App() {
     }
   };
 
-  const handleDeleteLead = (leadId: string) => {
-    deleteLead(leadId);
-    setLeads(getLeads());
+  const handleDeleteLead = async (leadId: string) => {
+    await deleteLead(leadId);
+    setLeads(await getLeads());
     setActivities(getActivities());
     if (selectedLead && selectedLead.lead_id === leadId) {
       setSelectedLead(null);
     }
   };
 
-  const handleBulkUpdateStage = (leadIds: string[], stage: PipelineStage) => {
-    bulkUpdateStage(leadIds, stage);
-    setLeads(getLeads());
+  const handleBulkUpdateStage = async (leadIds: string[], stage: PipelineStage) => {
+    await bulkUpdateStage(leadIds, stage);
+    setLeads(await getLeads());
     setActivities(getActivities());
   };
 
-  const handleBulkDelete = (leadIds: string[]) => {
-    bulkDelete(leadIds);
-    setLeads(getLeads());
+  const handleBulkDelete = async (leadIds: string[]) => {
+    await bulkDelete(leadIds);
+    setLeads(await getLeads());
     setActivities(getActivities());
   };
 
@@ -177,10 +180,11 @@ export function App() {
     if (current) setSelectedLead(current);
   };
 
-  const handleDeleteNote = (leadId: string, noteId: string) => {
-    deleteNoteFromLead(leadId, noteId);
-    setLeads(getLeads());
-    const current = getLeads().find((l) => l.lead_id === leadId);
+  const handleDeleteNote = async (leadId: string, noteId: string) => {
+    await deleteNoteFromLead(leadId, noteId);
+    const updatedLeads = await getLeads();
+    setLeads(updatedLeads);
+    const current = updatedLeads.find((l) => l.lead_id === leadId);
     if (current) setSelectedLead(current);
   };
 
@@ -352,7 +356,7 @@ export function App() {
         leadsCount={leads.length}
         hotCount={leads.filter((l) => l.is_hot_target).length}
         draftsCount={getEmailDrafts().length}
-        smsCount={getSMSMessages().length}
+        smsCount={smsCount}
         callsCount={getStoredCallRecords().length}
         followUpsCount={getFollowUpTasks().filter((f) => f.status === 'Pending').length}
         approvalsCount={getAIApprovals().filter((a) => a.status === 'Pending').length}
@@ -378,6 +382,7 @@ export function App() {
           {selectedLead ? (
             <LeadDetail
               lead={selectedLead}
+              leads={leads}
               onBack={() => setSelectedLead(null)}
               onUpdateLead={handleUpdateLead}
               onAddNote={handleAddNote}
@@ -567,7 +572,7 @@ export function App() {
             <SMSOutreachView
               leads={leads}
               onSelectLead={(lead) => setSelectedLead(lead)}
-              onRefreshLeads={() => setLeads(getLeads())}
+              onRefreshLeads={async () => setLeads(await getLeads())}
             />
           ) : currentTab === 'calls' ? (
             <CallsView
@@ -578,7 +583,7 @@ export function App() {
                 setDialerPhoneNumber(phoneNumber || lead?.phone || '');
                 setDialerModalOpen(true);
               }}
-              onRefreshLeads={() => setLeads(getLeads())}
+              onRefreshLeads={async () => setLeads(await getLeads())}
             />
           ) : currentTab === 'analytics' || currentTab === 'revenue' ? (
             <AnalyticsView leads={leads} />

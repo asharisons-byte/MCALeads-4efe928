@@ -1133,12 +1133,12 @@ export function generateNegotiationAdvice(
 // 5. PROPOSAL FOLLOW-UP AUTOMATION
 // ==========================================================
 
-export function scheduleProposalFollowUps(proposal: Proposal): void {
+export async function scheduleProposalFollowUps(proposal: Proposal): Promise<void> {
   const leadId = proposal.lead_id;
 
   // Day 2 Follow-Up (Engagement Check)
   const day2 = new Date(Date.now() + 2 * 86400000).toISOString().split('T')[0];
-  scheduleFollowUp(leadId, {
+  await scheduleFollowUp(leadId, {
     date: day2,
     type: 'Proposal Follow-Up',
     priority: 'High',
@@ -1147,7 +1147,7 @@ export function scheduleProposalFollowUps(proposal: Proposal): void {
 
   // Day 4 Follow-Up (Detailed Follow-Up Email)
   const day4 = new Date(Date.now() + 4 * 86400000).toISOString().split('T')[0];
-  scheduleFollowUp(leadId, {
+  await scheduleFollowUp(leadId, {
     date: day4,
     type: 'Email',
     priority: 'Medium',
@@ -1156,7 +1156,7 @@ export function scheduleProposalFollowUps(proposal: Proposal): void {
 
   // Day 7 Follow-Up (Call Recommendation)
   const day7 = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
-  scheduleFollowUp(leadId, {
+  await scheduleFollowUp(leadId, {
     date: day7,
     type: 'Call',
     priority: 'High',

@@ -21,6 +21,7 @@ import {
   SophiaExecutiveInsight,
   Campaign,
   TodayPriorityItem,
+  SMSMessage,
 } from '../../types';
 import {
   getWidgetConfigs,
@@ -215,7 +216,14 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
   const todayPriorities = useMemo(() => getTodayPriorities(filteredLeads, followUps, calls), [filteredLeads, followUps, calls]);
   const leadsAtRisk = useMemo(() => getLeadsAtRisk(filteredLeads, activities, followUps), [filteredLeads, activities, followUps]);
   const drafts = useMemo(() => getEmailDrafts(), []);
-  const messages = useMemo(() => getSMSMessages(), []);
+  const [messages, setMessages] = useState<SMSMessage[]>([]);
+
+  useEffect(() => {
+    async function fetchMessages() {
+      setMessages(await getSMSMessages());
+    }
+    fetchMessages();
+  }, []);
   const channelMetrics = useMemo(
     () => calculateChannelPerformance(activities, calls, drafts, messages, filteredLeads),
     [activities, calls, drafts, messages, filteredLeads]

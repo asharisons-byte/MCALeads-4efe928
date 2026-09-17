@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Lead, SMSMessage } from '../types';
 import {
   getSMSMessages,
@@ -38,7 +38,15 @@ export const SMSOutreachView: React.FC<SMSOutreachViewProps> = ({
   onSelectLead,
   onRefreshLeads,
 }) => {
-  const [messages, setMessages] = useState<SMSMessage[]>(() => getSMSMessages());
+  const [messages, setMessages] = useState<SMSMessage[]>([]);
+
+  useEffect(() => {
+    async function fetchMessages() {
+      const msgs = await getSMSMessages();
+      setMessages(msgs);
+    }
+    fetchMessages();
+  }, []);
   const [optOuts, setOptOuts] = useState(() => getOptOutRegistry());
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTab, setFilterTab] = useState<'ALL' | 'OUTBOUND' | 'INBOUND' | 'OPTED_OUT'>('ALL');
@@ -47,8 +55,8 @@ export const SMSOutreachView: React.FC<SMSOutreachViewProps> = ({
   const [composerPrefill, setComposerPrefill] = useState<string | undefined>(undefined);
 
   // Refresh data
-  function refreshData() {
-    setMessages(getSMSMessages());
+  async function refreshData() {
+    setMessages(await getSMSMessages());
     setOptOuts(getOptOutRegistry());
     if (onRefreshLeads) onRefreshLeads();
   }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Lead, SMSMessage, SophiaReplyAnalysis } from '../types';
 import {
   getSMSMessages,
@@ -37,7 +37,14 @@ export const SMSConversationView: React.FC<SMSConversationViewProps> = ({
   onOpenComposer,
   onMessageChange,
 }) => {
-  const [messages, setMessages] = useState<SMSMessage[]>(() => getSMSMessages(lead.lead_id));
+  const [messages, setMessages] = useState<SMSMessage[]>([]);
+
+  useEffect(() => {
+    async function fetchMessages() {
+      setMessages(await getSMSMessages(lead.lead_id));
+    }
+    fetchMessages();
+  }, [lead.lead_id]);
   const [replyInput, setReplyInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
@@ -47,8 +54,8 @@ export const SMSConversationView: React.FC<SMSConversationViewProps> = ({
   const phoneVal = validateAndNormalizePhone(lead.phone);
   const eligibility = checkSMSEligibility(lead, phoneVal);
 
-  function refresh() {
-    setMessages(getSMSMessages(lead.lead_id));
+  async function refresh() {
+    setMessages(await getSMSMessages(lead.lead_id));
     if (onMessageChange) onMessageChange();
   }
 

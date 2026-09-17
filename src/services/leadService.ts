@@ -411,8 +411,8 @@ export async function updateLead(leadId: string, updates: Partial<Lead>): Promis
   return null;
 }
 
-export function deleteLead(leadId: string): boolean {
-  const current = getLeads();
+export async function deleteLead(leadId: string): Promise<boolean> {
+  const current = await getLeads();
   const lead = current.find((l) => l.lead_id === leadId);
   const filtered = current.filter((l) => l.lead_id !== leadId);
   if (filtered.length !== current.length) {
@@ -440,8 +440,8 @@ export function deleteLead(leadId: string): boolean {
   return false;
 }
 
-export function bulkUpdateStage(leadIds: string[], stage: PipelineStage): void {
-  const current = getLeads();
+export async function bulkUpdateStage(leadIds: string[], stage: PipelineStage): Promise<void> {
+  const current = await getLeads();
   const timestamp = new Date().toISOString();
 
   const updated = current.map((l) => {
@@ -490,20 +490,20 @@ export function bulkUpdateStage(leadIds: string[], stage: PipelineStage): void {
   });
 }
 
-export function bulkDelete(leadIds: string[]): void {
-  const current = getLeads();
+export async function bulkDelete(leadIds: string[]): Promise<void> {
+  const current = await getLeads();
   const filtered = current.filter((l) => !leadIds.includes(l.lead_id));
   saveLeads(filtered);
 }
 
-export function addNoteToLead(
+export async function addNoteToLead(
   leadId: string,
   content: string,
   activityType: LeadNote['activity_type'] = 'Note',
   author: string = 'Agency User',
   isAIGenerated: boolean = false
-): LeadNote | null {
-  const current = getLeads();
+): Promise<LeadNote | null> {
+  const current = await getLeads();
   const lead = current.find((l) => l.lead_id === leadId);
   if (!lead) return null;
 
@@ -551,8 +551,8 @@ export function addNoteToLead(
   return note;
 }
 
-export function updateNoteInLead(leadId: string, noteId: string, content: string): boolean {
-  const current = getLeads();
+export async function updateNoteInLead(leadId: string, noteId: string, content: string): Promise<boolean> {
+  const current = await getLeads();
   const lead = current.find((l) => l.lead_id === leadId);
   if (!lead || !lead.notes) return false;
 
@@ -566,8 +566,8 @@ export function updateNoteInLead(leadId: string, noteId: string, content: string
   return true;
 }
 
-export function deleteNoteFromLead(leadId: string, noteId: string): boolean {
-  const current = getLeads();
+export async function deleteNoteFromLead(leadId: string, noteId: string): Promise<boolean> {
+  const current = await getLeads();
   const lead = current.find((l) => l.lead_id === leadId);
   if (!lead || !lead.notes) return false;
 
@@ -580,7 +580,7 @@ export function deleteNoteFromLead(leadId: string, noteId: string): boolean {
 /**
  * Schedule a follow-up for a lead
  */
-export function scheduleFollowUp(
+export async function scheduleFollowUp(
   leadId: string,
   data: {
     date: string;
@@ -589,8 +589,8 @@ export function scheduleFollowUp(
     priority: 'High' | 'Medium' | 'Low';
     note?: string;
   }
-): UpcomingFollowUp | null {
-  const current = getLeads();
+): Promise<UpcomingFollowUp | null> {
+  const current = await getLeads();
   const lead = current.find((l) => l.lead_id === leadId);
   if (!lead) return null;
 
@@ -643,8 +643,8 @@ export function scheduleFollowUp(
 /**
  * Mark a scheduled follow-up as completed
  */
-export function completeFollowUp(leadId: string, notes?: string): boolean {
-  const current = getLeads();
+export async function completeFollowUp(leadId: string, notes?: string): Promise<boolean> {
+  const current = await getLeads();
   const lead = current.find((l) => l.lead_id === leadId);
   if (!lead || !lead.upcoming_follow_up) return false;
 
