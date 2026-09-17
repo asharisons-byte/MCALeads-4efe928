@@ -7,8 +7,8 @@ import {
   PipelineStageHistoryEntry,
   UpcomingFollowUp,
 } from '../types';
-import { calculateLeadScore } from './scoringService';
-import { calculateMultiDimensionalScores } from './leadIntelligenceService';
+import { calculateLeadScore } from './scoringService.js';
+import { calculateMultiDimensionalScores } from './leadIntelligenceService.js';
 
 // NEON POSTGRESQL IS THE SINGLE SOURCE OF TRUTH
 // No localStorage, no seed data, no fallbacks

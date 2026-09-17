@@ -13,8 +13,8 @@ import {
   CallRecord,
   SophiaCallTurn,
 } from '../types';
-import { getStoredCallRecords, saveCallRecord } from './telephonyService';
-import { addActivity } from './leadService';
+import { getStoredCallRecords, saveCallRecord } from './telephonyService.js';
+import { addActivity } from './leadService.js';
 
 const INTELLIGENCE_STORAGE_KEY = 'mca_call_intelligence_v1';
 const FOLLOW_UPS_STORAGE_KEY = 'mca_follow_up_tasks_v1';

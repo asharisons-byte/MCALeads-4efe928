@@ -20,8 +20,8 @@ import {
   ApprovalHistoryEntry,
   DeliverableComment,
 } from '../types/clientPortal';
-import { getClients, saveClients } from './conversionService';
-import { addActivity } from './leadService';
+import { getClients, saveClients } from './conversionService.js';
+import { addActivity } from './leadService.js';
 
 // Storage Keys
 const USERS_KEY = 'mca_client_portal_users_v1';

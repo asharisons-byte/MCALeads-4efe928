@@ -10,9 +10,9 @@ import {
   PipelineStage,
   MediaStatus,
 } from '../types';
-import { addActivity } from './leadService';
-import { saveCommunication } from './communicationService';
-import { recordOptOut } from './messagingService';
+import { addActivity } from './leadService.js';
+import { saveCommunication } from './communicationService.js';
+import { recordOptOut } from './messagingService.js';
 
 const CALLS_STORAGE_KEY = 'mca_call_records_v1';
 const CALL_QUEUE_STORAGE_KEY = 'mca_call_queue_v1';

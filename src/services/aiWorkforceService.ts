@@ -17,10 +17,10 @@ import {
   AITaskOutput,
 } from '../types/aiWorkforce';
 import { Lead } from '../types';
-import { getLeads, addActivity, updateLead } from './leadService';
-import { getClients } from './conversionService';
-import { saveEmailDraft } from './emailService';
-import { saveSMSMessage } from './messagingService';
+import { getLeads, addActivity, updateLead } from './leadService.js';
+import { getClients } from './conversionService.js';
+import { saveEmailDraft } from './emailService.js';
+import { saveSMSMessage } from './messagingService.js';
 
 // Storage Keys
 const AGENTS_KEY = 'mca_ai_agents_v1';

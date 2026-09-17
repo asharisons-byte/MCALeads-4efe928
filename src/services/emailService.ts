@@ -7,9 +7,9 @@ import {
   EmailTone,
   ActivityEvent,
 } from '../types';
-import { getAgencyConfig } from './agencyConfig';
-import { addActivity } from './leadService';
-import { saveCommunication } from './communicationService';
+import { getAgencyConfig } from './agencyConfig.js';
+import { addActivity } from './leadService.js';
+import { saveCommunication } from './communicationService.js';
 
 const DRAFTS_KEY = 'mca_email_drafts_v1';
 

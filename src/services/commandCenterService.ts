@@ -34,11 +34,11 @@ export type {
   DuplicateLeadPair,
   AgencyHealthScore,
 };
-import { getStoredCallRecords } from './telephonyService';
-import { getFollowUpTasks, getAggregatedObjections, getAllCallIntelligence } from './callIntelligenceService';
-import { getEmailDrafts } from './emailService';
-import { getSMSMessages } from './messagingService';
-import { getCommunications } from './communicationService';
+import { getStoredCallRecords } from './telephonyService.js';
+import { getFollowUpTasks, getAggregatedObjections, getAllCallIntelligence } from './callIntelligenceService.js';
+import { getEmailDrafts } from './emailService.js';
+import { getSMSMessages } from './messagingService.js';
+import { getCommunications } from './communicationService.js';
 import * as XLSX from 'xlsx';
 
 // Storage keys

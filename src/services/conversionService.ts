@@ -22,8 +22,8 @@ import {
   ProposalAnalyticsMetrics,
   ActivityEvent,
 } from '../types';
-import { updateLead, addActivity, scheduleFollowUp } from './leadService';
-import { saveEmailDraft } from './emailService';
+import { updateLead, addActivity, scheduleFollowUp } from './leadService.js';
+import { saveEmailDraft } from './emailService.js';
 
 // Storage keys
 const AUDITS_STORAGE_KEY = 'mca_audits_v1';

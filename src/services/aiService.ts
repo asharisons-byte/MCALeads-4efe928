@@ -1,5 +1,5 @@
 import { Lead, SophiaCallStrategy, SophiaCallTurn, SophiaCallAnalysis } from '../types';
-import { getAIModelConfig } from './aiConfig';
+import { getAIModelConfig } from './aiConfig.js';
 
 export interface AIServiceProvider {
   name: string;

@@ -1,6 +1,6 @@
 import ExcelJS from 'exceljs';
 import { Lead, PipelineStage } from '../types';
-import { calculateLeadScore } from './scoringService';
+import { calculateLeadScore } from './scoringService.js';
 
 export interface ColumnMapping {
   rawColumn: string;
