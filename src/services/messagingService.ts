@@ -9,7 +9,7 @@ import {
   PersonalizationLevel,
   ActivityEvent,
 } from '../types';
-import { getAgencyConfig } from './agencyConfig';
+import { getAgencyConfig } from './agencyConfig.js';
 import { addActivity, updateLead, getLeads } from './leadService';
 import { saveCommunication } from './communicationService';
 
