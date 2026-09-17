@@ -22,7 +22,22 @@ export const TelnyxWebRTCService = {
         password: sipPassword,
       });
 
-      await this.client.connect();
+      this.client.on('socket.open', () => console.log('[MCA WEBRTC SIGNAL] socket.open'));
+      this.client.on('socket.close', (data: any) => console.log('[MCA WEBRTC SIGNAL] socket.close', { code: data.code, reason: data.reason, wasClean: data.wasClean, timestamp: Date.now() }));
+      this.client.on('socket.error', (error: any) => console.error('[MCA WEBRTC SIGNAL] socket.error', { name: error.name, message: error.message }));
+      this.client.on('telnyx.ready', () => console.log('[MCA WEBRTC SIGNAL] telnyx.ready'));
+      this.client.on('telnyx.error', (error: any) => console.error('[MCA WEBRTC SIGNAL] telnyx.error', { name: error.name, message: error.message, code: error.code }));
+      this.client.on('telnyx.notification', (notification: any) => console.log('[MCA WEBRTC SIGNAL] telnyx.notification', { type: notification.type, timestamp: Date.now() }));
+
+      console.log('[MCA WEBRTC SIGNAL] connect.start');
+      const start = performance.now();
+      try {
+        await this.client.connect();
+        console.log(`[MCA WEBRTC SIGNAL] connect.resolved (elapsed: ${performance.now() - start}ms)`);
+      } catch (error: any) {
+        console.error(`[MCA WEBRTC SIGNAL] connect.rejected (elapsed: ${performance.now() - start}ms)`, { name: error.name, message: error.message });
+        throw error;
+      }
       console.log('[MCA WebRTC] Client registered');
       return this.client;
     } catch (error) {
