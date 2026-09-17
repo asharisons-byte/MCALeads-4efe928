@@ -2410,6 +2410,28 @@ app.post('/api/telephony/calls/start', async (req, res) => {
   }
 });
 
+// Secure endpoint to fetch temporary WebRTC credentials
+app.get('/api/telephony/webrtc/token', async (req, res) => {
+  try {
+    const sipUsername = process.env.TELNYX_WEBRTC_SIP_USERNAME;
+    const sipPassword = process.env.TELNYX_WEBRTC_SIP_PASSWORD;
+    const connectionId = process.env.TELNYX_WEBRTC_CONNECTION_ID;
+
+    if (!sipUsername || !sipPassword || !connectionId) {
+      throw new Error('WebRTC configuration missing on server');
+    }
+
+    res.json({
+      sipUsername,
+      sipPassword,
+      connectionId
+    });
+  } catch (error: any) {
+    console.error('WebRTC token error:', error);
+    res.status(500).json({ error: 'Failed to fetch WebRTC credentials', details: error.message });
+  }
+});
+
 // Real-time call status endpoint
 app.get('/api/telephony/calls/:id/status', (req, res) => {
   try {

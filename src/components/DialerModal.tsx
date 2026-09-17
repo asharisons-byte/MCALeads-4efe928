@@ -48,6 +48,7 @@ import {
   formatPhoneNumber,
   getStoredCallRecords,
 } from '../services/telephonyService';
+import { TelnyxWebRTCService } from '../services/telnyxWebRTCService';
 
 interface DialerModalProps {
   isOpen: boolean;
@@ -115,6 +116,8 @@ export const DialerModal: React.FC<DialerModalProps> = ({
   // Timers & Polling refs
   const durationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const statusPollingRef = useRef<NodeJS.Timeout | null>(null);
+  const remoteAudioRef = useRef<HTMLAudioElement>(null);
+  const [isWebRTCConnected, setIsWebRTCConnected] = useState(false);
 
   // When initial lead or phone changes
   useEffect(() => {
@@ -231,6 +234,19 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     setCallState('PREPARING');
     setSelectedOutcome(null);
 
+    // 1. Try WebRTC
+    try {
+      await TelnyxWebRTCService.init();
+      setIsWebRTCConnected(true);
+      await TelnyxWebRTCService.makeCall(phoneNumber, '+14052853816', remoteAudioRef.current!);
+      setCallState('CONNECTED'); // Should be more granular based on Telnyx events, but this is a start
+      return;
+    } catch (e) {
+      console.warn('[WebRTC] Connection failed, falling back to PSTN:', e);
+      setIsWebRTCConnected(false);
+    }
+
+    // 2. Fallback to PSTN
     const callType: CallType = activeLead ? 'Outbound Call' : 'Manual Call';
     const result = await TelephonyService.startCall({
       lead: activeLead,
@@ -241,9 +257,6 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     if (result.success) {
       setActiveCallRecord(result.callRecord);
       setCallState(result.session.status || 'PREPARING');
-
-      // Real Telnyx PSTN calls: state transitions are driven by webhook events (call.initiated, call.ringing, call.answered, call.hangup)
-      // Frontend polling via getCallStatus will receive state updates from telephonyManager.activeCalls synchronized by webhooks
     } else {
       setCallState('FAILED');
     }
@@ -251,6 +264,15 @@ export const DialerModal: React.FC<DialerModalProps> = ({
 
   // Handle Call End
   const handleEndCall = async () => {
+    // 1. If WebRTC call, disconnect it
+    if (isWebRTCConnected) {
+      await TelnyxWebRTCService.disconnect();
+      setIsWebRTCConnected(false);
+      setCallState('COMPLETED');
+      return;
+    }
+
+    // 2. Fallback to PSTN
     if (!activeCallRecord) {
       setCallState('COMPLETED');
       return;
@@ -428,8 +450,8 @@ ${callScript.closing}
                   MCA Professional CRM Dialer
                 </h2>
                 <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  Secure Telephony Active
+                  <span className={`w-1.5 h-1.5 rounded-full ${isWebRTCConnected ? 'bg-emerald-400' : 'bg-slate-400'} animate-pulse`} />
+                  {isWebRTCConnected ? 'WebRTC Connected' : 'PSTN Mode'}
                 </span>
               </div>
               <p className="text-[11px] text-slate-400">
@@ -1325,6 +1347,8 @@ ${callScript.closing}
           </div>
         </div>
       )}
+        {/* Audio element for WebRTC */}
+        <audio ref={remoteAudioRef} autoPlay />
     </div>
   );
 };
