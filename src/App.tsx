@@ -173,7 +173,7 @@ export function App() {
     setLeads(getLeads());
     setActivities(getActivities());
     // Refresh selected lead
-    const current = getLeads().find((l) => l.lead_id === leadId);
+    const current = leads.find((l) => l.lead_id === leadId);
     if (current) setSelectedLead(current);
   };
 
@@ -255,7 +255,7 @@ export function App() {
       }
 
       if (confirmedLeads.length > 0) {
-        const current = getLeads();
+        const current = await getLeads();
         const confirmedIds = new Set(confirmedLeads.map((l) => l.lead_id));
         const remainingCurrent = current.filter((l) => !confirmedIds.has(l.lead_id));
         const combined = [...confirmedLeads, ...remainingCurrent];

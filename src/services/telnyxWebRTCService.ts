@@ -2,6 +2,7 @@ import { TelnyxRTC } from '@telnyx/webrtc';
 
 export const TelnyxWebRTCService = {
   client: null as TelnyxRTC | null,
+  currentCall: null as any | null,
 
   async init() {
     if (this.client) return this.client;
@@ -12,13 +13,13 @@ export const TelnyxWebRTCService = {
       const { sipUsername, sipPassword, connectionId } = await response.json();
 
       this.client = new TelnyxRTC({
-        sipUsername: sipUsername,
-        sipPassword: sipPassword,
+        sip_user: sipUsername,
+        password: sipPassword,
         connection_id: connectionId,
-        // TelnyxRTC SDK handles ICE/STUN/TURN automatically by default
       });
 
       await this.client.connect();
+      console.log('[Telnyx WebRTC] Client connected and registered');
       return this.client;
     } catch (error) {
       console.error('[Telnyx WebRTC] Initialization failed:', error);
@@ -26,24 +27,40 @@ export const TelnyxWebRTCService = {
     }
   },
 
-  async makeCall(destinationNumber: string, callerNumber: string, audioRef: HTMLAudioElement) {
+  async makeCall(destinationNumber: string, callerNumber: string, onStateChange: (state: string) => void, audioRef: HTMLAudioElement) {
     if (!this.client) await this.init();
     
     // @ts-ignore - SDK API
-    const call = await this.client.newCall({
+    this.currentCall = await this.client.newCall({
       destinationNumber,
       callerNumber,
     });
 
-    call.on('remoteStream', (stream: MediaStream) => {
-        audioRef.srcObject = stream;
-        audioRef.play();
+    this.currentCall.on('ringing', () => onStateChange('RINGING'));
+    this.currentCall.on('answered', () => onStateChange('CONNECTED'));
+    this.currentCall.on('ended', () => {
+      onStateChange('ENDED');
+      this.currentCall = null;
     });
 
-    return call;
+    this.currentCall.on('remoteStream', (stream: MediaStream) => {
+        audioRef.srcObject = stream;
+        audioRef.play().catch(e => console.error('Auto-play blocked:', e));
+    });
+
+    return this.currentCall;
+  },
+
+  async mute() {
+    if (this.currentCall) await this.currentCall.mute();
+  },
+
+  async unmute() {
+    if (this.currentCall) await this.currentCall.unmute();
   },
 
   async disconnect() {
+    if (this.currentCall) await this.currentCall.hangup();
     if (this.client) {
       await this.client.disconnect();
       this.client = null;

@@ -1516,7 +1516,7 @@ export async function runMultiAgentPipeline(
 // ----------------------------------------------------------------------------
 
 export async function generateDailyOperationsBriefing(): Promise<AIOperationsBriefing> {
-  const leads = getLeads();
+  const leads = await getLeads();
   const clients = getClients();
   const tasks = getAITasks();
   const approvals = getAIApprovals();
