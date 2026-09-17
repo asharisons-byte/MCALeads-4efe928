@@ -10,7 +10,7 @@ import {
   ActivityEvent,
 } from '../types';
 import { getAgencyConfig } from './agencyConfig.js';
-import { addActivity, updateLead, getLeads } from './leadService';
+import { addActivity, updateLead, getLeads } from './leadService.js';
 import { saveCommunication } from './communicationService';
 
 const SMS_STORAGE_KEY = 'mca_sms_messages_v1';
