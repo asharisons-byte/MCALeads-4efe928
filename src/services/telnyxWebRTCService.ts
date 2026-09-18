@@ -18,12 +18,18 @@ export const TelnyxWebRTCService = {
     });
 
     try {
+      console.log('[MCA-TELNYX] Client creating...');
       const response = await fetch('/api/telephony/webrtc/token');
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(`Failed to fetch WebRTC credentials: ${errorData.details || response.statusText}`);
       }
       const { sipUsername, sipPassword } = await response.json();
+      console.log('[MCA-TELNYX] Token fetch result:', {
+          hasToken: !!sipPassword,
+          tokenLength: sipPassword?.length,
+          tokenPrefix: sipPassword?.substring(0, 10)
+      });
 
       this.client = new TelnyxRTC({
         login: sipUsername,
@@ -31,7 +37,7 @@ export const TelnyxWebRTCService = {
       });
 
       this.client.on('telnyx.ready', () => {
-          console.log('[MCA DIALER TRACE] webrtc:ready');
+          console.log('[MCA-TELNYX] Client ready/registered - SIP registration complete');
           if (this.resolveReady) {
               this.resolveReady();
               this.resolveReady = null;
@@ -39,10 +45,11 @@ export const TelnyxWebRTCService = {
       });
 
       this.client.on('telnyx.notification', (notification: any) => {
-        console.log('[MCA DIALER TRACE] webrtc:notification', {
-          type: notification.type,
-          callState: notification.call?.state,
-          timestamp: Date.now()
+        console.log('[MCA-TELNYX] Notification received:', {
+          type: notification?.type,
+          callState: notification?.call?.state,
+          callId: notification?.call?.id,
+          hasCall: !!notification?.call
         });
 
         if (notification.type === 'callUpdate' && notification.call) {
@@ -57,10 +64,11 @@ export const TelnyxWebRTCService = {
         }
       });
 
+      console.log('[MCA-TELNYX] connect() called');
       await this.client.connect();
       return this.client;
     } catch (error) {
-      console.error('[MCA WebRTC ERROR] stage=initialization', error);
+      console.error('[MCA-TELNYX] Error in call path:', error);
       this.isInitialized = false;
       throw error;
     }
@@ -71,7 +79,7 @@ export const TelnyxWebRTCService = {
     
     // Wait for registration
     if (this.readyPromise) {
-        console.log('[MCA DIALER TRACE] Waiting for webrtc:ready...');
+        console.log('[MCA-TELNYX] Waiting for webrtc:ready...');
         await Promise.race([
             this.readyPromise,
             new Promise((_, reject) => setTimeout(() => reject(new Error('Registration timed out')), 10000))
@@ -81,12 +89,21 @@ export const TelnyxWebRTCService = {
     this.stateChangeCallback = onStateChange;
     this.client!.remoteElement = audioRef;
     
-    console.log(`[MCA DIALER TRACE] webrtc:newCall to ${destinationNumber}`);
+    console.log('[MCA-TELNYX] Attempting newCall() with params:', {
+      destinationNumber,
+      callerNumber,
+      hasClient: !!this.client,
+      isRegistered: true // Tracked by readyPromise
+    });
     
     // @ts-ignore - SDK API
     this.currentCall = await this.client!.newCall({
       destinationNumber,
       callerNumber,
+    });
+    console.log('[MCA-TELNYX] newCall() returned:', {
+        callObject: !!this.currentCall,
+        callType: typeof this.currentCall
     });
     
     return this.currentCall;
