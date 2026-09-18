@@ -39,7 +39,16 @@ export class TelnyxVoiceProvider implements VoiceProvider {
     metadata?: Record<string, any>;
   }): Promise<{ providerCallId: string; status: string }> {
     const fromNumber = params.from || this.defaultFromNumber;
-    const normalizedTo = validateAndNormalizePhone(params.to);
+    const phoneResult = validateAndNormalizePhone(params.to);
+    
+    // Add safe diagnostic logging
+    console.log(`[Telephony] Normalizing phone: ${params.to} -> Result: ${JSON.stringify(phoneResult)}`);
+    
+    if (!phoneResult.valid || !phoneResult.e164) {
+      throw new Error(`Invalid destination phone number for Telnyx: ${params.to}. Reason: ${phoneResult.reason || 'Unknown'}`);
+    }
+    
+    const normalizedTo = phoneResult.e164;
 
     // If Telnyx API key is present in environment, call the real Telnyx Call Control v2 API
     if (this.apiKey) {
