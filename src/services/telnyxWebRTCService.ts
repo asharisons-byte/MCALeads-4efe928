@@ -5,9 +5,17 @@ export const TelnyxWebRTCService = {
   currentCall: null as any | null,
   stateChangeCallback: null as ((state: string) => void) | null,
   previousState: null as string | null,
+  isInitialized: false,
+  readyPromise: null as Promise<void> | null,
+  resolveReady: null as (() => void) | null,
 
   async init() {
-    if (this.client) return this.client;
+    if (this.isInitialized && this.client) return this.client;
+    this.isInitialized = true;
+    
+    this.readyPromise = new Promise((resolve) => {
+        this.resolveReady = resolve;
+    });
 
     try {
       const response = await fetch('/api/telephony/webrtc/token');
@@ -22,6 +30,14 @@ export const TelnyxWebRTCService = {
         password: sipPassword,
       });
 
+      this.client.on('telnyx.ready', () => {
+          console.log('[MCA DIALER TRACE] webrtc:ready');
+          if (this.resolveReady) {
+              this.resolveReady();
+              this.resolveReady = null;
+          }
+      });
+
       this.client.on('telnyx.notification', (notification: any) => {
         console.log('[MCA DIALER TRACE] webrtc:notification', {
           type: notification.type,
@@ -29,21 +45,13 @@ export const TelnyxWebRTCService = {
           timestamp: Date.now()
         });
 
-        if (notification.type === 'callUpdate' && this.stateChangeCallback) {
-          const state = notification.call?.state;
+        if (notification.type === 'callUpdate' && notification.call) {
+          const state = notification.call.state;
           this.currentCall = notification.call;
           console.log(`[MCA DIALER TRACE] webrtc:state:${state} (prev: ${this.previousState})`);
           
-          if (state === 'active') {
-            this.stateChangeCallback('CONNECTED');
-          } else if (state === 'ringing') {
-            this.stateChangeCallback('RINGING');
-          } else if (state === 'ended') {
-            this.stateChangeCallback('ENDED');
-          } else if (state === 'destroy') {
-            console.log('[MCA WebRTC] Ignoring terminal destroy state for UI');
-          } else {
-            this.stateChangeCallback(state);
+          if (this.stateChangeCallback) {
+              this.stateChangeCallback(state);
           }
           this.previousState = state;
         }
@@ -53,12 +61,22 @@ export const TelnyxWebRTCService = {
       return this.client;
     } catch (error) {
       console.error('[MCA WebRTC ERROR] stage=initialization', error);
+      this.isInitialized = false;
       throw error;
     }
   },
 
   async makeCall(destinationNumber: string, callerNumber: string, onStateChange: (state: string) => void, audioRef: HTMLAudioElement) {
     if (!this.client) await this.init();
+    
+    // Wait for registration
+    if (this.readyPromise) {
+        console.log('[MCA DIALER TRACE] Waiting for webrtc:ready...');
+        await Promise.race([
+            this.readyPromise,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Registration timed out')), 10000))
+        ]);
+    }
     
     this.stateChangeCallback = onStateChange;
     this.client!.remoteElement = audioRef;

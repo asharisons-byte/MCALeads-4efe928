@@ -146,6 +146,17 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     });
   };
 
+  const mapTelnyxState = (state: string): CallState => {
+    switch (state) {
+        case 'active': return 'CONNECTED';
+        case 'ringing': return 'RINGING';
+        case 'ended': return 'COMPLETED';
+        case 'hangup': return 'COMPLETED';
+        case 'destroy': return 'COMPLETED';
+        default: return 'CALLING';
+    }
+  };
+
   // When initial lead or phone changes
   useEffect(() => {
     if (initialLead) {
@@ -275,20 +286,12 @@ export const DialerModal: React.FC<DialerModalProps> = ({
         phoneNumber, 
         '+14052853816', 
         (state) => {
-            console.log(`[MCA WebRTC] State: ${state}`);
+            console.log(`[MCA WebRTC] SDK State: ${state}`);
             addDiagnostic(`webrtc:status:${state}`);
-            if (state === 'CONNECTED') {
-                setCallState('CONNECTED');
-                setWebRTCStatus('Connected');
-            } else if (state === 'RINGING') {
-                setCallState('RINGING');
-                setWebRTCStatus('Ringing...');
-            } else if (state === 'ENDED') {
-                setCallState('COMPLETED');
-                setWebRTCStatus('Ended');
-            } else {
-                setWebRTCStatus(state);
-            }
+            
+            const internalState = mapTelnyxState(state);
+            setCallState(internalState);
+            setWebRTCStatus(state);
         }, 
         remoteAudioRef.current!
       );
