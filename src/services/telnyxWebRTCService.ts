@@ -4,6 +4,7 @@ export const TelnyxWebRTCService = {
   client: null as TelnyxRTC | null,
   currentCall: null as any | null,
   stateChangeCallback: null as ((state: string) => void) | null,
+  previousState: null as string | null,
 
   async init() {
     if (this.client) return this.client;
@@ -31,7 +32,7 @@ export const TelnyxWebRTCService = {
         if (notification.type === 'callUpdate' && this.stateChangeCallback) {
           const state = notification.call?.state;
           this.currentCall = notification.call;
-          console.log(`[MCA DIALER TRACE] webrtc:state:${state}`);
+          console.log(`[MCA DIALER TRACE] webrtc:state:${state} (prev: ${this.previousState})`);
           
           if (state === 'active') {
             this.stateChangeCallback('CONNECTED');
@@ -39,9 +40,12 @@ export const TelnyxWebRTCService = {
             this.stateChangeCallback('RINGING');
           } else if (state === 'ended') {
             this.stateChangeCallback('ENDED');
+          } else if (state === 'destroy') {
+            console.log('[MCA WebRTC] Ignoring terminal destroy state for UI');
           } else {
             this.stateChangeCallback(state);
           }
+          this.previousState = state;
         }
       });
 
