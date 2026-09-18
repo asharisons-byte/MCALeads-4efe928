@@ -120,6 +120,32 @@ export const DialerModal: React.FC<DialerModalProps> = ({
   const [isWebRTCConnected, setIsWebRTCConnected] = useState(false);
   const [webRTCStatus, setWebRTCStatus] = useState<string>('Idle');
 
+  // Diagnostic Panel state
+  const [diagnosticInfo, setDiagnosticInfo] = useState<{
+    callId: string;
+    lastError: string;
+    stage: string;
+    code: string;
+    time: string;
+    pstnResult: string;
+  } | null>(null);
+
+  // Helper to log and track diagnostics
+  const addDiagnostic = (stage: string, error: string = '', code: string = '', pstnResult: string = '') => {
+    const diagnosticId = `MCA-CALL-${Date.now().toString().slice(-6)}`;
+    const time = new Date().toLocaleTimeString();
+    console.log(`[MCA DIALER TRACE] ${stage}`, { diagnosticId, error, code, pstnResult, time });
+    
+    setDiagnosticInfo({
+      callId: diagnosticId,
+      lastError: error,
+      stage,
+      code,
+      time,
+      pstnResult
+    });
+  };
+
   // When initial lead or phone changes
   useEffect(() => {
     if (initialLead) {
@@ -235,18 +261,22 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     setCallState('PREPARING');
     setWebRTCStatus('Initializing WebRTC...');
     setSelectedOutcome(null);
+    setDiagnosticInfo(null); // Clear previous diagnostics
 
     // 1. Try WebRTC
     try {
+      addDiagnostic('webrtc:init');
       setWebRTCStatus('Registering...');
       const client = await TelnyxWebRTCService.init();
       
+      addDiagnostic('webrtc:connect:start');
       setWebRTCStatus('Starting WebRTC call...');
       await TelnyxWebRTCService.makeCall(
         phoneNumber, 
         '+14052853816', 
         (state) => {
             console.log(`[MCA WebRTC] State: ${state}`);
+            addDiagnostic(`webrtc:status:${state}`);
             if (state === 'CONNECTED') {
                 setCallState('CONNECTED');
                 setWebRTCStatus('Connected');
@@ -267,6 +297,7 @@ export const DialerModal: React.FC<DialerModalProps> = ({
       return;
     } catch (e: any) {
       console.error('[MCA WebRTC ERROR] Fallback triggered:', e);
+      addDiagnostic('webrtc:connect:error', e.message || 'Unknown WebRTC error', e.code || 'N/A');
       setWebRTCStatus(`Failed: ${e.message || 'Error'}`);
       setIsWebRTCConnected(false);
       // Wait for user to see the error
@@ -274,19 +305,29 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     }
 
     // 2. Fallback to PSTN
+    addDiagnostic('pstn:fallback:start');
     setWebRTCStatus('PSTN Fallback');
     const callType: CallType = activeLead ? 'Outbound Call' : 'Manual Call';
-    const result = await TelephonyService.startCall({
-      lead: activeLead,
-      phoneNumber,
-      callType,
-    });
+    
+    try {
+        const result = await TelephonyService.startCall({
+            lead: activeLead,
+            phoneNumber,
+            callType,
+        });
+        
+        addDiagnostic('pstn:start-success', '', '', JSON.stringify(result));
 
-    if (result.success) {
-      setActiveCallRecord(result.callRecord);
-      setCallState(result.session.status || 'PREPARING');
-    } else {
-      setCallState('FAILED');
+        if (result.success) {
+            setActiveCallRecord(result.callRecord);
+            setCallState(result.session.status || 'PREPARING');
+        } else {
+            addDiagnostic('pstn:start-error', 'PSTN start failed', 'N/A');
+            setCallState('FAILED');
+        }
+    } catch (e: any) {
+        addDiagnostic('pstn:start-error', e.message || 'Unknown PSTN error', 'N/A');
+        setCallState('FAILED');
     }
   };
 
@@ -497,6 +538,30 @@ ${callScript.closing}
             </button>
           </div>
         </div>
+
+        {/* Diagnostic Panel */}
+        {diagnosticInfo && (
+          <div className="px-5 py-3 bg-rose-950/20 border-b border-rose-900/50">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-bold text-rose-300 flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                Call Diagnostics (ID: {diagnosticInfo.callId})
+              </h3>
+              <button 
+                onClick={() => setDiagnosticInfo(null)}
+                className="text-[10px] text-rose-400 hover:text-rose-200 underline"
+              >
+                Clear Error
+              </button>
+            </div>
+            <div className="text-[11px] font-mono text-rose-200/80 space-y-1">
+              <p>Stage: <span className="text-white">{diagnosticInfo.stage}</span></p>
+              <p>Error: <span className="text-white">{diagnosticInfo.lastError || 'N/A'}</span></p>
+              <p>Code: <span className="text-white">{diagnosticInfo.code || 'N/A'}</span></p>
+              <p>Time: <span className="text-white">{diagnosticInfo.time}</span></p>
+            </div>
+          </div>
+        )}
 
         {/* 3-Panel Main Workspace */}
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 min-h-0 overflow-hidden divide-y lg:divide-y-0 lg:divide-x divide-slate-800/80">
