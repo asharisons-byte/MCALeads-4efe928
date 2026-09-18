@@ -2421,6 +2421,13 @@ app.get('/api/telephony/webrtc/token', async (req, res) => {
       throw new Error('WebRTC configuration missing on server');
     }
 
+    res.set({
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'Vercel-CDN-Cache-Control': 'no-store',
+    });
+
     res.json({
       sipUsername,
       sipPassword,

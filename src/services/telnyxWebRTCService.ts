@@ -8,23 +8,51 @@ export const TelnyxWebRTCService = {
   isInitialized: false,
   readyPromise: null as Promise<void> | null,
   resolveReady: null as (() => void) | null,
+  tokenExpiry: 0,
+
+  async getValidToken() {
+      // Refresh 30s before expiry (arbitrary 1 hour for static credentials)
+      const bufferMs = 30_000;
+      if (Date.now() > this.tokenExpiry - bufferMs) {
+          console.log('[MCA-TELNYX] Fetching fresh credentials...');
+          const response = await fetch(`/api/telephony/webrtc/token?t=${Date.now()}`, {
+              method: 'GET',
+              cache: 'no-store',
+              headers: {
+                  'Cache-Control': 'no-cache',
+                  'Pragma': 'no-cache',
+              },
+          });
+          if (!response.ok) {
+              const errorData = await response.json();
+              throw new Error(`Failed to fetch WebRTC credentials: ${errorData.details || response.statusText}`);
+          }
+          const { sipUsername, sipPassword, connectionId } = await response.json();
+          this.tokenExpiry = Date.now() + 3600000; // Assume 1 hour for static credentials
+          return { sipUsername, sipPassword, connectionId };
+      }
+      return null; // Should not happen with current logic
+  },
 
   async init() {
-    if (this.isInitialized && this.client) return this.client;
+    const creds = await this.getValidToken();
+    if (!creds) return this.client; // Already initialized
+
+    // If client exists, disconnect it before re-initializing with new credentials
+    if (this.client) {
+        await this.client.disconnect();
+        this.client = null;
+    }
+
     this.isInitialized = true;
-    
     this.readyPromise = new Promise((resolve) => {
         this.resolveReady = resolve;
     });
 
     try {
       console.log('[MCA-TELNYX] Client creating...');
-      const response = await fetch('/api/telephony/webrtc/token');
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Failed to fetch WebRTC credentials: ${errorData.details || response.statusText}`);
-      }
-      const { sipUsername, sipPassword } = await response.json();
+      const { sipUsername, sipPassword } = creds;
+      
       console.log('[MCA-TELNYX] Token fetch result:', {
           hasToken: !!sipPassword,
           tokenLength: sipPassword?.length,

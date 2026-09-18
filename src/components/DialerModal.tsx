@@ -128,22 +128,41 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     code: string;
     time: string;
     pstnResult: string;
+    tokenStatus: string;
+    tokenFetched: string;
+    tokenExpires: string;
+    wssStatus: string;
+    sipRegistered: string;
   } | null>(null);
 
   // Helper to log and track diagnostics
-  const addDiagnostic = (stage: string, error: string = '', code: string = '', pstnResult: string = '') => {
+  const addDiagnostic = (updates: Partial<{
+    stage: string;
+    error: string;
+    code: string;
+    pstnResult: string;
+    tokenStatus: string;
+    tokenFetched: string;
+    tokenExpires: string;
+    wssStatus: string;
+    sipRegistered: string;
+  }>) => {
     const diagnosticId = `MCA-CALL-${Date.now().toString().slice(-6)}`;
     const time = new Date().toLocaleTimeString();
-    console.log(`[MCA DIALER TRACE] ${stage}`, { diagnosticId, error, code, pstnResult, time });
     
-    setDiagnosticInfo({
-      callId: diagnosticId,
-      lastError: error,
-      stage,
-      code,
+    setDiagnosticInfo(prev => ({
+      callId: prev?.callId || diagnosticId,
+      lastError: updates.error || prev?.lastError || '',
+      stage: updates.stage || prev?.stage || '',
+      code: updates.code || prev?.code || '',
       time,
-      pstnResult
-    });
+      pstnResult: updates.pstnResult || prev?.pstnResult || '',
+      tokenStatus: updates.tokenStatus || prev?.tokenStatus || 'unknown',
+      tokenFetched: updates.tokenFetched || prev?.tokenFetched || 'N/A',
+      tokenExpires: updates.tokenExpires || prev?.tokenExpires || 'N/A',
+      wssStatus: updates.wssStatus || prev?.wssStatus || 'unknown',
+      sipRegistered: updates.sipRegistered || prev?.sipRegistered || 'unknown',
+    }));
   };
 
   const mapTelnyxState = (state: string): CallState => {
@@ -562,6 +581,11 @@ ${callScript.closing}
               <p>Error: <span className="text-white">{diagnosticInfo.lastError || 'N/A'}</span></p>
               <p>Code: <span className="text-white">{diagnosticInfo.code || 'N/A'}</span></p>
               <p>Time: <span className="text-white">{diagnosticInfo.time}</span></p>
+              <p>Token Status: <span className="text-white">{diagnosticInfo.tokenStatus}</span></p>
+              <p>Token Fetched: <span className="text-white">{diagnosticInfo.tokenFetched}</span></p>
+              <p>Token Expires: <span className="text-white">{diagnosticInfo.tokenExpires}</span></p>
+              <p>WSS Connected: <span className="text-white">{diagnosticInfo.wssStatus}</span></p>
+              <p>SIP Registered: <span className="text-white">{diagnosticInfo.sipRegistered}</span></p>
             </div>
           </div>
         )}
