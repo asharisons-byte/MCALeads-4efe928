@@ -664,6 +664,7 @@ export function App() {
             setDialerModalOpen(false);
             setDialerLead(null);
             setDialerPhoneNumber('');
+            setCurrentTab('leads');
             setLeads(await getLeads());
             setActivities(getActivities());
           }}
