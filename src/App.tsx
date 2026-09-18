@@ -660,11 +660,11 @@ export function App() {
           initialLead={dialerLead}
           initialPhoneNumber={dialerPhoneNumber}
           allLeads={leads}
-          onClose={() => {
+          onClose={async () => {
             setDialerModalOpen(false);
             setDialerLead(null);
             setDialerPhoneNumber('');
-            setLeads(getLeads());
+            setLeads(await getLeads());
             setActivities(getActivities());
           }}
           onLeadUpdated={handleUpdateLead}
