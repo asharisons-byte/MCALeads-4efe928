@@ -548,6 +548,7 @@ export type CallState =
   | 'CONNECTED'
   | 'ON_HOLD'
   | 'COMPLETED'
+  | 'PSTN_ACTIVE'
   | 'NO_ANSWER'
   | 'BUSY'
   | 'VOICEMAIL'

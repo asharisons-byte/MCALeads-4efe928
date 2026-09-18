@@ -135,6 +135,12 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     sipRegistered: string;
   } | null>(null);
 
+  useEffect(() => {
+    TelnyxWebRTCService.setDiagnosticCallback((update) => {
+      addDiagnostic(update);
+    });
+  }, []);
+
   // Helper to log and track diagnostics
   const addDiagnostic = (updates: Partial<{
     stage: string;
@@ -205,6 +211,20 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     }
   }, [activeLead]);
 
+  const getCallLabel = (state: CallState) => {
+      switch (state) {
+        case 'IDLE':         return 'Ready to Call';
+        case 'PREPARING':    return 'Preparing...';
+        case 'CALLING':      return 'Calling...';
+        case 'RINGING':      return 'Ringing...';
+        case 'CONNECTED':    return 'Connected';
+        case 'PSTN_ACTIVE':  return 'Connected (PSTN)';
+        case 'ON_HOLD':      return 'On Hold';
+        case 'COMPLETED':    return 'Call Ended';
+        default:             return 'Ready to Call';
+      }
+  };
+
   // Refresh Queue and Recents
   const refreshQueue = () => {
     setCallQueue(TelephonyService.getCallQueue());
@@ -213,7 +233,7 @@ export const DialerModal: React.FC<DialerModalProps> = ({
 
   // Duration Timer management
   useEffect(() => {
-    if (callState === 'CONNECTED') {
+    if (callState === 'CONNECTED' || callState === 'PSTN_ACTIVE') {
       if (!durationTimerRef.current) {
         durationTimerRef.current = setInterval(() => {
           setCallDuration((prev) => prev + 1);
