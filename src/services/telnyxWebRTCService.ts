@@ -60,8 +60,7 @@ export const TelnyxWebRTCService = {
       });
 
       this.client = new TelnyxRTC({
-        login: sipUsername,
-        password: sipPassword,
+        login_token: sipPassword,
       });
 
       this.client.on('telnyx.ready', () => {

@@ -295,18 +295,18 @@ export const DialerModal: React.FC<DialerModalProps> = ({
 
     // 1. Try WebRTC
     try {
-      addDiagnostic('webrtc:init');
+      addDiagnostic({ stage: 'webrtc:init' });
       setWebRTCStatus('Registering...');
       const client = await TelnyxWebRTCService.init();
       
-      addDiagnostic('webrtc:connect:start');
+      addDiagnostic({ stage: 'webrtc:connect:start' });
       setWebRTCStatus('Starting WebRTC call...');
       await TelnyxWebRTCService.makeCall(
         phoneNumber, 
         '+14052853816', 
         (state) => {
             console.log(`[MCA WebRTC] SDK State: ${state}`);
-            addDiagnostic(`webrtc:status:${state}`);
+            addDiagnostic({ stage: `webrtc:status:${state}` });
             
             const internalState = mapTelnyxState(state);
             setCallState(internalState);
@@ -319,7 +319,7 @@ export const DialerModal: React.FC<DialerModalProps> = ({
       return;
     } catch (e: any) {
       console.error('[MCA WebRTC ERROR] Fallback triggered:', e);
-      addDiagnostic('webrtc:connect:error', e.message || 'Unknown WebRTC error', e.code || 'N/A');
+      addDiagnostic({ stage: 'webrtc:connect:error', error: e.message || 'Unknown WebRTC error', code: e.code || 'N/A' });
       setWebRTCStatus(`Failed: ${e.message || 'Error'}`);
       setIsWebRTCConnected(false);
       // Wait for user to see the error
@@ -327,7 +327,7 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     }
 
     // 2. Fallback to PSTN
-    addDiagnostic('pstn:fallback:start');
+    addDiagnostic({ stage: 'pstn:fallback:start' });
     setWebRTCStatus('PSTN Fallback');
     const callType: CallType = activeLead ? 'Outbound Call' : 'Manual Call';
     
@@ -338,17 +338,17 @@ export const DialerModal: React.FC<DialerModalProps> = ({
             callType,
         });
         
-        addDiagnostic('pstn:start-success', '', '', JSON.stringify(result));
+        addDiagnostic({ stage: 'pstn:start-success', pstnResult: JSON.stringify(result) });
 
         if (result.success) {
             setActiveCallRecord(result.callRecord);
             setCallState(result.session.status || 'PREPARING');
         } else {
-            addDiagnostic('pstn:start-error', 'PSTN start failed', 'N/A');
+            addDiagnostic({ stage: 'pstn:start-error', error: 'PSTN start failed', code: 'N/A' });
             setCallState('FAILED');
         }
     } catch (e: any) {
-        addDiagnostic('pstn:start-error', e.message || 'Unknown PSTN error', 'N/A');
+        addDiagnostic({ stage: 'pstn:start-error', error: e.message || 'Unknown PSTN error', code: 'N/A' });
         setCallState('FAILED');
     }
   };
