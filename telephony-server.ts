@@ -71,8 +71,40 @@ export class TelnyxVoiceProvider implements VoiceProvider {
 
       if (response.ok) {
         const data = await response.json();
+        const callControlId = data.data?.call_control_id;
+
+        console.log('[PSTN] Destination call created, call_control_id:', callControlId);
+
+        // Bridge the agent into the call
+        const agentPhone = process.env.TELNYX_AGENT_PHONE_NUMBER;
+        if (agentPhone && callControlId) {
+          console.log('[PSTN] Bridging agent phone:', agentPhone);
+          const bridgeRes = await fetch(
+            `https://api.telnyx.com/v2/calls/${callControlId}/actions/transfer`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${this.apiKey}`,
+              },
+              body: JSON.stringify({
+                to: agentPhone,
+                from: fromNumber,
+              }),
+            }
+          );
+          if (!bridgeRes.ok) {
+            const bridgeErr = await bridgeRes.json().catch(() => ({}));
+            console.warn('[PSTN] Agent bridge failed:', bridgeRes.status, bridgeErr);
+          } else {
+            console.log('[PSTN] Agent bridge initiated successfully');
+          }
+        } else {
+          console.warn('[PSTN] TELNYX_AGENT_PHONE_NUMBER not set — no agent audio bridge');
+        }
+
         return {
-          providerCallId: data.data?.call_control_id,
+          providerCallId: callControlId,
           status: 'CALLING',
         };
       }
@@ -117,7 +149,7 @@ export class TelnyxVoiceProvider implements VoiceProvider {
         // fallback
       }
     }
-    return { status: 'CONNECTED' };
+    return { status: 'UNKNOWN' };
   }
 
   private mapTelnyxState(state: string): string {

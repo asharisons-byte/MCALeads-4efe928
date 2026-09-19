@@ -2415,27 +2415,36 @@ app.get('/api/telephony/webrtc/token', async (req, res) => {
   try {
     const sipUsername = process.env.TELNYX_WEBRTC_SIP_USERNAME;
     const sipPassword = process.env.TELNYX_WEBRTC_SIP_PASSWORD;
-    const connectionId = process.env.TELNYX_WEBRTC_CONNECTION_ID;
 
-    if (!sipUsername || !sipPassword || !connectionId) {
-      throw new Error('WebRTC configuration missing on server');
+    if (!sipUsername || !sipPassword) {
+      console.error('[TOKEN] Missing SIP credentials in environment');
+      return res.status(500).json({
+        error: 'WebRTC credentials not configured',
+        details: 'TELNYX_WEBRTC_SIP_USERNAME and TELNYX_WEBRTC_SIP_PASSWORD are required'
+      });
     }
+
+    console.log('[TOKEN] Serving SIP credentials, username:', sipUsername);
 
     res.set({
       'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
       'Pragma': 'no-cache',
       'Expires': '0',
       'Vercel-CDN-Cache-Control': 'no-store',
+      'Surrogate-Control': 'no-store',
     });
 
     res.json({
-      sipUsername,
-      sipPassword,
-      connectionId
+      sip_username: sipUsername,
+      sip_password: sipPassword,
     });
+
   } catch (error: any) {
-    console.error('WebRTC token error:', error);
-    res.status(500).json({ error: 'Failed to fetch WebRTC credentials', details: error.message });
+    console.error('[TOKEN] Unexpected error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch WebRTC credentials',
+      details: error.message
+    });
   }
 });
 

@@ -553,7 +553,8 @@ export type CallState =
   | 'BUSY'
   | 'VOICEMAIL'
   | 'FAILED'
-  | 'CANCELLED';
+  | 'CANCELLED'
+  | 'UNKNOWN';
 
 export type CallOutcome =
   | 'Interested'

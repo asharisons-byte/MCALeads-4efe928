@@ -8,7 +8,9 @@ export const TelnyxWebRTCService = {
   isInitialized: false,
   readyPromise: null as Promise<void> | null,
   resolveReady: null as (() => void) | null,
+  rejectReady: null as ((e: any) => void) | null,  // ADD — was missing, caused silent crash
   tokenExpiry: 0,
+  audioRef: null as HTMLAudioElement | null,        // ADD — needed for remoteElement at init
   diagnosticCallback: null as ((update: any) => void) | null,
 
   setDiagnosticCallback(cb: (update: any) => void) {
@@ -16,58 +18,75 @@ export const TelnyxWebRTCService = {
   },
 
   async getValidToken() {
-      // Refresh 30s before expiry (arbitrary 1 hour for static credentials)
-      const bufferMs = 30_000;
-      if (Date.now() > this.tokenExpiry - bufferMs) {
-          console.log('[MCA-TELNYX] Fetching fresh credentials...');
-          const response = await fetch(`/api/telephony/webrtc/token?t=${Date.now()}`, {
-              method: 'GET',
-              cache: 'no-store',
-              headers: {
-                  'Cache-Control': 'no-cache',
-                  'Pragma': 'no-cache',
-              },
-          });
-          if (!response.ok) {
-              const errorData = await response.json();
-              this.diagnosticCallback?.({ tokenStatus: 'failed' });
-              throw new Error(`Failed to fetch WebRTC credentials: ${errorData.details || response.statusText}`);
-          }
-          const { sipUsername, sipPassword, connectionId } = await response.json();
-          this.tokenExpiry = Date.now() + 3600000; // Assume 1 hour for static credentials
-          this.diagnosticCallback?.({
-              tokenStatus: 'fresh',
-              tokenFetched: new Date().toLocaleTimeString(),
-              tokenExpires: new Date(this.tokenExpiry).toLocaleTimeString(),
-          });
-          return { sipUsername, sipPassword, connectionId };
+    const bufferMs = 30_000;
+    if (Date.now() > this.tokenExpiry - bufferMs) {
+      console.log('[MCA-TELNYX] Fetching SIP credentials from server...');
+  
+      const response = await fetch(`/api/telephony/webrtc/token?t=${Date.now()}`, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache',
+        },
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        this.diagnosticCallback?.({ tokenStatus: 'failed' });
+        throw new Error(`Credentials fetch failed: ${errorData.details || response.statusText}`);
       }
-      return null; // Should not happen with current logic
+  
+      const data = await response.json();
+  
+      if (!data.sip_username || !data.sip_password) {
+        this.diagnosticCallback?.({ tokenStatus: 'failed' });
+        throw new Error(`Server returned empty SIP credentials. Keys received: ${Object.keys(data).join(', ')}`);
+      }
+  
+      // SIP credentials are static — refresh every 23 hours
+      this.tokenExpiry = Date.now() + 23 * 60 * 60 * 1000;
+  
+      console.log('[MCA-TELNYX] SIP credentials received, username:', data.sip_username);
+  
+      this.diagnosticCallback?.({
+        tokenStatus: 'fresh',
+        tokenFetched: new Date().toLocaleTimeString(),
+        tokenExpires: new Date(this.tokenExpiry).toLocaleTimeString(),
+      });
+  
+      return { sip_username: data.sip_username, sip_password: data.sip_password };
+    }
+    return null;
   },
 
-  async init() {
+  async init(audioRef?: HTMLAudioElement) {
+    if (audioRef) this.audioRef = audioRef;
+  
     const creds = await this.getValidToken();
-    if (!creds) return this.client; // Already initialized
-
-    // If client exists, disconnect it before re-initializing with new credentials
+    if (!creds) return this.client;
+  
     if (this.client) {
-        await this.client.disconnect();
-        this.client = null;
+      await this.client.disconnect();
+      this.client = null;
     }
-
+  
     this.isInitialized = true;
     this.readyPromise = new Promise((resolve, reject) => {
-        this.resolveReady = resolve;
-        this.rejectReady = reject;
+      this.resolveReady = resolve;
+      this.rejectReady = reject;   // now properly assigned
     });
-
+  
     try {
-      console.log('[MCA-TELNYX] Client creating...');
-      const { sipPassword } = creds;
-      
+      console.log('[MCA-TELNYX] Creating TelnyxRTC client...');
+  
       this.client = new TelnyxRTC({
-        login_token: sipPassword,
+        login: creds.sip_username,               // SIP username
+        password: creds.sip_password,            // SIP password
       });
+      if (this.audioRef) {
+        this.client.remoteElement = this.audioRef;
+      }
 
       this.client.on('telnyx.ready', () => {
           console.log('[MCA-TELNYX] Client ready/registered - SIP registration complete');
@@ -117,7 +136,9 @@ export const TelnyxWebRTCService = {
   },
 
   async makeCall(destinationNumber: string, callerNumber: string, onStateChange: (state: string) => void, audioRef: HTMLAudioElement) {
-    if (!this.client) await this.init();
+    this.audioRef = audioRef;  // store BEFORE init() so init can pass it to constructor
+  
+    if (!this.client) await this.init(audioRef);
     
     // Wait for registration
     if (this.readyPromise) {
@@ -129,7 +150,6 @@ export const TelnyxWebRTCService = {
     }
     
     this.stateChangeCallback = onStateChange;
-    this.client!.remoteElement = audioRef;
     
     // ... rest of makeCall
     this.currentCall = await this.client!.newCall({

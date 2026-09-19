@@ -278,8 +278,8 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     ) {
       statusPollingRef.current = setInterval(async () => {
         const res = await TelephonyService.getCallStatus(activeCallRecord.call_id);
-        if (res.status && res.status !== callState) {
-          setCallState(res.status);
+        if (res.status && res.status !== 'UNKNOWN' && res.status !== callState) {
+          setCallState(res.status as CallState);
           if (res.duration !== undefined && res.duration > callDuration) {
             setCallDuration(res.duration);
           }
@@ -362,7 +362,7 @@ export const DialerModal: React.FC<DialerModalProps> = ({
 
         if (result.success) {
             setActiveCallRecord(result.callRecord);
-            setCallState(result.session.status || 'PREPARING');
+            setCallState('PSTN_ACTIVE');
         } else {
             addDiagnostic({ stage: 'pstn:start-error', error: 'PSTN start failed', code: 'N/A' });
             setCallState('FAILED');
@@ -998,6 +998,7 @@ ${callScript.closing}
                 callState === 'CALLING' ||
                 callState === 'RINGING' ||
                 callState === 'CONNECTED' ||
+                callState === 'PSTN_ACTIVE' ||
                 callState === 'ON_HOLD' ? (
                 <div className="w-full flex items-center justify-center gap-3">
                   {/* Mute Button */}
@@ -1468,7 +1469,7 @@ ${callScript.closing}
             </p>
 
             <div className="flex items-center justify-end gap-2.5 pt-2">
-              <audio ref={remoteAudioRef} />
+
               <button
                 onClick={() => setShowDoNotContactConfirm(false)}
                 className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors"
@@ -1489,7 +1490,7 @@ ${callScript.closing}
         </div>
       )}
         {/* Audio element for WebRTC */}
-        <audio ref={remoteAudioRef} autoPlay />
+        <audio ref={remoteAudioRef} autoPlay playsInline style={{ display: 'none' }} />
     </div>
   );
 };
