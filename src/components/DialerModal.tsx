@@ -135,12 +135,6 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     sipRegistered: string;
   } | null>(null);
 
-  useEffect(() => {
-    TelnyxWebRTCService.setDiagnosticCallback((update) => {
-      addDiagnostic(update);
-    });
-  }, []);
-
   // Helper to log and track diagnostics
   const addDiagnostic = (updates: Partial<{
     stage: string;
@@ -170,6 +164,17 @@ export const DialerModal: React.FC<DialerModalProps> = ({
       sipRegistered: updates.sipRegistered || prev?.sipRegistered || 'unknown',
     }));
   };
+
+  const addDiagnosticRef = useRef(addDiagnostic);
+  useEffect(() => {
+    addDiagnosticRef.current = addDiagnostic;
+  });
+
+  useEffect(() => {
+    TelnyxWebRTCService.setDiagnosticCallback((update) => {
+      addDiagnosticRef.current(update);
+    });
+  }, []);
 
   const mapTelnyxState = (state: string): CallState => {
     switch (state) {

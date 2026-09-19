@@ -21,6 +21,7 @@ export const TelnyxWebRTCService = {
     const bufferMs = 30_000;
     if (Date.now() > this.tokenExpiry - bufferMs) {
       console.log('[MCA-TELNYX] Fetching SIP credentials from server...');
+      console.log('[MCA-A] getValidToken() entered, tokenExpiry:', new Date(this.tokenExpiry).toISOString());
   
       const response = await fetch(`/api/telephony/webrtc/token?t=${Date.now()}`, {
         method: 'GET',
@@ -31,13 +32,18 @@ export const TelnyxWebRTCService = {
         },
       });
   
+      console.log('[MCA-B] Token fetch response status:', response.status, response.ok);
+  
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         this.diagnosticCallback?.({ tokenStatus: 'failed' });
+        console.error('[MCA-CATCH] getValidToken', `Credentials fetch failed: ${errorData.details || response.statusText}`);
         throw new Error(`Credentials fetch failed: ${errorData.details || response.statusText}`);
       }
   
       const data = await response.json();
+      console.log('[MCA-C] Token data keys received:', Object.keys(data || {}));
+      console.log('[MCA-D] sip_username present:', !!data.sip_username, 'sip_password present:', !!data.sip_password);
   
       if (!data.sip_username || !data.sip_password) {
         this.diagnosticCallback?.({ tokenStatus: 'failed' });
@@ -54,6 +60,7 @@ export const TelnyxWebRTCService = {
         tokenFetched: new Date().toLocaleTimeString(),
         tokenExpires: new Date(this.tokenExpiry).toLocaleTimeString(),
       });
+      console.log('[MCA-E] Token diagnostic callback fired');
   
       return { sip_username: data.sip_username, sip_password: data.sip_password };
     }
@@ -137,6 +144,7 @@ export const TelnyxWebRTCService = {
 
   async makeCall(destinationNumber: string, callerNumber: string, onStateChange: (state: string) => void, audioRef: HTMLAudioElement) {
     this.audioRef = audioRef;  // store BEFORE init() so init can pass it to constructor
+    console.log('[MCA-K] Calling newCall() with destination:', destinationNumber?.substring(0, 6) + '***');
   
     if (!this.client) await this.init(audioRef);
     

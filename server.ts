@@ -2412,9 +2412,13 @@ app.post('/api/telephony/calls/start', async (req, res) => {
 
 // Secure endpoint to fetch temporary WebRTC credentials
 app.get('/api/telephony/webrtc/token', async (req, res) => {
+  console.log('[TOKEN-A] Token route called');
   try {
     const sipUsername = process.env.TELNYX_WEBRTC_SIP_USERNAME;
     const sipPassword = process.env.TELNYX_WEBRTC_SIP_PASSWORD;
+
+    console.log('[TOKEN-B] SIP_USERNAME present:', !!sipUsername);
+    console.log('[TOKEN-C] SIP_PASSWORD present:', !!sipPassword);
 
     if (!sipUsername || !sipPassword) {
       console.error('[TOKEN] Missing SIP credentials in environment');
@@ -2425,6 +2429,7 @@ app.get('/api/telephony/webrtc/token', async (req, res) => {
     }
 
     console.log('[TOKEN] Serving SIP credentials, username:', sipUsername);
+    console.log('[TOKEN-D] Sending credentials, username length:', sipUsername?.length);
 
     res.set({
       'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
