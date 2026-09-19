@@ -4,7 +4,7 @@ import { GoogleGenAI, Type, ThinkingLevel } from '@google/genai';
 import dotenv from 'dotenv';
 import { telephonyManager } from './telephony-server.js';
 import { databaseRoutes } from './src/routes/databaseRoutes.js';
-import { integrationRoutes } from './src/routes/integrationRoutes.js';
+// import { integrationRoutes } from './src/routes/integrationRoutes.js';
 import { initDatabaseDefaults, saveDbAiContent, addDbLeadSms } from './src/db/repository.js';
 
 dotenv.config();
@@ -147,7 +147,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use('/api', databaseRoutes);
 
 // Mount Phase 5C Real Integrations, Webhook Endpoints & System Activation
-app.use('/api', integrationRoutes);
+// app.use('/api', integrationRoutes);
 
 // Lazy initialization for Gemini client
 let geminiClient: GoogleGenAI | null = null;
