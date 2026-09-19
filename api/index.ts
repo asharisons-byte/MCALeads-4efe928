@@ -1,4 +1,4 @@
-import { app } from '../server.js';
+import { app } from '../server.ts';
 
 // Vercel Serverless Function Handler
 // This file wraps the existing Express application for Vercel deployment.
