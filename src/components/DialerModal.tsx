@@ -133,6 +133,9 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     tokenExpires: string;
     wssStatus: string;
     sipRegistered: string;
+    hangupCause: string;
+    hangupCode: string;
+    hangupReason: string;
   } | null>(null);
 
   // Helper to log and track diagnostics
@@ -146,6 +149,9 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     tokenExpires: string;
     wssStatus: string;
     sipRegistered: string;
+    hangupCause: string;
+    hangupCode: string;
+    hangupReason: string;
   }>) => {
     const diagnosticId = `MCA-CALL-${Date.now().toString().slice(-6)}`;
     const time = new Date().toLocaleTimeString();
@@ -162,6 +168,9 @@ export const DialerModal: React.FC<DialerModalProps> = ({
       tokenExpires: updates.tokenExpires || prev?.tokenExpires || 'N/A',
       wssStatus: updates.wssStatus || prev?.wssStatus || 'unknown',
       sipRegistered: updates.sipRegistered || prev?.sipRegistered || 'unknown',
+      hangupCause: updates.hangupCause || prev?.hangupCause || '',
+      hangupCode: updates.hangupCode || prev?.hangupCode || '',
+      hangupReason: updates.hangupReason || prev?.hangupReason || '',
     }));
   };
 
@@ -328,7 +337,7 @@ export const DialerModal: React.FC<DialerModalProps> = ({
       setWebRTCStatus('Starting WebRTC call...');
       await TelnyxWebRTCService.makeCall(
         phoneNumber, 
-        '+14052853816', 
+        import.meta.env.VITE_TELNYX_FROM_NUMBER || '+14052853816', 
         (state) => {
             console.log(`[MCA WebRTC] SDK State: ${state}`);
             addDiagnostic({ stage: `webrtc:status:${state}` });
@@ -347,8 +356,12 @@ export const DialerModal: React.FC<DialerModalProps> = ({
       addDiagnostic({ stage: 'webrtc:connect:error', error: e.message || 'Unknown WebRTC error', code: e.code || 'N/A' });
       setWebRTCStatus(`Failed: ${e.message || 'Error'}`);
       setIsWebRTCConnected(false);
-      // Wait for user to see the error
-      await new Promise(r => setTimeout(r, 1000));
+      
+      // If this is an immediate hangup, wait 3 seconds to show the diagnostic
+      // before falling to PSTN — so the user can read the error
+      const isImmediateHangup = e.message?.includes('hangup') || 
+                                e.message?.includes('Registration timed out') === false;
+      await new Promise(r => setTimeout(r, isImmediateHangup ? 3000 : 1000));
     }
 
     // 2. Fallback to PSTN
@@ -611,6 +624,13 @@ ${callScript.closing}
               <p>Token Expires: <span className="text-white">{diagnosticInfo.tokenExpires}</span></p>
               <p>WSS Connected: <span className="text-white">{diagnosticInfo.wssStatus}</span></p>
               <p>SIP Registered: <span className="text-white">{diagnosticInfo.sipRegistered}</span></p>
+              {diagnosticInfo.hangupCause && (
+                <>
+                  <p>Hangup Cause: <span className="text-red-400">{diagnosticInfo.hangupCause}</span></p>
+                  <p>Hangup Code: <span className="text-red-400">{diagnosticInfo.hangupCode}</span></p>
+                  <p>Hangup Reason: <span className="text-red-400">{diagnosticInfo.hangupReason}</span></p>
+                </>
+              )}
             </div>
           </div>
         )}

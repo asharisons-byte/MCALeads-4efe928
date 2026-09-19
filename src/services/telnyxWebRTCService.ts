@@ -159,6 +159,28 @@ export const TelnyxWebRTCService = {
           } else if (ringingStates.includes(state)) {
             if (this.stateChangeCallback) this.stateChangeCallback(state);
           } else if (terminalStates.includes(state)) {
+            // Extract Telnyx rejection details
+            const cause = notification.call?.cause;
+            const causeCode = notification.call?.causeCode;
+            const sipCode = notification.call?.sipCode || notification.call?.sip_code;
+            const sipReason = notification.call?.sipReason || notification.call?.sip_reason;
+
+            console.error('[MCA-HANGUP] Call terminated:', {
+              state,
+              cause,
+              causeCode,
+              sipCode,
+              sipReason,
+              callId: notification.call?.id,
+            });
+
+            // Surface the rejection reason to diagnostic panel
+            this.diagnosticCallback?.({
+              hangupCause: cause || 'unknown',
+              hangupCode: sipCode ? String(sipCode) : causeCode ? String(causeCode) : 'N/A',
+              hangupReason: sipReason || cause || 'No reason provided',
+            });
+
             if (this.stateChangeCallback) this.stateChangeCallback('hangup');
           } else {
             if (this.stateChangeCallback) this.stateChangeCallback(state);
@@ -199,6 +221,14 @@ export const TelnyxWebRTCService = {
     this.currentCall = await this.client!.newCall({
       destinationNumber,
       callerNumber,
+    });
+    console.log('[MCA-NEWCALL] Initiating call with params:', {
+      destinationNumber,
+      callerNumber,
+      destinationLength: destinationNumber?.length,
+      callerLength: callerNumber?.length,
+      destFormat: destinationNumber?.startsWith('+') ? 'E164' : 'NON-E164',
+      callerFormat: callerNumber?.startsWith('+') ? 'E164' : 'NON-E164',
     });
     console.log('[MCA-TELNYX] newCall() returned:', {
         callObject: !!this.currentCall,
