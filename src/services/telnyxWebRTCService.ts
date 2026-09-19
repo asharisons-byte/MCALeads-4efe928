@@ -119,12 +119,29 @@ export const TelnyxWebRTCService = {
       });
 
       this.client.on('telnyx.notification', (notification: any) => {
-        // ... (rest of notification handler)
+        console.log('[MCA-TELNYX] Notification received:', notification);
+
         if (notification.type === 'callUpdate' && notification.call) {
           const state = notification.call.state;
           this.currentCall = notification.call;
           console.log(`[MCA DIALER TRACE] webrtc:state:${state} (prev: ${this.previousState})`);
           
+          if (state === 'destroyed') {
+            console.log('[MCA-TELNYX] WebRTC Call Destroyed:', notification);
+            this.diagnosticCallback?.({
+              stage: 'webrtc:destroyed',
+              error: 'WebRTC Call Destroyed',
+              pstnResult: JSON.stringify({
+                callId: notification.call.id,
+                direction: notification.call.direction,
+                state: notification.call.state,
+                cause: notification.call.hangup_cause,
+                raw: notification
+              })
+            });
+            return; // Do not map to COMPLETED yet
+          }
+
           if (this.stateChangeCallback) {
               this.stateChangeCallback(state);
           }
