@@ -88,16 +88,17 @@ export const TelnyxWebRTCService = {
       console.log('[MCA-TELNYX] Creating TelnyxRTC client...');
   
       this.client = new TelnyxRTC({
-        login: creds.sip_username,               // SIP username
-        password: creds.sip_password,            // SIP password
-      });
-      if (this.audioRef) {
-        this.client.remoteElement = this.audioRef;
-      }
+        login: creds.sip_username,
+        password: creds.sip_password,
+        remoteElement: this.audioRef || undefined,
+        ringtoneFile: undefined,
+        ringbackFile: undefined,
+        logLevel: 'debug',
+      } as any);
 
       this.client.on('telnyx.ready', () => {
           console.log('[MCA-TELNYX] Client ready/registered - SIP registration complete');
-          this.diagnosticCallback?.({ sipRegistered: true });
+          this.diagnosticCallback?.({ sipRegistered: 'yes' });
           if (this.resolveReady) {
               this.resolveReady();
               this.resolveReady = null;
@@ -106,7 +107,7 @@ export const TelnyxWebRTCService = {
       
       this.client.on('telnyx.error', (error) => {
           console.error('[MCA-TELNYX] SDK Error:', error);
-          this.diagnosticCallback?.({ wssStatus: 'failed', sipRegistered: false });
+          this.diagnosticCallback?.({ wssStatus: 'failed', sipRegistered: 'failed' });
           if (this.rejectReady) {
               this.rejectReady(error);
               this.rejectReady = null;
@@ -118,41 +119,51 @@ export const TelnyxWebRTCService = {
           this.diagnosticCallback?.({ wssStatus: 'connected' });
       });
 
-      this.client.on('telnyx.notification', (notification: any) => {
-        console.log('[MCA-TELNYX] Notification received:', notification);
+      this.client.on('telnyx.socket.error', (error: any) => {
+        console.error('[MCA-TELNYX] Socket error:', JSON.stringify(error));
+        this.diagnosticCallback?.({ wssStatus: 'failed' });
+        if (this.rejectReady) {
+          this.rejectReady(new Error('WebSocket error: ' + JSON.stringify(error)));
+          this.rejectReady = null;
+        }
+      });
 
+      this.client.on('telnyx.socket.close', () => {
+        console.warn('[MCA-TELNYX] Socket closed unexpectedly');
+        this.diagnosticCallback?.({ wssStatus: 'closed' });
+      });
+
+      this.client.on('telnyx.notification', (notification: any) => {
+        console.log('[MCA-TELNYX] Notification received:', {
+          type: notification?.type,
+          callState: notification?.call?.state,
+          callId: notification?.call?.id,
+          hasCall: !!notification?.call
+        });
+      
+        if (!notification) return;
+      
         if (notification.type === 'callUpdate' && notification.call) {
           const state = notification.call.state;
           this.currentCall = notification.call;
+      
           console.log(`[MCA DIALER TRACE] webrtc:state:${state} (prev: ${this.previousState})`);
-          
-          if (state === 'destroyed') {
-            console.log('[MCA-TELNYX] WebRTC Call Destroyed:', {
-              callId: notification.call.id,
-              direction: notification.call.direction,
-              state: notification.call.state,
-              cause: notification.call.hangup_cause,
-              sipCode: notification.call.sip_code || 'N/A',
-              notification: notification
-            });
-            this.diagnosticCallback?.({
-              stage: 'webrtc:destroyed',
-              error: 'WebRTC Call Destroyed',
-              pstnResult: JSON.stringify({
-                callId: notification.call.id,
-                direction: notification.call.direction,
-                state: notification.call.state,
-                cause: notification.call.hangup_cause,
-                sipCode: notification.call.sip_code || 'N/A',
-                raw: notification
-              })
-            });
-            return; // Do not map to COMPLETED yet
+      
+          // Map SDK states to internal states before passing to UI
+          const terminalStates = ['hangup', 'destroy', 'purge'];
+          const activeStates = ['active', 'answering', 'early'];
+          const ringingStates = ['new', 'requesting', 'ringing', 'recovering'];
+      
+          if (activeStates.includes(state)) {
+            if (this.stateChangeCallback) this.stateChangeCallback('active');
+          } else if (ringingStates.includes(state)) {
+            if (this.stateChangeCallback) this.stateChangeCallback(state);
+          } else if (terminalStates.includes(state)) {
+            if (this.stateChangeCallback) this.stateChangeCallback('hangup');
+          } else {
+            if (this.stateChangeCallback) this.stateChangeCallback(state);
           }
-
-          if (this.stateChangeCallback) {
-              this.stateChangeCallback(state);
-          }
+      
           this.previousState = state;
         }
       });

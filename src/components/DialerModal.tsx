@@ -322,7 +322,7 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     try {
       addDiagnostic({ stage: 'webrtc:init' });
       setWebRTCStatus('Registering...');
-      const client = await TelnyxWebRTCService.init();
+      const client = await TelnyxWebRTCService.init(remoteAudioRef.current || undefined);
       
       addDiagnostic({ stage: 'webrtc:connect:start' });
       setWebRTCStatus('Starting WebRTC call...');
