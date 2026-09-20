@@ -247,24 +247,20 @@ export const EmailOutreachView: React.FC<EmailOutreachViewProps> = ({
 
         <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1">
           <div className="text-slate-400 text-xs font-semibold flex items-center justify-between">
-            <span>Verified Lead Emails</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <span>Open Rate</span>
+            <Eye className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-2xl font-bold text-emerald-400">
-            {leads.filter((l) => l.email && l.email.includes('@')).length}
-          </div>
-          <div className="text-[11px] text-slate-500">Available from Oregon CCB dataset</div>
+          <div className="text-2xl font-bold text-emerald-400">--%</div>
+          <div className="text-[11px] text-slate-500">Requires ESP Integration</div>
         </div>
 
         <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1">
           <div className="text-slate-400 text-xs font-semibold flex items-center justify-between">
-            <span>High Personalization</span>
-            <Sparkles className="w-4 h-4 text-indigo-400" />
+            <span>Click-Through Rate</span>
+            <ExternalLink className="w-4 h-4 text-indigo-400" />
           </div>
-          <div className="text-2xl font-bold text-indigo-400">
-            {drafts.filter((d) => d.personalization_level === 'High').length}
-          </div>
-          <div className="text-[11px] text-slate-500">Grounded in CCB &amp; GMB data</div>
+          <div className="text-2xl font-bold text-indigo-400">--%</div>
+          <div className="text-[11px] text-slate-500">Requires ESP Integration</div>
         </div>
       </div>
 

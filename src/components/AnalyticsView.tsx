@@ -1,6 +1,7 @@
 import React from 'react';
 import { Lead } from '../types';
-import { BarChart3, TrendingUp, DollarSign, Award, Target } from 'lucide-react';
+import { BarChart3, TrendingUp, DollarSign, Award, Target, MapPin } from 'lucide-react';
+import { APIProvider, Map, AdvancedMarker, Pin } from '@vis.gl/react-google-maps';
 
 interface AnalyticsViewProps {
   leads: Lead[];
@@ -26,12 +27,16 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ leads }) => {
     serviceRevenue[service] = (serviceRevenue[service] || 0) + (l.estimated_retainer || 0);
   });
 
+  // Geocoding placeholder: in a real app, this would use geocoding API or stored coords.
+  // Using fixed Oregon coordinates for demo based on Lead data.
+  const mapCenter = { lat: 44.5, lng: -120.5 };
+
   return (
     <div id="mca-analytics" className="p-8 max-w-7xl mx-auto space-y-6">
       <div>
         <h1 className="text-2xl font-extrabold text-white tracking-tight">Agency Analytics &amp; Revenue</h1>
         <p className="text-xs text-slate-400 mt-1">
-          Market penetration insights, gap prevalence, and projected retainer revenue for Marketing Charm Agency.
+          Market penetration insights, gap prevalence, projected retainer revenue, and geographic clustering.
         </p>
       </div>
 
@@ -139,6 +144,34 @@ export const AnalyticsView: React.FC<AnalyticsViewProps> = ({ leads }) => {
               );
             })}
           </div>
+        </div>
+      </div>
+
+      {/* Map Visualization */}
+      <div className="p-6 rounded-2xl bg-[#0d121f] border border-slate-800 space-y-4">
+        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-rose-400" />
+          <span>Geographic Lead Clusters</span>
+        </h3>
+        <div className="h-[400px] w-full rounded-xl overflow-hidden border border-slate-800">
+          <APIProvider apiKey={process.env.GOOGLE_MAPS_API_KEY || ''}>
+            <Map defaultCenter={mapCenter} defaultZoom={7} disableDefaultUI={true}>
+              {leads.map((lead, index) => (
+                // In production, use real geocoding coordinates.
+                // Dummy logic to scatter markers in Oregon area.
+                <AdvancedMarker
+                  key={index}
+                  position={{
+                    lat: mapCenter.lat + (Math.random() - 0.5) * 3,
+                    lng: mapCenter.lng + (Math.random() - 0.5) * 3,
+                  }}
+                  title={lead.business_name}
+                >
+                  <Pin background={'#fbbf24'} glyphColor={'#000'} borderColor={'#000'} />
+                </AdvancedMarker>
+              ))}
+            </Map>
+          </APIProvider>
         </div>
       </div>
     </div>

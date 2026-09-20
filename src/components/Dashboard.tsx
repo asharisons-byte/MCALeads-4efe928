@@ -20,6 +20,7 @@ import {
   Activity,
 } from 'lucide-react';
 import { Lead, ActivityEvent } from '../types';
+import { DashboardActivityChart } from './DashboardActivityChart';
 
 interface DashboardProps {
   leads: Lead[];
@@ -190,6 +191,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <div className="text-[11px] text-rose-300/80 mt-0.5">Primary pitch targets</div>
           </div>
         </div>
+      </div>
+      
+      {/* Activity Trend Chart */}
+      <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
+        <h3 className="text-sm font-bold text-white flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-indigo-400" />
+          <span>Activity Trends (Past 30 Days)</span>
+        </h3>
+        <DashboardActivityChart activities={activities} />
       </div>
 
       {/* Sophia's Recommendations Section (Generated from actual CRM records) */}

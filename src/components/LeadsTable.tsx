@@ -8,6 +8,7 @@ import {
   Flame,
   CheckCircle2,
   AlertCircle,
+  AlertTriangle,
   ExternalLink,
   ChevronLeft,
   ChevronRight,
@@ -702,6 +703,11 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                           <span>{lead.business_name}</span>
                           {lead.is_hot_target && (
                             <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400 flex-shrink-0" />
+                          )}
+                          {Math.floor((new Date().getTime() - new Date(lead.updated_at).getTime()) / (1000 * 60 * 60 * 24)) > 7 && (
+                             <div title={`Inactive for ${Math.floor((new Date().getTime() - new Date(lead.updated_at).getTime()) / (1000 * 60 * 60 * 24))} days`}>
+                                <AlertTriangle className="w-3.5 h-3.5 text-rose-500 flex-shrink-0" />
+                             </div>
                           )}
                         </div>
                         <div className="text-[11px] text-slate-400 font-mono mt-0.5">

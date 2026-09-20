@@ -9,6 +9,7 @@ import {
   Bot,
   GitCommit,
   Sparkles,
+  Search,
 } from 'lucide-react';
 import { ActivityEvent } from '../../types';
 
@@ -20,18 +21,27 @@ type LogFilter = 'all' | 'calls' | 'emails' | 'sms' | 'notes';
 
 export const ActivityLog: React.FC<ActivityLogProps> = ({ activities }) => {
   const [filter, setFilter] = useState<LogFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const filteredActivities = useMemo(() => {
+    const lowerQuery = searchQuery.toLowerCase();
     return activities.filter((act) => {
       const type = act.activity_type || act.type;
-      if (filter === 'all') return true;
-      if (filter === 'emails') return type.includes('email');
-      if (filter === 'calls') return type.includes('call');
-      if (filter === 'sms') return type.includes('sms');
-      if (filter === 'notes') return type === 'note_added';
-      return true;
+      const matchesType =
+        filter === 'all' ||
+        (filter === 'emails' && type.includes('email')) ||
+        (filter === 'calls' && type.includes('call')) ||
+        (filter === 'sms' && type.includes('sms')) ||
+        (filter === 'notes' && type === 'note_added');
+      
+      const matchesSearch =
+        !searchQuery ||
+        act.title.toLowerCase().includes(lowerQuery) ||
+        (act.description && act.description.toLowerCase().includes(lowerQuery));
+
+      return matchesType && matchesSearch;
     });
-  }, [activities, filter]);
+  }, [activities, filter, searchQuery]);
 
   const getActivityIcon = (act: ActivityEvent) => {
     const type = act.activity_type || act.type;
@@ -57,6 +67,17 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ activities }) => {
           <option value="sms">SMS</option>
           <option value="notes">Notes</option>
         </select>
+        
+        <div className="relative flex-1">
+          <Search className="absolute left-2 top-2 w-3 h-3 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search activities..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg pl-7 pr-2 py-1.5 focus:outline-none focus:border-indigo-500"
+          />
+        </div>
       </div>
 
       <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
