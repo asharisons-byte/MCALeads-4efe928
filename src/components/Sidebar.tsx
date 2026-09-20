@@ -118,9 +118,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <LayoutDashboard className="w-4 h-4 text-indigo-400" />
                 <span>Command Center</span>
               </div>
-              <span className="px-1.5 py-0.5 text-[9px] rounded font-bold bg-indigo-500/30 text-indigo-200">
-                Phase 5A
-              </span>
             </button>
 
             <button
@@ -169,9 +166,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <FileSpreadsheet className="w-4 h-4 text-indigo-400" />
                 <span>Import Leads</span>
               </div>
-              <span className="px-1.5 py-0.5 text-[9px] rounded font-bold bg-indigo-500/20 text-indigo-300">
-                .CSV
-              </span>
             </button>
 
             <button
@@ -195,9 +189,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div>
           <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
             <span>AI Workforce</span>
-            <span className="text-[9px] px-1.5 py-0.2 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-              Phase 4A
-            </span>
           </div>
           <div className="space-y-1">
             <button
@@ -248,9 +239,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div>
           <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
             <span>Client Experience</span>
-            <span className="text-[9px] px-1.5 py-0.2 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
-              Phase 4B
-            </span>
           </div>
           <div className="space-y-1">
             <button
@@ -292,9 +280,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <Target className="w-4 h-4 text-indigo-400" />
                 <span>Lead Intelligence & Scoring</span>
               </div>
-              <span className="px-1.5 py-0.5 text-[9px] rounded font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                3B
-              </span>
             </button>
 
             <button
@@ -325,9 +310,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <Sparkles className="w-4 h-4 text-purple-400" />
                 <span>Call Intelligence & Objections</span>
               </div>
-              <span className="px-1.5 py-0.5 text-[9px] rounded font-mono font-bold bg-purple-500/20 text-purple-300">
-                2F
-              </span>
             </button>
 
             <button
@@ -399,9 +381,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <FileCheck className="w-4 h-4 text-amber-400" />
                 <span>Audits & Proposals</span>
               </div>
-              <span className="px-1.5 py-0.5 text-[9px] rounded font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
-                Phase 3C
-              </span>
             </button>
 
             <button
@@ -605,7 +584,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <span className="text-[9px] px-1 py-0.2 rounded bg-indigo-500/30 text-indigo-200 uppercase font-semibold">AI Ops</span>
               </div>
               <div className="text-[10px] text-indigo-300/80">
-                Phase 4A Multi-Agent Ready
+                Multi-Agent Ready
               </div>
             </div>
           </div>

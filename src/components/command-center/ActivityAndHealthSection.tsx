@@ -21,15 +21,18 @@ import {
   PipelineMovementEntry,
   TeamMemberPerformance,
 } from '../../services/commandCenterService';
+import { ActivityLog } from './ActivityLog';
 import {
   AgencyHealthScore,
   DataQualityItem,
   DuplicateLeadPair,
+  ActivityEvent,
 } from '../../types';
 
 interface ActivityAndHealthSectionProps {
   activitySummary: DailyActivitySummaryData;
   pipelineMovements: PipelineMovementEntry[];
+  activities: ActivityEvent[];
   healthScore: AgencyHealthScore;
   dataQualityIssues: DataQualityItem[];
   duplicatePairs: DuplicateLeadPair[];
@@ -41,6 +44,7 @@ interface ActivityAndHealthSectionProps {
 export const ActivityAndHealthSection: React.FC<ActivityAndHealthSectionProps> = ({
   activitySummary,
   pipelineMovements,
+  activities,
   healthScore,
   dataQualityIssues,
   duplicatePairs,
@@ -165,48 +169,58 @@ export const ActivityAndHealthSection: React.FC<ActivityAndHealthSectionProps> =
             </div>
           </div>
 
-          {/* Pipeline Movement Tracker */}
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 flex items-center justify-between">
-              <span>Recent Pipeline Stage Movements</span>
-              <span className="text-[11px] text-slate-400">Last 10 stage transitions</span>
-            </div>
+          {/* Pipeline Movement Tracker & Activity Log */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2 flex items-center justify-between">
+                <span>Recent Pipeline Stage Movements</span>
+                <span className="text-[11px] text-slate-400">Last 10 stage transitions</span>
+              </div>
 
-            <div className="divide-y divide-slate-100 border border-slate-100 rounded-lg overflow-hidden">
-              {pipelineMovements.length === 0 ? (
-                <div className="p-4 text-center text-xs text-slate-400">
-                  No stage transitions recorded yet. Advance a lead in Pipeline view to track movement.
-                </div>
-              ) : (
-                pipelineMovements.map((move) => (
-                  <div
-                    key={move.id}
-                    onClick={() => onOpenLead(move.leadId)}
-                    className="p-3 flex items-center justify-between text-xs hover:bg-slate-50/70 transition-colors cursor-pointer group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
-                      <div>
-                        <div className="font-semibold text-slate-900 group-hover:text-indigo-600">
-                          {move.businessName}
-                        </div>
-                        <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
-                          <span className="px-1.5 py-0.5 rounded bg-slate-100 font-medium">
-                            {move.previousStage}
-                          </span>
-                          <ArrowRight className="w-3 h-3 text-slate-400" />
-                          <span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 font-medium">
-                            {move.newStage}
-                          </span>
-                          <span className="text-slate-400 ml-1">• by {move.source}</span>
+              <div className="divide-y divide-slate-100 border border-slate-100 rounded-lg overflow-hidden">
+                {pipelineMovements.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-slate-400">
+                    No stage transitions recorded yet. Advance a lead in Pipeline view to track movement.
+                  </div>
+                ) : (
+                  pipelineMovements.map((move) => (
+                    <div
+                      key={move.id}
+                      onClick={() => onOpenLead(move.leadId)}
+                      className="p-3 flex items-center justify-between text-xs hover:bg-slate-50/70 transition-colors cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-indigo-500"></div>
+                        <div>
+                          <div className="font-semibold text-slate-900 group-hover:text-indigo-600">
+                            {move.businessName}
+                          </div>
+                          <div className="text-[11px] text-slate-500 flex items-center gap-1.5 mt-0.5">
+                            <span className="px-1.5 py-0.5 rounded bg-slate-100 font-medium">
+                              {move.previousStage}
+                            </span>
+                            <ArrowRight className="w-3 h-3 text-slate-400" />
+                            <span className="px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 font-medium">
+                              {move.newStage}
+                            </span>
+                            <span className="text-slate-400 ml-1">• by {move.source}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="text-slate-400 text-[11px]">{move.date}</div>
-                  </div>
-                ))
-              )}
+                      <div className="text-slate-400 text-[11px]">{move.date}</div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* NEW ACTIVITY LOG */}
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">
+                Unified Activity Log
+              </div>
+              <ActivityLog activities={activities} />
             </div>
           </div>
         </div>

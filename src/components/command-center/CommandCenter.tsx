@@ -652,6 +652,7 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
             <ActivityAndHealthSection
               activitySummary={activitySummary}
               pipelineMovements={pipelineMovements}
+              activities={activities}
               healthScore={healthScore}
               dataQualityIssues={dataQualityIssues}
               duplicatePairs={duplicatePairs}
