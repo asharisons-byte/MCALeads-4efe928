@@ -33,6 +33,7 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
   const [county, setCounty] = useState('Multnomah');
   const [state, setState] = useState('OR');
   const [postalCode, setPostalCode] = useState('97201');
+  const [country, setCountry] = useState('USA');
 
   // Digital Presence & Audit Indicators
   const [websiteStatus, setWebsiteStatus] = useState<'Active' | 'No Website' | 'Slow / Unreachable Server'>('Active');
@@ -120,7 +121,7 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
       city,
       county,
       state,
-      country: 'USA',
+      country,
       postal_code: postalCode,
       gmb_status: gmbStatus,
       gmb_rating: rating,
@@ -374,7 +375,7 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
               <span>Location &amp; Service Radius</span>
             </h3>
 
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
               <div className="col-span-2">
                 <label className="block text-slate-300 font-semibold mb-1">Street Address</label>
                 <input
@@ -405,6 +406,16 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
                   type="text"
                   value={county}
                   onChange={(e) => setCounty(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-xs"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Country</label>
+                <input
+                  type="text"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-xs"
                 />
               </div>

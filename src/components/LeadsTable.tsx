@@ -188,6 +188,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       Address: l.address || '',
       City: l.city || '',
       State: l.state || '',
+      Country: l.country || 'USA',
       Niche: l.niche || '',
       'GMB Rating': l.gmb_rating || '',
       'GMB Reviews': l.gmb_review_count || '',
@@ -612,6 +613,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   </div>
                 </th>
                 <th className="p-3.5">Location</th>
+                <th className="p-3.5">Country</th>
                 <th className="p-3.5">Contact</th>
                 <th className="p-3.5">GMB</th>
                 <th className="p-3.5">Website</th>
@@ -642,7 +644,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             <tbody className="divide-y divide-slate-800/60">
               {paginatedLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="p-12 text-center text-slate-400">
+                  <td colSpan={13} className="p-12 text-center text-slate-400">
                     <div className="space-y-3 max-w-sm mx-auto">
                       <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center mx-auto text-slate-400">
                         <Search className="w-5 h-5" />
@@ -721,6 +723,11 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                       <td className="p-3.5 text-slate-300 whitespace-nowrap">
                         <div>{lead.city || 'Portland'}, {lead.state || 'OR'}</div>
                         <div className="text-[10px] text-slate-400">{lead.postal_code || '97201'}</div>
+                      </td>
+
+                      {/* Country */}
+                      <td className="p-3.5 text-slate-300 whitespace-nowrap">
+                        {lead.country || 'USA'}
                       </td>
 
                       {/* Contact */}

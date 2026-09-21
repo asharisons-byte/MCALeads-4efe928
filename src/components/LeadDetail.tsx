@@ -766,6 +766,10 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                 <span className="text-slate-400">Physical Address</span>
                 <span className="text-right text-slate-300">{lead.address || `${lead.city}, ${lead.state}`}</span>
               </div>
+              <div className="flex justify-between py-2 border-b border-slate-800/60">
+                <span className="text-slate-400">Country</span>
+                <span className="text-right text-slate-300">{lead.country || 'USA'}</span>
+              </div>
               <div className="flex justify-between py-2">
                 <span className="text-slate-400">Operating Hours</span>
                 <span className="text-slate-300">{lead.opening_hours || 'Mon-Fri 8:00 AM - 5:00 PM'}</span>
