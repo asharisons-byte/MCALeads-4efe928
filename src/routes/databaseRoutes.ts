@@ -1,6 +1,8 @@
 import express, { Request, Response } from 'express';
 import { getDatabaseDetails, db, schema } from '../db/index.js';
-import { sql } from 'drizzle-orm';
+import { sql, eq, and, desc, count, sum } from 'drizzle-orm';
+import { requireAuth, AuthRequest } from '../middleware/auth.js';
+import { normalizeAppRole, canAccessTeamManagement } from '../utils/roleUtils.js';
 import {
   initDatabaseDefaults,
   getDbLeads,
@@ -30,6 +32,67 @@ import {
 } from '../db/repository.js';
 
 const router = express.Router();
+
+// Team Performance endpoint with proper authentication and authorization
+router.get('/team/performance', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    // Get Firebase UID from authenticated request
+    const firebaseUid = req.user?.uid;
+    
+    if (!firebaseUid) {
+      return res.status(401).json({ error: 'Unauthorized: Missing user identity' });
+    }
+    
+    // Load user from Neon database using Firebase UID
+    const userResult = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.uid, firebaseUid))
+      .limit(1);
+    
+    if (userResult.length === 0) {
+      return res.status(401).json({ error: 'Unauthorized: User not found in database' });
+    }
+    
+    const dbUser = userResult[0];
+    
+    // Normalize role to canonical form
+    const canonicalRole = normalizeAppRole(dbUser.role);
+    
+    // Check if user has AGENCY_DIRECTOR role for team access
+    if (!canonicalRole || !canAccessTeamManagement(canonicalRole)) {
+      return res.status(403).json({ 
+        error: 'Forbidden: Only Agency Director can access team management',
+        requiredRole: 'AGENCY_DIRECTOR',
+        userRole: canonicalRole || dbUser.role
+      });
+    }
+    
+    // Get period from query parameter
+    const period = req.query.period as string || 'This Month';
+    
+    // Fetch team performance data from Neon
+    const performance = await getDbTeamPerformance(period);
+    
+    return res.json({ 
+      success: true,
+      performance,
+      period,
+      currentUser: {
+        id: dbUser.id,
+        displayName: dbUser.displayName,
+        role: dbUser.role,
+        canonicalRole
+      }
+    });
+  } catch (error: any) {
+    console.error('Team performance API error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to fetch team performance',
+      details: error.message 
+    });
+  }
+});
 
 // 1b. Database Diagnostic
 router.get('/debug/db-diagnostic', async (req: Request, res: Response) => {
@@ -318,16 +381,6 @@ router.get('/dashboard/metrics', async (req: Request, res: Response) => {
   try {
     const metrics = await getDbDashboardMetrics();
     return res.json(metrics);
-  } catch (err: any) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
-// 17b. Team Performance
-router.get('/team/performance', async (req: Request, res: Response) => {
-  try {
-    const performance = await getDbTeamPerformance();
-    return res.json({ performance });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
