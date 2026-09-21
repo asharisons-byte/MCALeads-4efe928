@@ -686,6 +686,7 @@ export async function updateDbLead(leadId: string | number, updates: any) {
       if (updates.email !== undefined) updateFields.email = updates.email;
       if (updates.pipeline_stage !== undefined) updateFields.leadStatus = updates.pipeline_stage;
       if (updates.leadStatus !== undefined) updateFields.leadStatus = updates.leadStatus;
+      if (updates.country !== undefined) updateFields.country = updates.country;
 
       const numId = Number(leadId);
       const whereClause = isNaN(numId)

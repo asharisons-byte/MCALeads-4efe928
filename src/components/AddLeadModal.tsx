@@ -412,12 +412,17 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
               
               <div>
                 <label className="block text-slate-300 font-semibold mb-1">Country</label>
-                <input
-                  type="text"
+                <select
                   value={country}
                   onChange={(e) => setCountry(e.target.value)}
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-xs"
-                />
+                >
+                  <option value="USA">United States</option>
+                  <option value="Canada">Canada</option>
+                  <option value="UK">United Kingdom</option>
+                  <option value="Australia">Australia</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
 
               <div>
