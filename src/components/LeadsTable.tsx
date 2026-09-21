@@ -680,8 +680,10 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   return (
                     <tr
                       key={lead.lead_id}
-                      className={`hover:bg-slate-800/40 transition-colors group ${
-                        isSelected ? 'bg-indigo-950/20' : ''
+                      className={`hover:bg-slate-800/40 transition-colors group ${isSelected ? 'bg-indigo-950/20' : ''} ${
+                        ((lead.overall_priority_score || lead.lead_score || 0) > 0)
+                          ? `bg-indigo-900/[${((lead.overall_priority_score || lead.lead_score || 0) / 400).toFixed(2)}]`
+                          : ''
                       }`}
                     >
                       {/* Checkbox */}
