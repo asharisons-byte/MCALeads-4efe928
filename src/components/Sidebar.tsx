@@ -61,6 +61,7 @@ interface SidebarProps {
   callsCount?: number;
   followUpsCount?: number;
   approvalsCount?: number;
+  currentUserRole?: string;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -74,6 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   callsCount = 0,
   followUpsCount = 0,
   approvalsCount = 0,
+  currentUserRole = 'User',
 }) => {
   return (
     <aside
@@ -547,20 +549,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </div>
             </button>
 
-            <button
-              id="nav-team"
-              onClick={() => onNavigate('team')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'team'
-                  ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <UserCheck className="w-4 h-4 text-slate-400" />
-                <span>Team</span>
-              </div>
-            </button>
+            {['Agency Owner', 'Super Admin'].includes(currentUserRole) && (
+              <button
+                id="nav-team"
+                onClick={() => onNavigate('team')}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  currentTab === 'team'
+                    ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <UserCheck className="w-4 h-4 text-slate-400" />
+                  <span>Team</span>
+                </div>
+              </button>
+            )}
           </div>
         </div>
       </div>

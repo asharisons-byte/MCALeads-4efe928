@@ -2,6 +2,7 @@ import { eq, ilike, or, and, desc, asc, sql, inArray } from 'drizzle-orm';
 import { db, isDbConfigured, getDatabaseDetails } from './index.js';
 import * as schema from './schema.js';
 import { OREGON_CCB_LEADS } from '../data/ccbLeadsData.js';
+import { TeamMemberPerformance } from '../types.js';
 
 // ==========================================
 // IN-MEMORY RESILIENT STATE STORAGE
@@ -1270,6 +1271,60 @@ export async function getDbDashboardMetrics() {
 // ==========================================
 // 6. ACTIVITIES & AUDIT LOGS
 // ==========================================
+export async function getDbTeamPerformance() {
+  if (!isDbConfigured) {
+    return [];
+  }
+
+  try {
+    const teamMembers = await db
+      .select({
+        user_id: schema.users.id,
+        name: schema.users.displayName,
+        role: schema.users.role,
+      })
+      .from(schema.users)
+      .where(eq(schema.users.status, 'active'));
+
+    const performanceData: TeamMemberPerformance[] = await Promise.all(
+      teamMembers.map(async (member) => {
+        const calls = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(schema.calls)
+          .where(eq(schema.calls.assignedUserId, member.user_id));
+        
+        const emails = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(schema.activities)
+          .where(and(eq(schema.activities.userId, member.user_id), eq(schema.activities.activityType, 'email_sent')));
+
+        const sms = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(schema.activities)
+          .where(and(eq(schema.activities.userId, member.user_id), eq(schema.activities.activityType, 'sms_sent')));
+
+        return {
+          user_id: String(member.user_id),
+          name: member.name,
+          role: member.role || 'User',
+          is_ai: false,
+          calls_made: Number(calls[0]?.count || 0),
+          emails_sent: Number(emails[0]?.count || 0),
+          sms_sent: Number(sms[0]?.count || 0),
+          follow_ups_completed: 0,
+          meetings_requested: 0,
+          won_revenue: 0,
+        };
+      })
+    );
+
+    return performanceData;
+  } catch (error: any) {
+    console.warn('getDbTeamPerformance failed:', error?.message);
+    return [];
+  }
+}
+
 export async function getDbActivities(limit = 50) {
   // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 

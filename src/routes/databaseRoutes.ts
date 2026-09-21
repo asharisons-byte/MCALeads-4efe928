@@ -26,6 +26,7 @@ import {
   batchImportDbLeads,
   truncateAllLeads,
   deleteAllDbLeads,
+  getDbTeamPerformance,
 } from '../db/repository.js';
 
 const router = express.Router();
@@ -317,6 +318,16 @@ router.get('/dashboard/metrics', async (req: Request, res: Response) => {
   try {
     const metrics = await getDbDashboardMetrics();
     return res.json(metrics);
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// 17b. Team Performance
+router.get('/team/performance', async (req: Request, res: Response) => {
+  try {
+    const performance = await getDbTeamPerformance();
+    return res.json({ performance });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

@@ -10,6 +10,7 @@ import { AddLeadModal } from './components/AddLeadModal';
 import { SophiaModal } from './components/SophiaModal';
 import { AgencySettings } from './components/AgencySettings';
 import { IntegrationsView } from './components/IntegrationsView';
+import { TeamPage } from './components/TeamPage';
 import { LeadListsView } from './components/LeadListsView';
 import { AnalyticsView } from './components/AnalyticsView';
 import { EmailOutreachView } from './components/EmailOutreachView';
@@ -360,6 +361,7 @@ export function App() {
         callsCount={getStoredCallRecords().length}
         followUpsCount={getFollowUpTasks().filter((f) => f.status === 'Pending').length}
         approvalsCount={getAIApprovals().filter((a) => a.status === 'Pending').length}
+        currentUserRole={'Agency Owner'}
       />
 
       {/* Main Content Area */}
@@ -591,6 +593,8 @@ export function App() {
             <AgencySettings />
           ) : currentTab === 'integrations' ? (
             <IntegrationsView />
+          ) : currentTab === 'team' ? (
+            <TeamPage />
           ) : (
             <LeadsTable
               leads={leads}
