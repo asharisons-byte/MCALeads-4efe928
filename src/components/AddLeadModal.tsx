@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { COUNTRIES } from '../data/countries';
 import { X, Plus, Sparkles, Building, Phone, Mail, Globe, MapPin, ShieldCheck, DollarSign, Star, FileText } from 'lucide-react';
 import { Lead, PipelineStage } from '../types';
 import { calculateLeadScore } from '../services/scoringService';
@@ -417,11 +418,8 @@ export const AddLeadModal: React.FC<AddLeadModalProps> = ({
                   onChange={(e) => setCountry(e.target.value)}
                   className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-white text-xs"
                 >
-                  <option value="USA">United States</option>
-                  <option value="Canada">Canada</option>
-                  <option value="UK">United Kingdom</option>
-                  <option value="Australia">Australia</option>
-                  <option value="Other">Other</option>
+                  <option value="">Select a country</option>
+                  {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
 

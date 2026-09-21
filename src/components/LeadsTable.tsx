@@ -69,6 +69,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [stageFilter, setStageFilter] = useState<string>('All');
   const [nicheFilter, setNicheFilter] = useState<string>('All');
+  const [countryFilter, setCountryFilter] = useState<string>('All');
   const [sortField, setSortField] = useState<keyof Lead>('lead_score');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -80,13 +81,15 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
   const [showColumnConverter, setShowColumnConverter] = useState(false);
 
-  // Extract unique niches for filter
-  const uniqueNiches = useMemo(() => {
-    const set = new Set<string>();
+  // Extract unique niches and countries for filter
+  const { uniqueNiches, uniqueCountries } = useMemo(() => {
+    const niches = new Set<string>();
+    const countries = new Set<string>();
     leads.forEach((l) => {
-      if (l.niche) set.add(l.niche);
+      if (l.niche) niches.add(l.niche);
+      if (l.country) countries.add(l.country);
     });
-    return Array.from(set);
+    return { uniqueNiches: Array.from(niches), uniqueCountries: Array.from(countries) };
   }, [leads]);
 
   // Filtered Leads
@@ -107,6 +110,12 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
       // Niche Filter
       if (nicheFilter !== 'All' && l.niche !== nicheFilter) return false;
+
+      // Country Filter
+      if (countryFilter !== 'All' && l.country !== countryFilter) return false;
+
+      // Country Filter
+      if (countryFilter !== 'All' && l.country !== countryFilter) return false;
 
       // Search Query
       if (searchQuery.trim()) {
@@ -571,11 +580,28 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             </select>
           </div>
 
+          <div>
+            <label className="block text-slate-400 font-semibold mb-1.5">Country</label>
+            <select
+              value={countryFilter}
+              onChange={(e) => setCountryFilter(e.target.value)}
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-200"
+            >
+              <option value="All">All Countries</option>
+              {uniqueCountries.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex items-end">
             <button
               onClick={() => {
                 setStageFilter('All');
                 setNicheFilter('All');
+                setCountryFilter('All');
                 setSearchQuery('');
               }}
               className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold"
