@@ -32,7 +32,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header
       id="mca-top-header"
-      className="h-16 border-b border-slate-800/80 bg-[#0b0f19]/95 backdrop-blur-md px-6 flex items-center justify-between z-10 sticky top-0"
+      className="h-16 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur-md px-6 flex items-center justify-between z-10 sticky top-0"
     >
       {/* Search Input */}
       <div className="relative w-96">
@@ -50,7 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
               if (searchQuery.trim().length > 0) setShowSearchDropdown(true);
             }}
             placeholder="Search business, phone, email, niche, GMB..."
-            className="w-full bg-slate-900/90 border border-slate-800 text-slate-200 text-xs rounded-lg pl-9 pr-8 py-2 focus:outline-none focus:border-indigo-500/80 focus:ring-1 focus:ring-indigo-500/50 transition-all placeholder:text-slate-500"
+            className="w-full bg-zinc-900 border border-zinc-700 text-zinc-100 text-xs rounded-lg pl-9 pr-8 py-2 focus:outline-none focus:border-zinc-500 focus:ring-1 focus:ring-zinc-500 transition-all placeholder:text-zinc-500"
           />
           {searchQuery && (
             <button

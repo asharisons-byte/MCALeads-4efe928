@@ -78,7 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       id="mca-sidebar"
-      className="w-64 h-screen bg-[#0d121f] border-r border-slate-800/80 flex flex-col flex-shrink-0 select-none z-20"
+      className="w-64 h-screen bg-zinc-950 border-r border-zinc-800 flex flex-col flex-shrink-0 select-none z-20"
     >
       {/* Brand Header */}
       <div className="p-5 border-b border-slate-800/80 bg-gradient-to-b from-slate-900/60 to-transparent">

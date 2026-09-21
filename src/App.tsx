@@ -344,7 +344,7 @@ export function App() {
   }
 
   return (
-    <div id="mca-app-root" className="flex h-screen bg-[#090d16] text-slate-100 antialiased overflow-hidden font-sans">
+    <div id="mca-app-root" className="flex h-screen bg-zinc-950 text-zinc-100 antialiased overflow-hidden font-sans">
       {/* Sidebar */}
       <Sidebar
         currentTab={currentTab}
