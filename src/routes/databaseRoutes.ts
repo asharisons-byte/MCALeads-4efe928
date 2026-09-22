@@ -1,6 +1,8 @@
 import express, { Request, Response } from 'express';
 import { getDatabaseDetails, db, schema } from '../db/index.js';
-import { sql } from 'drizzle-orm';
+import { sql, eq, and, desc, count, sum } from 'drizzle-orm';
+import { requireAuth, AuthRequest } from '../middleware/auth.js';
+import { normalizeAppRole, canAccessTeamManagement } from '../utils/roleUtils.js';
 import {
   initDatabaseDefaults,
   getDbLeads,
@@ -30,6 +32,67 @@ import {
 } from '../db/repository.js';
 
 const router = express.Router();
+
+// Team Performance endpoint with proper authentication and authorization
+router.get('/team/performance', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    // Get Firebase UID from authenticated request
+    const firebaseUid = req.user?.uid;
+    
+    if (!firebaseUid) {
+      return res.status(401).json({ error: 'Unauthorized: Missing user identity' });
+    }
+    
+    // Load user from Neon database using Firebase UID
+    const userResult = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.uid, firebaseUid))
+      .limit(1);
+    
+    if (userResult.length === 0) {
+      return res.status(401).json({ error: 'Unauthorized: User not found in database' });
+    }
+    
+    const dbUser = userResult[0];
+    
+    // Normalize role to canonical form
+    const canonicalRole = normalizeAppRole(dbUser.role);
+    
+    // Check if user has AGENCY_DIRECTOR role for team access
+    if (!canonicalRole || !canAccessTeamManagement(canonicalRole)) {
+      return res.status(403).json({ 
+        error: 'Forbidden: Only Agency Director can access team management',
+        requiredRole: 'AGENCY_DIRECTOR',
+        userRole: canonicalRole || dbUser.role
+      });
+    }
+    
+    // Get period from query parameter
+    const period = req.query.period as string || 'This Month';
+    
+    // Fetch team performance data from Neon
+    const performance = await getDbTeamPerformance(period);
+    
+    return res.json({ 
+      success: true,
+      performance,
+      period,
+      currentUser: {
+        id: dbUser.id,
+        displayName: dbUser.displayName,
+        role: dbUser.role,
+        canonicalRole
+      }
+    });
+  } catch (error: any) {
+    console.error('Team performance API error:', error);
+    return res.status(500).json({ 
+      error: 'Failed to fetch team performance',
+      details: error.message 
+    });
+  }
+});
 
 // 1b. Database Diagnostic
 router.get('/debug/db-diagnostic', async (req: Request, res: Response) => {
@@ -323,16 +386,6 @@ router.get('/dashboard/metrics', async (req: Request, res: Response) => {
   }
 });
 
-// 17b. Team Performance
-router.get('/team/performance', async (req: Request, res: Response) => {
-  try {
-    const performance = await getDbTeamPerformance();
-    return res.json({ performance });
-  } catch (err: any) {
-    return res.status(500).json({ error: err.message });
-  }
-});
-
 // 18. Activities Feed
 router.get('/activities', async (req: Request, res: Response) => {
   try {
@@ -435,6 +488,388 @@ router.post('/import/google-sheet', async (req: Request, res: Response) => {
     return res.json({ success: true, csvText: text, spreadsheetId: id });
   } catch (err: any) {
     return res.status(500).json({ error: err.message || 'Failed to fetch Google Sheet' });
+  }
+});
+
+// ==========================================
+// USER MANAGEMENT & INVITE FLOW
+// ==========================================
+
+// POST /api/users/invite - Create a new user invite
+router.post('/users/invite', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const firebaseUid = req.user?.uid;
+    if (!firebaseUid) {
+      return res.status(401).json({ error: 'Unauthorized: Missing user identity' });
+    }
+
+    // Verify inviter is authorized (Agency Director or Sales Manager)
+    const inviterResult = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.uid, firebaseUid))
+      .limit(1);
+
+    if (inviterResult.length === 0) {
+      return res.status(401).json({ error: 'Unauthorized: User not found' });
+    }
+
+    const inviter = inviterResult[0];
+    const inviterRole = normalizeAppRole(inviter.role);
+    
+    if (!inviterRole || !['AGENCY_DIRECTOR', 'SALES_MANAGER'].includes(inviterRole)) {
+      return res.status(403).json({ error: 'Forbidden: Only Agency Director or Sales Manager can send invites' });
+    }
+
+    const { email, firstName, lastName, role } = req.body;
+
+    if (!email || !firstName || !role) {
+      return res.status(400).json({ error: 'Email, first name, and role are required' });
+    }
+
+    // Check if email already exists
+    const existingUser = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.email, email.toLowerCase()))
+      .limit(1);
+
+    if (existingUser.length > 0) {
+      return res.status(409).json({ error: 'Email already exists in the system' });
+    }
+
+    // Generate invite token
+    const crypto = await import('crypto');
+    const inviteToken = crypto.randomUUID();
+    const inviteExpiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000); // 72 hours
+
+    // Create displayName
+    const displayName = `${firstName} ${lastName || ''}`.trim() || firstName;
+
+    // Insert invited user
+    const [newUser] = await db
+      .insert(schema.users)
+      .values({
+        uid: `invite_${inviteToken}`, // Temporary UID for invited users
+        email: email.toLowerCase(),
+        firstName,
+        lastName: lastName || null,
+        displayName,
+        role,
+        status: 'invited',
+        inviteToken,
+        inviteExpiresAt,
+        organizationId: inviter.organizationId,
+      })
+      .returning();
+
+    return res.json({
+      success: true,
+      inviteLink: `/accept-invite?token=${inviteToken}`,
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        displayName: newUser.displayName,
+        role: newUser.role,
+      },
+    });
+  } catch (error: any) {
+    console.error('Invite user error:', error);
+    return res.status(500).json({ error: 'Failed to create invite', details: error.message });
+  }
+});
+
+// GET /api/users/invite/accept?token=xxx - Accept an invite
+router.get('/users/invite/accept', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.query;
+
+    if (!token || typeof token !== 'string') {
+      return res.status(400).json({ error: 'Invalid or missing token' });
+    }
+
+    const userResult = await db
+      .select()
+      .from(schema.users)
+      .where(
+        and(
+          eq(schema.users.inviteToken, token),
+          eq(schema.users.status, 'invited')
+        )
+      )
+      .limit(1);
+
+    if (userResult.length === 0) {
+      return res.status(400).json({ error: 'Invalid or expired invite token' });
+    }
+
+    const user = userResult[0];
+
+    // Check if invite has expired
+    if (user.inviteExpiresAt && new Date(user.inviteExpiresAt) < new Date()) {
+      return res.status(400).json({ error: 'Invite token has expired' });
+    }
+
+    return res.json({
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      displayName: user.displayName,
+    });
+  } catch (error: any) {
+    console.error('Accept invite error:', error);
+    return res.status(500).json({ error: 'Failed to process invite', details: error.message });
+  }
+});
+
+// POST /api/users/invite/complete - Complete invite with Firebase UID
+router.post('/users/invite/complete', async (req: Request, res: Response) => {
+  try {
+    const { token, firebaseUid } = req.body;
+
+    if (!token || !firebaseUid) {
+      return res.status(400).json({ error: 'Token and Firebase UID are required' });
+    }
+
+    const userResult = await db
+      .select()
+      .from(schema.users)
+      .where(
+        and(
+          eq(schema.users.inviteToken, token),
+          eq(schema.users.status, 'invited')
+        )
+      )
+      .limit(1);
+
+    if (userResult.length === 0) {
+      return res.status(400).json({ error: 'Invalid or expired invite token' });
+    }
+
+    const user = userResult[0];
+
+    // Check if invite has expired
+    if (user.inviteExpiresAt && new Date(user.inviteExpiresAt) < new Date()) {
+      return res.status(400).json({ error: 'Invite token has expired' });
+    }
+
+    // Update user with Firebase UID and activate
+    const [updatedUser] = await db
+      .update(schema.users)
+      .set({
+        uid: firebaseUid,
+        status: 'active',
+        inviteToken: null,
+        inviteExpiresAt: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(schema.users.id, user.id))
+      .returning();
+
+    return res.json({
+      success: true,
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        displayName: updatedUser.displayName,
+        role: updatedUser.role,
+      },
+    });
+  } catch (error: any) {
+    console.error('Complete invite error:', error);
+    return res.status(500).json({ error: 'Failed to complete invite', details: error.message });
+  }
+});
+
+// GET /api/users - List all users
+router.get('/users', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const firebaseUid = req.user?.uid;
+    if (!firebaseUid) {
+      return res.status(401).json({ error: 'Unauthorized: Missing user identity' });
+    }
+
+    // Get current user to verify access
+    const currentUserResult = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.uid, firebaseUid))
+      .limit(1);
+
+    if (currentUserResult.length === 0) {
+      return res.status(401).json({ error: 'Unauthorized: User not found' });
+    }
+
+    const currentUser = currentUserResult[0];
+    const canonicalRole = normalizeAppRole(currentUser.role);
+
+    // Only Agency Director and Sales Manager can view all users
+    if (!canonicalRole || !['AGENCY_DIRECTOR', 'SALES_MANAGER'].includes(canonicalRole)) {
+      return res.status(403).json({ error: 'Forbidden: Insufficient permissions' });
+    }
+
+    const users = await db
+      .select({
+        id: schema.users.id,
+        uid: schema.users.uid,
+        displayName: schema.users.displayName,
+        email: schema.users.email,
+        firstName: schema.users.firstName,
+        lastName: schema.users.lastName,
+        role: schema.users.role,
+        status: schema.users.status,
+        lastLoginAt: schema.users.lastLoginAt,
+        createdAt: schema.users.createdAt,
+      })
+      .from(schema.users)
+      .orderBy(desc(schema.users.createdAt));
+
+    return res.json({ users });
+  } catch (error: any) {
+    console.error('List users error:', error);
+    return res.status(500).json({ error: 'Failed to list users', details: error.message });
+  }
+});
+
+// PUT /api/users/:id/role - Update user role
+router.put('/users/:id/role', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const firebaseUid = req.user?.uid;
+    if (!firebaseUid) {
+      return res.status(401).json({ error: 'Unauthorized: Missing user identity' });
+    }
+
+    const { id } = req.params;
+    const { role } = req.body;
+
+    if (!role) {
+      return res.status(400).json({ error: 'Role is required' });
+    }
+
+    // Get current user
+    const currentUserResult = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.uid, firebaseUid))
+      .limit(1);
+
+    if (currentUserResult.length === 0) {
+      return res.status(401).json({ error: 'Unauthorized: User not found' });
+    }
+
+    const currentUser = currentUserResult[0];
+    const canonicalRole = normalizeAppRole(currentUser.role);
+
+    // Only Agency Director can update roles
+    if (canonicalRole !== 'AGENCY_DIRECTOR') {
+      return res.status(403).json({ error: 'Forbidden: Only Agency Director can update roles' });
+    }
+
+    // Cannot update own role
+    if (Number(id) === currentUser.id) {
+      return res.status(400).json({ error: 'Cannot update your own role' });
+    }
+
+    // Get target user
+    const targetUserResult = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.id, Number(id)))
+      .limit(1);
+
+    if (targetUserResult.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const [updatedUser] = await db
+      .update(schema.users)
+      .set({ role, updatedAt: new Date() })
+      .where(eq(schema.users.id, Number(id)))
+      .returning();
+
+    return res.json({
+      success: true,
+      user: {
+        id: updatedUser.id,
+        displayName: updatedUser.displayName,
+        email: updatedUser.email,
+        role: updatedUser.role,
+      },
+    });
+  } catch (error: any) {
+    console.error('Update role error:', error);
+    return res.status(500).json({ error: 'Failed to update role', details: error.message });
+  }
+});
+
+// PUT /api/users/:id/status - Update user status
+router.put('/users/:id/status', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const firebaseUid = req.user?.uid;
+    if (!firebaseUid) {
+      return res.status(401).json({ error: 'Unauthorized: Missing user identity' });
+    }
+
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status || !['active', 'suspended'].includes(status)) {
+      return res.status(400).json({ error: 'Status must be "active" or "suspended"' });
+    }
+
+    // Get current user
+    const currentUserResult = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.uid, firebaseUid))
+      .limit(1);
+
+    if (currentUserResult.length === 0) {
+      return res.status(401).json({ error: 'Unauthorized: User not found' });
+    }
+
+    const currentUser = currentUserResult[0];
+    const canonicalRole = normalizeAppRole(currentUser.role);
+
+    // Only Agency Director can update status
+    if (canonicalRole !== 'AGENCY_DIRECTOR') {
+      return res.status(403).json({ error: 'Forbidden: Only Agency Director can update status' });
+    }
+
+    // Cannot suspend yourself
+    if (Number(id) === currentUser.id) {
+      return res.status(400).json({ error: 'Cannot suspend yourself' });
+    }
+
+    // Get target user
+    const targetUserResult = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.id, Number(id)))
+      .limit(1);
+
+    if (targetUserResult.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const [updatedUser] = await db
+      .update(schema.users)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(schema.users.id, Number(id)))
+      .returning();
+
+    return res.json({
+      success: true,
+      user: {
+        id: updatedUser.id,
+        displayName: updatedUser.displayName,
+        email: updatedUser.email,
+        status: updatedUser.status,
+      },
+    });
+  } catch (error: any) {
+    console.error('Update status error:', error);
+    return res.status(500).json({ error: 'Failed to update status', details: error.message });
   }
 });
 

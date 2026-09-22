@@ -1271,56 +1271,221 @@ export async function getDbDashboardMetrics() {
 // ==========================================
 // 6. ACTIVITIES & AUDIT LOGS
 // ==========================================
-export async function getDbTeamPerformance() {
+export async function getDbTeamPerformance(period: string = 'This Month') {
   if (!isDbConfigured) {
+    // Return empty array when database is not configured - no mock data
+    console.warn('[Team Performance] Database not configured, returning empty result');
     return [];
   }
 
   try {
+    // Calculate date range based on period
+    let startDate: Date, endDate: Date;
+    const now = new Date();
+
+    switch (period) {
+      case 'Today':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        endDate = new Date(now);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case 'This Week':
+        startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - startDate.getDay());
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(now);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case 'This Month':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case 'Last Month':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+        endDate.setHours(23, 59, 59, 999);
+        break;
+      case 'All Time':
+        startDate = new Date(0);
+        endDate = new Date();
+        break;
+      default:
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date(now);
+        endDate.setHours(23, 59, 59, 999);
+    }
+
+    // Get all active users from database
     const teamMembers = await db
       .select({
         user_id: schema.users.id,
-        name: schema.users.displayName,
+        uid: schema.users.uid,
+        firstName: schema.users.firstName,
+        lastName: schema.users.lastName,
+        displayName: schema.users.displayName,
+        email: schema.users.email,
         role: schema.users.role,
+        status: schema.users.status,
+        lastLoginAt: schema.users.lastLoginAt,
+        createdAt: schema.users.createdAt,
       })
       .from(schema.users)
       .where(eq(schema.users.status, 'active'));
 
-    const performanceData: TeamMemberPerformance[] = await Promise.all(
+    const performanceData = await Promise.all(
       teamMembers.map(async (member) => {
-        const calls = await db
+        // Count assigned leads
+        const assignedLeadsResult = await db
           .select({ count: sql<number>`count(*)` })
-          .from(schema.calls)
-          .where(eq(schema.calls.assignedUserId, member.user_id));
-        
-        const emails = await db
-          .select({ count: sql<number>`count(*)` })
-          .from(schema.activities)
-          .where(and(eq(schema.activities.userId, member.user_id), eq(schema.activities.activityType, 'email_sent')));
+          .from(schema.leads)
+          .where(
+            and(
+              eq(schema.leads.assignedUserId, member.user_id),
+              sql`${schema.leads.createdAt} >= ${startDate}`,
+              sql`${schema.leads.createdAt} <= ${endDate}`
+            )
+          );
 
-        const sms = await db
+        // Count contacted leads (status = 'Contacted')
+        const contactedResult = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(schema.leads)
+          .where(
+            and(
+              eq(schema.leads.assignedUserId, member.user_id),
+              eq(schema.leads.leadStatus, 'Contacted'),
+              sql`${schema.leads.createdAt} >= ${startDate}`,
+              sql`${schema.leads.createdAt} <= ${endDate}`
+            )
+          );
+
+        // Count appointments from activities
+        const appointmentsResult = await db
           .select({ count: sql<number>`count(*)` })
           .from(schema.activities)
-          .where(and(eq(schema.activities.userId, member.user_id), eq(schema.activities.activityType, 'sms_sent')));
+          .where(
+            and(
+              eq(schema.activities.userId, member.user_id),
+              eq(schema.activities.activityType, 'meeting_scheduled'),
+              sql`${schema.activities.createdAt} >= ${startDate}`,
+              sql`${schema.activities.createdAt} <= ${endDate}`
+            )
+          );
+
+        // Count won deals (leadStatus = 'Won Retainer' or 'Won')
+        const wonResult = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(schema.leads)
+          .where(
+            and(
+              eq(schema.leads.assignedUserId, member.user_id),
+              eq(schema.leads.leadStatus, 'Won Retainer'),
+              sql`${schema.leads.createdAt} >= ${startDate}`,
+              sql`${schema.leads.createdAt} <= ${endDate}`
+            )
+          );
+
+        // Count calls - join through leads table since calls doesn't have assignedUserId
+        const callsResult = await db
+          .select({
+            count: sql<number>`count(*)`,
+            totalDuration: sql<number>`COALESCE(SUM(${schema.calls.durationSeconds}), 0)`,
+          })
+          .from(schema.calls)
+          .innerJoin(schema.leads, eq(schema.calls.leadId, schema.leads.id))
+          .where(
+            and(
+              eq(schema.leads.assignedUserId, member.user_id),
+              sql`${schema.calls.createdAt} >= ${startDate}`,
+              sql`${schema.calls.createdAt} <= ${endDate}`
+            )
+          );
+
+        // Count emails sent - join through leads table since emailMessages doesn't have assignedUserId
+        const emailsResult = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(schema.emailMessages)
+          .innerJoin(schema.leads, eq(schema.emailMessages.leadId, schema.leads.id))
+          .where(
+            and(
+              eq(schema.leads.assignedUserId, member.user_id),
+              eq(schema.emailMessages.status, 'Sent'),
+              sql`${schema.emailMessages.createdAt} >= ${startDate}`,
+              sql`${schema.emailMessages.createdAt} <= ${endDate}`
+            )
+          );
+
+        // Count SMS sent - join through leads table since smsMessages doesn't have assignedUserId
+        const smsResult = await db
+          .select({ count: sql<number>`count(*)` })
+          .from(schema.smsMessages)
+          .innerJoin(schema.leads, eq(schema.smsMessages.leadId, schema.leads.id))
+          .where(
+            and(
+              eq(schema.leads.assignedUserId, member.user_id),
+              eq(schema.smsMessages.status, 'Sent'),
+              sql`${schema.smsMessages.createdAt} >= ${startDate}`,
+              sql`${schema.smsMessages.createdAt} <= ${endDate}`
+            )
+          );
+
+        // Calculate MRR from won clients (if we have actual deal values)
+        // For now, use estimated_retainer from won leads
+        const mrrResult = await db
+          .select({
+            totalMRR: sql<number>`COALESCE(SUM(${schema.leads.estimatedRetainer}), 0)`,
+          })
+          .from(schema.leads)
+          .where(
+            and(
+              eq(schema.leads.assignedUserId, member.user_id),
+              eq(schema.leads.leadStatus, 'Won Retainer')
+            )
+          );
+
+        // Check if this is Sophia (AI Sales Rep)
+        const isSophia = member.firstName === 'Sophia' || member.displayName === 'Sophia';
+
+        // Calculate conversion rate
+        const assignedLeads = Number(assignedLeadsResult[0]?.count || 0);
+        const contacted = Number(contactedResult[0]?.count || 0);
+        const conversionRate = assignedLeads > 0 ? (contacted / assignedLeads) * 100 : 0;
+
+        // Format display name with role
+        let displayRole = member.role || 'User';
+        let displayName = isSophia ? 'Sophia (AI Sales Rep)' : member.displayName;
 
         return {
           user_id: String(member.user_id),
-          name: member.name,
-          role: member.role || 'User',
-          is_ai: false,
-          calls_made: Number(calls[0]?.count || 0),
-          emails_sent: Number(emails[0]?.count || 0),
-          sms_sent: Number(sms[0]?.count || 0),
+          name: displayName,
+          firstName: member.firstName || member.displayName,
+          lastName: member.lastName || '',
+          email: member.email,
+          role: displayRole,
+          status: member.status,
+          lastLogin: member.lastLoginAt ? member.lastLoginAt.toISOString() : undefined,
+          is_ai: isSophia,
+          assignedLeads,
+          contacted,
+          appointments: Number(appointmentsResult[0]?.count || 0),
+          won: Number(wonResult[0]?.count || 0),
+          conversion: Number(conversionRate.toFixed(1)),
+          calls_made: Number(callsResult[0]?.count || 0),
+          talkTime: Number((callsResult[0]?.totalDuration || 0) / 60), // Convert seconds to minutes
+          emails_sent: Number(emailsResult[0]?.count || 0),
+          sms_sent: Number(smsResult[0]?.count || 0),
+          mrr: Number(mrrResult[0]?.totalMRR || 0),
           follow_ups_completed: 0,
           meetings_requested: 0,
-          won_revenue: 0,
+          won_revenue: Number(mrrResult[0]?.totalMRR || 0),
         };
       })
     );
 
     return performanceData;
   } catch (error: any) {
-    console.warn('getDbTeamPerformance failed:', error?.message);
+    console.error('getDbTeamPerformance failed:', error?.message);
     return [];
   }
 }
