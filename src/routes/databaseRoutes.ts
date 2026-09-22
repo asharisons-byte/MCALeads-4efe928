@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import { getDatabaseDetails, db, schema } from '../db/index.js';
 import { sql, eq, and, desc, count, sum } from 'drizzle-orm';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
-import { normalizeAppRole, canAccessTeamManagement } from '../utils/roleUtils.js';
+import { normalizeAppRole, canAccessTeamManagement, canAssignSophia } from '../utils/roleUtils.js';
 import {
   initDatabaseDefaults,
   getDbLeads,
@@ -250,10 +250,127 @@ router.post('/leads/bulk', async (req: Request, res: Response) => {
   }
 });
 
-// 7. Leads: Update
-router.put('/leads/:id', async (req: Request, res: Response) => {
+// 7. Leads: Update - Requires authentication for ownership changes
+router.put('/leads/:id', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const updated = await updateDbLead(req.params.id, req.body);
+    const firebaseUid = req.user?.uid;
+    
+    if (!firebaseUid) {
+      return res.status(401).json({ error: 'Unauthorized: Missing user identity' });
+    }
+    
+    // Load authenticated user from Neon database
+    const userResult = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.uid, firebaseUid))
+      .limit(1);
+    
+    if (!userResult || userResult.length === 0) {
+      return res.status(404).json({ error: 'User not found in database' });
+    }
+    
+    const dbUser = userResult[0];
+    const canonicalRole = normalizeAppRole(dbUser.role as string) || dbUser.role;
+    
+    // Load existing lead to check current ownership
+    const existingLead = await getDbLeadById(req.params.id);
+    if (!existingLead) {
+      return res.status(404).json({ error: 'Lead not found' });
+    }
+    
+    // Handle ownership assignment securely
+    const updates: any = { ...req.body };
+    
+    // Check if ownership change is being requested
+    if (updates.assigned_user !== undefined || updates.assignedTo !== undefined || updates.assigned_to !== undefined) {
+      // Determine the requested owner
+      let requestedOwner = updates.assigned_user || updates.assignedTo || updates.assigned_to;
+      
+      // Check if this is a Sophia assignment request
+      const isSophiaRequest = requestedOwner === 'Sophia (AI Sales Rep)' || 
+                              (typeof requestedOwner === 'object' && requestedOwner.firstName === 'Sophia');
+      
+      if (isSophiaRequest) {
+        // Sophia assignment requires explicit authorization via canAssignSophia()
+        if (!canAssignSophia(canonicalRole)) {
+          return res.status(403).json({ 
+            error: 'You are not authorized to assign leads to Sophia. Only Agency Director and other senior roles can assign Sophia.' 
+          });
+        }
+        // Set Sophia ownership server-side using canonical format
+        updates.assigned_user = {
+          id: null,
+          firstName: 'Sophia',
+          role: 'AI_SALES_REP',
+        };
+      } else if (existingLead.assignedTo === 'Sophia (AI Sales Rep)') {
+        // Protect existing Sophia-owned leads from being reassigned without explicit action
+        // If no explicit new owner is provided, keep Sophia as owner
+        if (!requestedOwner || requestedOwner === 'Sophia (AI Sales Rep)') {
+          // No reassignment requested, preserve Sophia ownership
+          delete updates.assigned_user;
+          delete updates.assignedTo;
+          delete updates.assigned_to;
+        } else {
+          // Explicit reassignment from Sophia - proceed with validation below
+        }
+      }
+      
+      // Handle non-Sophia ownership changes
+      if (updates.assigned_user !== undefined && !isSophiaRequest) {
+        const assignedUser = updates.assigned_user;
+        
+        // Self-claim operation: assign to authenticated user
+        if (assignedUser.selfClaim === true || !assignedUser.id) {
+          updates.assigned_user = {
+            id: dbUser.id,
+            firstName: dbUser.firstName || dbUser.displayName,
+            role: canonicalRole,
+          };
+        } else {
+          // Attempting to assign to another user - requires Agency Director
+          if (canonicalRole !== 'AGENCY_DIRECTOR') {
+            return res.status(403).json({ 
+              error: 'You are not authorized to assign this lead to another team member. Only Agency Director can reassign leads.' 
+            });
+          }
+          
+          // Validate target user exists in Neon
+          const targetUserResult = await db
+            .select({ 
+              id: schema.users.id, 
+              firstName: schema.users.firstName, 
+              displayName: schema.users.displayName, 
+              role: schema.users.role 
+            })
+            .from(schema.users)
+            .where(eq(schema.users.id, Number(assignedUser.id)))
+            .limit(1);
+          
+          if (!targetUserResult || targetUserResult.length === 0) {
+            return res.status(400).json({ error: 'Invalid assignment target: User not found' });
+          }
+          
+          const targetUser = targetUserResult[0];
+          const targetCanonicalRole = normalizeAppRole(targetUser.role as string) || targetUser.role;
+          updates.assigned_user = {
+            id: targetUser.id,
+            firstName: targetUser.firstName || targetUser.displayName,
+            role: targetCanonicalRole,
+          };
+        }
+      } else if ((updates.assignedTo !== undefined || updates.assigned_to !== undefined) && !isSophiaRequest) {
+        // Direct assignedTo/assigned_to field without proper authorization - block it
+        // This prevents browser from directly setting owner strings
+        console.warn('PUT /leads/:id: Direct assignedTo/assigned_to assignment blocked for security');
+        // Do not update ownership fields - they will be handled by assigned_user logic or remain unchanged
+        delete updates.assignedTo;
+        delete updates.assigned_to;
+      }
+    }
+    
+    const updated = await updateDbLead(req.params.id, updates);
     return res.json({ lead: updated });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });

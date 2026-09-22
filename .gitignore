@@ -1,5 +1,23 @@
 ```
+# Build artifacts
+dist/
+*.js
+*.cjs
+*.map
+
 # Dependencies
 node_modules/
-package-lock.json
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Environment
+.env
+.env.local
+.env.*
+
+# Editors
+.vscode/
+.idea/
 ```
