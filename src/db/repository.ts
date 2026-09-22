@@ -668,20 +668,11 @@ export async function updateDbLead(leadId: string | number, updates: any) {
         }
       }
     } else if (updates.assigned_to !== undefined) {
-      // Legacy field - only allow if it matches Sophia (AI Sales Rep) exactly
-      // This prevents arbitrary reassignment via this legacy field
-      if (updates.assigned_to === 'Sophia (AI Sales Rep)') {
-        target.assignedTo = updates.assigned_to;
-      } else {
-        console.warn('updateDbLead: Direct assigned_to assignment blocked for security');
-      }
+      // Legacy field - blocked for security; ownership must come from validated assigned_user
+      console.warn('updateDbLead: Direct assigned_to assignment blocked for security');
     } else if (updates.assignedTo !== undefined) {
-      // Direct assignedTo field - same restriction as assigned_to
-      if (updates.assignedTo === 'Sophia (AI Sales Rep)') {
-        target.assignedTo = updates.assignedTo;
-      } else {
-        console.warn('updateDbLead: Direct assignedTo assignment blocked for security');
-      }
+      // Direct assignedTo field - blocked for security; ownership must come from validated assigned_user
+      console.warn('updateDbLead: Direct assignedTo assignment blocked for security');
     }
     if (updates.opportunity_angle !== undefined) target.opportunityAngle = updates.opportunity_angle;
     if (updates.opportunityAngle !== undefined) target.opportunityAngle = updates.opportunityAngle;
@@ -724,14 +715,17 @@ export async function updateDbLead(leadId: string | number, updates: any) {
 
       if (updates.assigned_user !== undefined) {
         const dbUser = updates.assigned_user;
-        const roleTitle = ROLE_DISPLAY_TITLES[dbUser.role as AppRole] || dbUser.role;
-        updateFields.assignedTo = `${dbUser.firstName} (${roleTitle})`;
-        updateFields.assignedUserId = dbUser.id;
-      } else if (updates.assigned_to !== undefined) {
-        updateFields.assignedTo = updates.assigned_to;
-      } else if (updates.assignedTo !== undefined) {
-        updateFields.assignedTo = updates.assignedTo;
+        // Handle Sophia case specially
+        if (dbUser.firstName === 'Sophia') {
+          updateFields.assignedTo = 'Sophia (AI Sales Rep)';
+          updateFields.assignedUserId = null;
+        } else {
+          const roleTitle = ROLE_DISPLAY_TITLES[dbUser.role as AppRole] || dbUser.role;
+          updateFields.assignedTo = `${dbUser.firstName} (${roleTitle})`;
+          updateFields.assignedUserId = dbUser.id;
+        }
       }
+      // Do not accept direct assigned_to or assignedTo - these must come through validated assigned_user
 
       const numId = Number(leadId);
       const whereClause = isNaN(numId)

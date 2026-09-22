@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import { getDatabaseDetails, db, schema } from '../db/index.js';
 import { sql, eq, and, desc, count, sum } from 'drizzle-orm';
 import { requireAuth, AuthRequest } from '../middleware/auth.js';
-import { normalizeAppRole, canAccessTeamManagement } from '../utils/roleUtils.js';
+import { normalizeAppRole, canAccessTeamManagement, canAssignSophia } from '../utils/roleUtils.js';
 import {
   initDatabaseDefaults,
   getDbLeads,
@@ -273,46 +273,100 @@ router.put('/leads/:id', requireAuth, async (req: AuthRequest, res: Response) =>
     const dbUser = userResult[0];
     const canonicalRole = normalizeAppRole(dbUser.role as string) || dbUser.role;
     
-    // Handle ownership assignment securely
-    const updates = { ...req.body };
+    // Load existing lead to check current ownership
+    const existingLead = await getDbLeadById(req.params.id);
+    if (!existingLead) {
+      return res.status(404).json({ error: 'Lead not found' });
+    }
     
-    // If assigned_user is provided, validate it comes from database
-    if (updates.assigned_user !== undefined) {
-      // For self-assignment or Agency Director reassignment
-      const assignedUser = updates.assigned_user;
+    // Handle ownership assignment securely
+    const updates: any = { ...req.body };
+    
+    // Check if ownership change is being requested
+    if (updates.assigned_user !== undefined || updates.assignedTo !== undefined || updates.assigned_to !== undefined) {
+      // Determine the requested owner
+      let requestedOwner = updates.assigned_user || updates.assignedTo || updates.assigned_to;
       
-      // If this is a self-claim operation, use the authenticated user's identity
-      if (assignedUser.selfClaim === true || !assignedUser.id) {
-        // Self-claim: assign to authenticated user
-        updates.assigned_user = {
-          id: dbUser.id,
-          firstName: dbUser.firstName || dbUser.displayName,
-          role: canonicalRole,
-        };
-      } else {
-        // Agency Director reassignment: validate target user exists in Neon
-        if (canonicalRole !== 'AGENCY_DIRECTOR') {
-          return res.status(403).json({ error: 'Only Agency Director can reassign leads to other users' });
+      // Check if this is a Sophia assignment request
+      const isSophiaRequest = requestedOwner === 'Sophia (AI Sales Rep)' || 
+                              (typeof requestedOwner === 'object' && requestedOwner.firstName === 'Sophia');
+      
+      if (isSophiaRequest) {
+        // Sophia assignment requires explicit authorization via canAssignSophia()
+        if (!canAssignSophia(canonicalRole)) {
+          return res.status(403).json({ 
+            error: 'You are not authorized to assign leads to Sophia. Only Agency Director and other senior roles can assign Sophia.' 
+          });
         }
-        
-        // Validate target user exists
-        const targetUserResult = await db
-          .select({ id: schema.users.id, firstName: schema.users.firstName, displayName: schema.users.displayName, role: schema.users.role })
-          .from(schema.users)
-          .where(eq(schema.users.id, Number(assignedUser.id)))
-          .limit(1);
-        
-        if (!targetUserResult || targetUserResult.length === 0) {
-          return res.status(400).json({ error: 'Invalid assignment target: User not found' });
-        }
-        
-        const targetUser = targetUserResult[0];
-        const targetCanonicalRole = normalizeAppRole(targetUser.role as string) || targetUser.role;
+        // Set Sophia ownership server-side using canonical format
         updates.assigned_user = {
-          id: targetUser.id,
-          firstName: targetUser.firstName || targetUser.displayName,
-          role: targetCanonicalRole,
+          id: null,
+          firstName: 'Sophia',
+          role: 'AI_SALES_REP',
         };
+      } else if (existingLead.assignedTo === 'Sophia (AI Sales Rep)') {
+        // Protect existing Sophia-owned leads from being reassigned without explicit action
+        // If no explicit new owner is provided, keep Sophia as owner
+        if (!requestedOwner || requestedOwner === 'Sophia (AI Sales Rep)') {
+          // No reassignment requested, preserve Sophia ownership
+          delete updates.assigned_user;
+          delete updates.assignedTo;
+          delete updates.assigned_to;
+        } else {
+          // Explicit reassignment from Sophia - proceed with validation below
+        }
+      }
+      
+      // Handle non-Sophia ownership changes
+      if (updates.assigned_user !== undefined && !isSophiaRequest) {
+        const assignedUser = updates.assigned_user;
+        
+        // Self-claim operation: assign to authenticated user
+        if (assignedUser.selfClaim === true || !assignedUser.id) {
+          updates.assigned_user = {
+            id: dbUser.id,
+            firstName: dbUser.firstName || dbUser.displayName,
+            role: canonicalRole,
+          };
+        } else {
+          // Attempting to assign to another user - requires Agency Director
+          if (canonicalRole !== 'AGENCY_DIRECTOR') {
+            return res.status(403).json({ 
+              error: 'You are not authorized to assign this lead to another team member. Only Agency Director can reassign leads.' 
+            });
+          }
+          
+          // Validate target user exists in Neon
+          const targetUserResult = await db
+            .select({ 
+              id: schema.users.id, 
+              firstName: schema.users.firstName, 
+              displayName: schema.users.displayName, 
+              role: schema.users.role 
+            })
+            .from(schema.users)
+            .where(eq(schema.users.id, Number(assignedUser.id)))
+            .limit(1);
+          
+          if (!targetUserResult || targetUserResult.length === 0) {
+            return res.status(400).json({ error: 'Invalid assignment target: User not found' });
+          }
+          
+          const targetUser = targetUserResult[0];
+          const targetCanonicalRole = normalizeAppRole(targetUser.role as string) || targetUser.role;
+          updates.assigned_user = {
+            id: targetUser.id,
+            firstName: targetUser.firstName || targetUser.displayName,
+            role: targetCanonicalRole,
+          };
+        }
+      } else if ((updates.assignedTo !== undefined || updates.assigned_to !== undefined) && !isSophiaRequest) {
+        // Direct assignedTo/assigned_to field without proper authorization - block it
+        // This prevents browser from directly setting owner strings
+        console.warn('PUT /leads/:id: Direct assignedTo/assigned_to assignment blocked for security');
+        // Do not update ownership fields - they will be handled by assigned_user logic or remain unchanged
+        delete updates.assignedTo;
+        delete updates.assigned_to;
       }
     }
     

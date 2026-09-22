@@ -1432,13 +1432,19 @@ async function updateDbLead(leadId, updates) {
     if (updates.isHotTarget !== void 0) target.isHotTarget = Boolean(updates.isHotTarget);
     if (updates.assigned_user !== void 0) {
       const dbUser = updates.assigned_user;
-      const roleTitle = ROLE_DISPLAY_TITLES[dbUser.role] || dbUser.role;
-      target.assignedTo = `${dbUser.firstName} (${roleTitle})`;
-      target.assignedUserId = dbUser.id;
+      if (dbUser.selfClaim === true || !dbUser.id) {
+        console.warn("updateDbLead: assigned_user without ID detected, skipping assignment");
+      } else {
+        if (dbUser.id && dbUser.firstName) {
+          const roleTitle = ROLE_DISPLAY_TITLES[dbUser.role] || dbUser.role;
+          target.assignedTo = `${dbUser.firstName} (${roleTitle})`;
+          target.assignedUserId = dbUser.id;
+        }
+      }
     } else if (updates.assigned_to !== void 0) {
-      target.assignedTo = updates.assigned_to;
+      console.warn("updateDbLead: Direct assigned_to assignment blocked for security");
     } else if (updates.assignedTo !== void 0) {
-      target.assignedTo = updates.assignedTo;
+      console.warn("updateDbLead: Direct assignedTo assignment blocked for security");
     }
     if (updates.opportunity_angle !== void 0) target.opportunityAngle = updates.opportunity_angle;
     if (updates.opportunityAngle !== void 0) target.opportunityAngle = updates.opportunityAngle;
@@ -1478,13 +1484,14 @@ async function updateDbLead(leadId, updates) {
       if (updates.country !== void 0) updateFields.country = updates.country;
       if (updates.assigned_user !== void 0) {
         const dbUser = updates.assigned_user;
-        const roleTitle = ROLE_DISPLAY_TITLES[dbUser.role] || dbUser.role;
-        updateFields.assignedTo = `${dbUser.firstName} (${roleTitle})`;
-        updateFields.assignedUserId = dbUser.id;
-      } else if (updates.assigned_to !== void 0) {
-        updateFields.assignedTo = updates.assigned_to;
-      } else if (updates.assignedTo !== void 0) {
-        updateFields.assignedTo = updates.assignedTo;
+        if (dbUser.firstName === "Sophia") {
+          updateFields.assignedTo = "Sophia (AI Sales Rep)";
+          updateFields.assignedUserId = null;
+        } else {
+          const roleTitle = ROLE_DISPLAY_TITLES[dbUser.role] || dbUser.role;
+          updateFields.assignedTo = `${dbUser.firstName} (${roleTitle})`;
+          updateFields.assignedUserId = dbUser.id;
+        }
       }
       const numId = Number(leadId);
       const whereClause = isNaN(numId) ? (0, import_drizzle_orm2.eq)(leads.leadId, String(leadId)) : (0, import_drizzle_orm2.or)((0, import_drizzle_orm2.eq)(leads.id, numId), (0, import_drizzle_orm2.eq)(leads.leadId, String(leadId)));
@@ -2749,6 +2756,10 @@ function canAccessTeamManagement(role) {
   const canonical = getCanonicalRole(role);
   return canonical === "AGENCY_DIRECTOR";
 }
+function canAssignSophia(role) {
+  const canonical = getCanonicalRole(role);
+  return !["SDR", "ACCOUNT_EXECUTIVE"].includes(canonical);
+}
 
 // src/routes/databaseRoutes.ts
 var router = import_express.default.Router();
@@ -2932,9 +2943,83 @@ router.post("/leads/bulk", async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
-router.put("/leads/:id", async (req, res) => {
+router.put("/leads/:id", requireAuth, async (req, res) => {
   try {
-    const updated = await updateDbLead(req.params.id, req.body);
+    const firebaseUid = req.user?.uid;
+    if (!firebaseUid) {
+      return res.status(401).json({ error: "Unauthorized: Missing user identity" });
+    }
+    const userResult = await db.select().from(schema_exports.users).where((0, import_drizzle_orm3.eq)(schema_exports.users.uid, firebaseUid)).limit(1);
+    if (!userResult || userResult.length === 0) {
+      return res.status(404).json({ error: "User not found in database" });
+    }
+    const dbUser = userResult[0];
+    const canonicalRole = normalizeAppRole(dbUser.role) || dbUser.role;
+    const existingLead = await getDbLeadById(req.params.id);
+    if (!existingLead) {
+      return res.status(404).json({ error: "Lead not found" });
+    }
+    const updates = { ...req.body };
+    if (updates.assigned_user !== void 0 || updates.assignedTo !== void 0 || updates.assigned_to !== void 0) {
+      let requestedOwner = updates.assigned_user || updates.assignedTo || updates.assigned_to;
+      const isSophiaRequest = requestedOwner === "Sophia (AI Sales Rep)" || typeof requestedOwner === "object" && requestedOwner.firstName === "Sophia";
+      if (isSophiaRequest) {
+        if (!canAssignSophia(canonicalRole)) {
+          return res.status(403).json({
+            error: "You are not authorized to assign leads to Sophia. Only Agency Director and other senior roles can assign Sophia."
+          });
+        }
+        updates.assigned_user = {
+          id: null,
+          firstName: "Sophia",
+          role: "AI_SALES_REP"
+        };
+      } else if (existingLead.assignedTo === "Sophia (AI Sales Rep)") {
+        if (!requestedOwner || requestedOwner === "Sophia (AI Sales Rep)") {
+          delete updates.assigned_user;
+          delete updates.assignedTo;
+          delete updates.assigned_to;
+        } else {
+        }
+      }
+      if (updates.assigned_user !== void 0 && !isSophiaRequest) {
+        const assignedUser = updates.assigned_user;
+        if (assignedUser.selfClaim === true || !assignedUser.id) {
+          updates.assigned_user = {
+            id: dbUser.id,
+            firstName: dbUser.firstName || dbUser.displayName,
+            role: canonicalRole
+          };
+        } else {
+          if (canonicalRole !== "AGENCY_DIRECTOR") {
+            return res.status(403).json({
+              error: "You are not authorized to assign this lead to another team member. Only Agency Director can reassign leads."
+            });
+          }
+          const targetUserResult = await db.select({
+            id: schema_exports.users.id,
+            firstName: schema_exports.users.firstName,
+            displayName: schema_exports.users.displayName,
+            role: schema_exports.users.role
+          }).from(schema_exports.users).where((0, import_drizzle_orm3.eq)(schema_exports.users.id, Number(assignedUser.id))).limit(1);
+          if (!targetUserResult || targetUserResult.length === 0) {
+            return res.status(400).json({ error: "Invalid assignment target: User not found" });
+          }
+          const targetUser = targetUserResult[0];
+          const targetCanonicalRole = normalizeAppRole(targetUser.role) || targetUser.role;
+          updates.assigned_user = {
+            id: targetUser.id,
+            firstName: targetUser.firstName || targetUser.displayName,
+            role: targetCanonicalRole
+          };
+        }
+      } else if ((updates.assignedTo !== void 0 || updates.assigned_to !== void 0) && !isSophiaRequest) {
+        console.warn("PUT /leads/:id: Direct assignedTo/assigned_to assignment blocked for security");
+        delete updates.assignedTo;
+        delete updates.assigned_to;
+      }
+    }
+    const updated = await updateDbLead(req.params.id, updates);
     return res.json({ lead: updated });
   } catch (err) {
     return res.status(500).json({ error: err.message });
