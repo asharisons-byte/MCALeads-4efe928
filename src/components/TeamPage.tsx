@@ -1,87 +1,372 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Phone, Mail, MessageSquare, DollarSign, Activity, Loader2 } from 'lucide-react';
-import { TeamMemberPerformance } from '../types';
+import {
+  Box,
+  Typography,
+  Card,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Button,
+  Tabs,
+  Tab,
+  Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  IconButton,
+} from '@mui/material';
+import BlockIcon from '@mui/icons-material/Block';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import InviteMemberModal from './InviteMemberModal';
 
-export const TeamPage: React.FC = () => {
-  const [performance, setPerformance] = useState<TeamMemberPerformance[]>([]);
+interface User {
+  id: number;
+  uid: string;
+  displayName: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  role: string;
+  status: string;
+  lastLoginAt: Date | null;
+  createdAt: Date;
+}
+
+interface TeamPerformanceData {
+  members: any[];
+  summary: {
+    totalMembers: number;
+    activeMembers: number;
+    totalLeads: number;
+    totalDeals: number;
+    totalRevenue: number;
+  };
+}
+
+const TeamPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState(0);
+  const [users, setUsers] = useState<User[]>([]);
+  const [performance, setPerformance] = useState<TeamPerformanceData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState('This Month');
+
+  const periods = ['Today', 'This Week', 'This Month', 'Last Month', 'All Time'];
 
   useEffect(() => {
-    async function fetchPerformance() {
-      try {
-        const response = await fetch('/api/team/performance');
-        const data = await response.json();
-        if (data.performance) {
-          setPerformance(data.performance);
-        }
-      } catch (err) {
-        console.error('Failed to fetch team performance:', err);
-      } finally {
-        setLoading(false);
-      }
-    }
+    fetchUsers();
     fetchPerformance();
-  }, []);
+  }, [selectedPeriod]);
 
-  if (loading) {
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem('firebaseToken');
+      if (!token) return;
+
+      const response = await fetch('/api/users', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUsers(data.users || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    }
+  };
+
+  const fetchPerformance = async () => {
+    try {
+      const token = localStorage.getItem('firebaseToken');
+      if (!token) return;
+
+      const response = await fetch(`/api/team/performance?period=${encodeURIComponent(selectedPeriod)}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPerformance(data.performance || null);
+      }
+    } catch (error) {
+      console.error('Failed to fetch performance:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRoleChange = async (userId: number, newRole: string) => {
+    try {
+      const token = localStorage.getItem('firebaseToken');
+      const response = await fetch(`/api/users/${userId}/role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ role: newRole }),
+      });
+
+      if (response.ok) {
+        fetchUsers();
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to update role');
+      }
+    } catch (error) {
+      console.error('Failed to update role:', error);
+    }
+  };
+
+  const handleStatusChange = async (userId: number, newStatus: string) => {
+    try {
+      const token = localStorage.getItem('firebaseToken');
+      const response = await fetch(`/api/users/${userId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (response.ok) {
+        fetchUsers();
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to update status');
+      }
+    } catch (error) {
+      console.error('Failed to update status:', error);
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'success';
+      case 'invited':
+        return 'warning';
+      case 'suspended':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
+
+  const formatDate = (date: Date | null) => {
+    if (!date) return 'Never';
+    return new Date(date).toLocaleDateString();
+  };
+
+  const ROLES = [
+    { value: 'AGENCY_DIRECTOR', label: 'Agency Director' },
+    { value: 'SALES_MANAGER', label: 'Sales Manager' },
+    { value: 'SDR', label: 'Sales Development Rep' },
+    { value: 'ACCOUNT_EXECUTIVE', label: 'Account Executive' },
+    { value: 'APPOINTMENT_SETTER', label: 'Appointment Setter' },
+    { value: 'OUTREACH_SPECIALIST', label: 'Outreach Specialist' },
+    { value: 'CLIENT_SUCCESS', label: 'Client Success Manager' },
+    { value: 'OPERATIONS_ANALYST', label: 'Operations Analyst' },
+  ];
+
+  if (loading && activeTab === 1) {
     return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
-      </div>
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography>Loading team data...</Typography>
+      </Box>
     );
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-white">Team Management & Performance</h1>
-      
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-slate-900 border border-slate-800 p-4 rounded-lg">
-          <p className="text-slate-400 text-xs uppercase">Total Members</p>
-          <p className="text-2xl font-bold text-white">{performance.length}</p>
-        </div>
-        <div className="bg-slate-900 border border-slate-800 p-4 rounded-lg">
-          <p className="text-slate-400 text-xs uppercase">Total Calls</p>
-          <p className="text-2xl font-bold text-white">{performance.reduce((sum, m) => sum + m.calls_made, 0)}</p>
-        </div>
-        <div className="bg-slate-900 border border-slate-800 p-4 rounded-lg">
-          <p className="text-slate-400 text-xs uppercase">Emails Sent</p>
-          <p className="text-2xl font-bold text-white">{performance.reduce((sum, m) => sum + m.emails_sent, 0)}</p>
-        </div>
-        <div className="bg-slate-900 border border-slate-800 p-4 rounded-lg">
-          <p className="text-slate-400 text-xs uppercase">Total Won Revenue</p>
-          <p className="text-2xl font-bold text-white">${performance.reduce((sum, m) => sum + m.won_revenue, 0).toLocaleString()}</p>
-        </div>
-      </div>
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h4">Team Management</Typography>
+        <Button variant="contained" onClick={() => setInviteModalOpen(true)}>
+          Invite Member
+        </Button>
+      </Box>
 
-      {/* Performance Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
-        <table className="w-full text-sm text-left">
-          <thead className="bg-slate-800 text-slate-400">
-            <tr>
-              <th className="px-4 py-3">Member</th>
-              <th className="px-4 py-3">Role</th>
-              <th className="px-4 py-3">Calls</th>
-              <th className="px-4 py-3">Emails</th>
-              <th className="px-4 py-3">SMS</th>
-              <th className="px-4 py-3">Won Revenue</th>
-            </tr>
-          </thead>
-          <tbody className="text-slate-200">
-            {performance.map((member) => (
-              <tr key={member.user_id} className="border-t border-slate-800 hover:bg-slate-800/50">
-                <td className="px-4 py-3 font-medium">{member.name}</td>
-                <td className="px-4 py-3">{member.role}</td>
-                <td className="px-4 py-3">{member.calls_made}</td>
-                <td className="px-4 py-3">{member.emails_sent}</td>
-                <td className="px-4 py-3">{member.sms_sent}</td>
-                <td className="px-4 py-3">${member.won_revenue.toLocaleString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+      <Card sx={{ mb: 3 }}>
+        <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)}>
+          <Tab label="Members" />
+          <Tab label="Performance" />
+        </Tabs>
+      </Card>
+
+      {activeTab === 0 && (
+        <Card>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Name</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Role</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Last Login</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.id}>
+                  <TableCell>{user.displayName}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>
+                    <FormControl size="small" sx={{ minWidth: 200 }}>
+                      <Select
+                        value={user.role}
+                        onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                        disabled={user.status === 'suspended'}
+                      >
+                        {ROLES.map((role) => (
+                          <MenuItem key={role.value} value={role.value}>
+                            {role.label}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={user.status}
+                      color={getStatusColor(user.status) as any}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>{formatDate(user.lastLoginAt)}</TableCell>
+                  <TableCell>
+                    <IconButton
+                      size="small"
+                      onClick={() =>
+                        handleStatusChange(
+                          user.id,
+                          user.status === 'active' ? 'suspended' : 'active'
+                        )
+                      }
+                      disabled={user.status === 'invited'}
+                    >
+                      {user.status === 'active' ? (
+                        <BlockIcon fontSize="small" />
+                      ) : (
+                        <CheckCircleIcon fontSize="small" color="success" />
+                      )}
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
+
+      {activeTab === 1 && performance && (
+        <>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel>Period</InputLabel>
+              <Select
+                value={selectedPeriod}
+                label="Period"
+                onChange={(e) => setSelectedPeriod(e.target.value)}
+              >
+                {periods.map((period) => (
+                  <MenuItem key={period} value={period}>
+                    {period}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+
+          <Card sx={{ mb: 3 }}>
+            <Box sx={{ p: 2, display: 'flex', gap: 3 }}>
+              <Box>
+                <Typography variant="h6">{performance.summary.totalMembers}</Typography>
+                <Typography>Total Members</Typography>
+              </Box>
+              <Box>
+                <Typography variant="h6">{performance.summary.activeMembers}</Typography>
+                <Typography>Active Members</Typography>
+              </Box>
+              <Box>
+                <Typography variant="h6">{performance.summary.totalLeads}</Typography>
+                <Typography>Total Leads</Typography>
+              </Box>
+              <Box>
+                <Typography variant="h6">{performance.summary.totalDeals}</Typography>
+                <Typography>Closed Deals</Typography>
+              </Box>
+              <Box>
+                <Typography variant="h6">
+                  ${performance.summary.totalRevenue.toLocaleString()}
+                </Typography>
+                <Typography>Total Revenue</Typography>
+              </Box>
+            </Box>
+          </Card>
+
+          <Card>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Member</TableCell>
+                  <TableCell>Role</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Last Login</TableCell>
+                  <TableCell>Assigned Leads</TableCell>
+                  <TableCell>Contacted</TableCell>
+                  <TableCell>Appointments</TableCell>
+                  <TableCell>Won</TableCell>
+                  <TableCell>Conversion</TableCell>
+                  <TableCell>Calls</TableCell>
+                  <TableCell>Talk Time</TableCell>
+                  <TableCell>SMS</TableCell>
+                  <TableCell>MRR</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {performance.members.map((member: any) => (
+                  <TableRow key={member.id}>
+                    <TableCell>{member.firstName} {member.lastName}</TableCell>
+                    <TableCell>{member.role}</TableCell>
+                    <TableCell>{member.status}</TableCell>
+                    <TableCell>{formatDate(member.lastLogin)}</TableCell>
+                    <TableCell>{member.assignedLeads}</TableCell>
+                    <TableCell>{member.contacted}</TableCell>
+                    <TableCell>{member.appointments}</TableCell>
+                    <TableCell>{member.won}</TableCell>
+                    <TableCell>{member.conversion}%</TableCell>
+                    <TableCell>{member.calls}</TableCell>
+                    <TableCell>{Math.round(member.talkTime)} min</TableCell>
+                    <TableCell>{member.sms}</TableCell>
+                    <TableCell>${member.mrr.toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Card>
+        </>
+      )}
+
+      <InviteMemberModal
+        open={inviteModalOpen}
+        onClose={() => setInviteModalOpen(false)}
+        onSuccess={() => {
+          fetchUsers();
+          setInviteModalOpen(false);
+        }}
+      />
+    </Box>
   );
 };
+
+export default TeamPage;

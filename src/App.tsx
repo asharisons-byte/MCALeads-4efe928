@@ -10,7 +10,7 @@ import { AddLeadModal } from './components/AddLeadModal';
 import { SophiaModal } from './components/SophiaModal';
 import { AgencySettings } from './components/AgencySettings';
 import { IntegrationsView } from './components/IntegrationsView';
-import { TeamPage } from './components/TeamPage';
+import TeamPage from './components/TeamPage';
 import { LeadListsView } from './components/LeadListsView';
 import { AnalyticsView } from './components/AnalyticsView';
 import { EmailOutreachView } from './components/EmailOutreachView';

@@ -45,6 +45,8 @@ export const users = pgTable('users', {
   lastLoginAt: timestamp('last_login_at'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
+  inviteToken: text('invite_token').unique(),
+  inviteExpiresAt: timestamp('invite_expires_at'),
 });
 
 export const roles = pgTable('roles', {
