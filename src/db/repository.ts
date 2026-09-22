@@ -2,7 +2,7 @@ import { eq, ilike, or, and, desc, asc, sql, inArray } from 'drizzle-orm';
 import { db, isDbConfigured, getDatabaseDetails } from './index.js';
 import * as schema from './schema.js';
 import { OREGON_CCB_LEADS } from '../data/ccbLeadsData.js';
-import { TeamMemberPerformance } from '../types.js';
+import { TeamMemberPerformance, AppRole, ROLE_DISPLAY_TITLES } from '../types.js';
 
 // ==========================================
 // IN-MEMORY RESILIENT STATE STORAGE
@@ -648,8 +648,16 @@ export async function updateDbLead(leadId: string | number, updates: any) {
     if (updates.leadStatus !== undefined) target.leadStatus = updates.leadStatus;
     if (updates.is_hot_target !== undefined) target.isHotTarget = Boolean(updates.is_hot_target);
     if (updates.isHotTarget !== undefined) target.isHotTarget = Boolean(updates.isHotTarget);
-    if (updates.assigned_to !== undefined) target.assignedTo = updates.assigned_to;
-    if (updates.assignedTo !== undefined) target.assignedTo = updates.assignedTo;
+    if (updates.assigned_user !== undefined) {
+      const dbUser = updates.assigned_user;
+      const roleTitle = ROLE_DISPLAY_TITLES[dbUser.role as AppRole] || dbUser.role;
+      target.assignedTo = `${dbUser.firstName} (${roleTitle})`;
+      target.assignedUserId = dbUser.id;
+    } else if (updates.assigned_to !== undefined) {
+      target.assignedTo = updates.assigned_to;
+    } else if (updates.assignedTo !== undefined) {
+      target.assignedTo = updates.assignedTo;
+    }
     if (updates.opportunity_angle !== undefined) target.opportunityAngle = updates.opportunity_angle;
     if (updates.opportunityAngle !== undefined) target.opportunityAngle = updates.opportunityAngle;
     if (updates.recommended_service !== undefined) target.recommendedService = updates.recommended_service;
@@ -688,6 +696,17 @@ export async function updateDbLead(leadId: string | number, updates: any) {
       if (updates.pipeline_stage !== undefined) updateFields.leadStatus = updates.pipeline_stage;
       if (updates.leadStatus !== undefined) updateFields.leadStatus = updates.leadStatus;
       if (updates.country !== undefined) updateFields.country = updates.country;
+
+      if (updates.assigned_user !== undefined) {
+        const dbUser = updates.assigned_user;
+        const roleTitle = ROLE_DISPLAY_TITLES[dbUser.role as AppRole] || dbUser.role;
+        updateFields.assignedTo = `${dbUser.firstName} (${roleTitle})`;
+        updateFields.assignedUserId = dbUser.id;
+      } else if (updates.assigned_to !== undefined) {
+        updateFields.assignedTo = updates.assigned_to;
+      } else if (updates.assignedTo !== undefined) {
+        updateFields.assignedTo = updates.assignedTo;
+      }
 
       const numId = Number(leadId);
       const whereClause = isNaN(numId)
