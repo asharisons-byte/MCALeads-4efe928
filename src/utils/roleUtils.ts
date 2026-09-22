@@ -1,4 +1,4 @@
-import { AppRole } from '../types';
+import { AppRole } from '../constants.js';
 
 // Canonical role display titles
 export const ROLE_DISPLAY_TITLES: Record<string, string> = {

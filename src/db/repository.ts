@@ -2,7 +2,8 @@ import { eq, ilike, or, and, desc, asc, sql, inArray } from 'drizzle-orm';
 import { db, isDbConfigured, getDatabaseDetails } from './index.js';
 import * as schema from './schema.js';
 import { OREGON_CCB_LEADS } from '../data/ccbLeadsData.js';
-import { TeamMemberPerformance, AppRole, ROLE_DISPLAY_TITLES } from '../types.js';
+import { TeamMemberPerformance } from '../types.js';
+import { AppRole, ROLE_DISPLAY_TITLES } from '../constants.js';
 
 // ==========================================
 // IN-MEMORY RESILIENT STATE STORAGE
