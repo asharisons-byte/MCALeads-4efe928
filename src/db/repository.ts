@@ -1386,41 +1386,44 @@ export async function getDbTeamPerformance(period: string = 'This Month') {
             )
           );
 
-        // Count calls
+        // Count calls - join through leads table since calls doesn't have assignedUserId
         const callsResult = await db
           .select({
             count: sql<number>`count(*)`,
             totalDuration: sql<number>`COALESCE(SUM(${schema.calls.durationSeconds}), 0)`,
           })
           .from(schema.calls)
+          .innerJoin(schema.leads, eq(schema.calls.leadId, schema.leads.id))
           .where(
             and(
-              eq(schema.calls.assignedUserId, member.user_id),
+              eq(schema.leads.assignedUserId, member.user_id),
               sql`${schema.calls.createdAt} >= ${startDate}`,
               sql`${schema.calls.createdAt} <= ${endDate}`
             )
           );
 
-        // Count emails sent
+        // Count emails sent - join through leads table since emailMessages doesn't have assignedUserId
         const emailsResult = await db
           .select({ count: sql<number>`count(*)` })
           .from(schema.emailMessages)
+          .innerJoin(schema.leads, eq(schema.emailMessages.leadId, schema.leads.id))
           .where(
             and(
-              eq(schema.emailMessages.assignedUserId, member.user_id),
+              eq(schema.leads.assignedUserId, member.user_id),
               eq(schema.emailMessages.status, 'Sent'),
               sql`${schema.emailMessages.createdAt} >= ${startDate}`,
               sql`${schema.emailMessages.createdAt} <= ${endDate}`
             )
           );
 
-        // Count SMS sent
+        // Count SMS sent - join through leads table since smsMessages doesn't have assignedUserId
         const smsResult = await db
           .select({ count: sql<number>`count(*)` })
           .from(schema.smsMessages)
+          .innerJoin(schema.leads, eq(schema.smsMessages.leadId, schema.leads.id))
           .where(
             and(
-              eq(schema.smsMessages.assignedUserId, member.user_id),
+              eq(schema.leads.assignedUserId, member.user_id),
               eq(schema.smsMessages.status, 'Sent'),
               sql`${schema.smsMessages.createdAt} >= ${startDate}`,
               sql`${schema.smsMessages.createdAt} <= ${endDate}`

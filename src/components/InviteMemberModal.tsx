@@ -1,20 +1,7 @@
 import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Box,
-  Typography,
-  IconButton,
-} from '@mui/material';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import { auth } from '../lib/firebase';
+import { User } from 'firebase/auth';
+import { X, Copy, Check, Mail, User as UserIcon, Briefcase, Send } from 'lucide-react';
 
 interface InviteMemberModalProps {
   open: boolean;
@@ -50,15 +37,11 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ open, onClose, on
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    setError(null);
-  };
-
-  const handleRoleChange = (e: any) => {
-    setFormData((prev) => ({ ...prev, role: e.target.value }));
     setError(null);
   };
 
@@ -72,12 +55,17 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ open, onClose, on
     setError(null);
 
     try {
-      const token = localStorage.getItem('firebaseToken');
-      if (!token) {
+      // Get current user and ID token properly using Firebase SDK
+      const currentUser: User | null = auth.currentUser;
+      
+      if (!currentUser) {
         setError('Authentication required. Please log in again.');
         setLoading(false);
         return;
       }
+
+      // Get fresh ID token from Firebase
+      const token = await currentUser.getIdToken();
 
       const response = await fetch('/api/users/invite', {
         method: 'POST',
@@ -107,6 +95,8 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ open, onClose, on
     if (inviteLink) {
       const fullUrl = `${window.location.origin}${inviteLink}`;
       navigator.clipboard.writeText(fullUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -114,109 +104,188 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ open, onClose, on
     setFormData({ email: '', firstName: '', lastName: '', role: 'SDR' });
     setError(null);
     setInviteLink(null);
+    setCopied(false);
     onClose();
   };
 
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle>Invite Team Member</DialogTitle>
-      <DialogContent>
-        {!inviteLink ? (
-          <>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-              <TextField
-                name="firstName"
-                label="First Name"
-                value={formData.firstName}
-                onChange={handleChange}
-                fullWidth
-                required
-              />
-              <TextField
-                name="lastName"
-                label="Last Name"
-                value={formData.lastName}
-                onChange={handleChange}
-                fullWidth
-              />
-              <TextField
-                name="email"
-                label="Email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                fullWidth
-                required
-              />
-              <FormControl fullWidth required>
-                <InputLabel>Role</InputLabel>
-                <Select
-                  name="role"
-                  value={formData.role}
-                  label="Role"
-                  onChange={handleRoleChange}
-                >
-                  {ROLES.map((role) => (
-                    <MenuItem key={role.value} value={role.value}>
-                      {role.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="bg-gray-900 border border-gray-700 rounded-lg w-full max-w-md mx-4 shadow-2xl">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-700">
+          <h2 className="text-xl font-semibold text-white">
+            {inviteLink ? 'Invite Sent!' : 'Invite Team Member'}
+          </h2>
+          <button
+            onClick={handleClose}
+            className="p-1 hover:bg-gray-800 rounded transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-400" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="p-4">
+          {!inviteLink ? (
+            <div className="space-y-4">
+              {/* First Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  First Name *
+                </label>
+                <div className="relative">
+                  <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input
+                    type="text"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 pl-10 pr-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="John"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Last Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Doe"
+                />
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Email *
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 pl-10 pr-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="john@example.com"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Role */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1">
+                  Role *
+                </label>
+                <div className="relative">
+                  <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleChange}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 pl-10 pr-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
+                    required
+                  >
+                    {ROLES.map((role) => (
+                      <option key={role.value} value={role.value}>
+                        {role.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Error Message */}
               {error && (
-                <Typography color="error" variant="body2">
-                  {error}
-                </Typography>
+                <div className="bg-red-900/20 border border-red-800 rounded-lg p-3">
+                  <p className="text-red-400 text-sm">{error}</p>
+                </div>
               )}
-            </Box>
-          </>
-        ) : (
-          <Box sx={{ p: 2 }}>
-            <Typography variant="h6" sx={{ mb: 2, color: 'success.main' }}>
-              Invite Sent Successfully!
-            </Typography>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              Share this link with the team member:
-            </Typography>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                p: 1,
-                bgcolor: 'background.paper',
-                border: '1px solid',
-                borderColor: 'divider',
-                borderRadius: 1,
-              }}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="bg-green-900/20 border border-green-800 rounded-lg p-4">
+                <p className="text-green-400 font-medium mb-2">
+                  ✓ Invite sent successfully!
+                </p>
+                <p className="text-gray-300 text-sm mb-3">
+                  Share this link with the team member:
+                </p>
+                <div className="flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-lg p-2">
+                  <code className="text-gray-300 text-xs flex-1 break-all">
+                    {window.location.origin}{inviteLink}
+                  </code>
+                  <button
+                    onClick={handleCopyLink}
+                    className="p-2 hover:bg-gray-700 rounded transition-colors"
+                    title="Copy to clipboard"
+                  >
+                    {copied ? (
+                      <Check className="w-4 h-4 text-green-400" />
+                    ) : (
+                      <Copy className="w-4 h-4 text-gray-400" />
+                    )}
+                  </button>
+                </div>
+                {copied && (
+                  <p className="text-green-400 text-xs mt-2">Copied to clipboard!</p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-700">
+          {!inviteLink ? (
+            <>
+              <button
+                onClick={handleClose}
+                disabled={loading}
+                className="px-4 py-2 text-gray-300 hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    Send Invite
+                  </>
+                )}
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleClose}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
             >
-              <Typography variant="body2" sx={{ flexGrow: 1, wordBreak: 'break-all' }}>
-                {window.location.origin}{inviteLink}
-              </Typography>
-              <IconButton onClick={handleCopyLink} size="small">
-                <ContentCopyIcon fontSize="small" />
-              </IconButton>
-            </Box>
-          </Box>
-        )}
-      </DialogContent>
-      <DialogActions>
-        {!inviteLink ? (
-          <>
-            <Button onClick={handleClose} disabled={loading}>
-              Cancel
-            </Button>
-            <Button onClick={handleSubmit} variant="contained" disabled={loading}>
-              {loading ? 'Sending...' : 'Send Invite'}
-            </Button>
-          </>
-        ) : (
-          <Button onClick={handleClose} variant="contained">
-            Done
-          </Button>
-        )}
-      </DialogActions>
-    </Dialog>
+              Done
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 
