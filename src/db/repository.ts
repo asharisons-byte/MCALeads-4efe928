@@ -650,14 +650,38 @@ export async function updateDbLead(leadId: string | number, updates: any) {
     if (updates.is_hot_target !== undefined) target.isHotTarget = Boolean(updates.is_hot_target);
     if (updates.isHotTarget !== undefined) target.isHotTarget = Boolean(updates.isHotTarget);
     if (updates.assigned_user !== undefined) {
+      // Server-side validation: assigned_user must come from authenticated context
+      // The API layer should have already validated this, but we add defense-in-depth
       const dbUser = updates.assigned_user;
-      const roleTitle = ROLE_DISPLAY_TITLES[dbUser.role as AppRole] || dbUser.role;
-      target.assignedTo = `${dbUser.firstName} (${roleTitle})`;
-      target.assignedUserId = dbUser.id;
+      
+      // If selfClaim flag is set or no ID provided, this indicates server should resolve identity
+      // This should have been handled by the API layer, but we validate here too
+      if (dbUser.selfClaim === true || !dbUser.id) {
+        // This case should not reach here if API layer did its job - log warning
+        console.warn('updateDbLead: assigned_user without ID detected, skipping assignment');
+      } else {
+        // Validate that the user data looks legitimate (has required fields)
+        if (dbUser.id && dbUser.firstName) {
+          const roleTitle = ROLE_DISPLAY_TITLES[dbUser.role as AppRole] || dbUser.role;
+          target.assignedTo = `${dbUser.firstName} (${roleTitle})`;
+          target.assignedUserId = dbUser.id;
+        }
+      }
     } else if (updates.assigned_to !== undefined) {
-      target.assignedTo = updates.assigned_to;
+      // Legacy field - only allow if it matches Sophia (AI Sales Rep) exactly
+      // This prevents arbitrary reassignment via this legacy field
+      if (updates.assigned_to === 'Sophia (AI Sales Rep)') {
+        target.assignedTo = updates.assigned_to;
+      } else {
+        console.warn('updateDbLead: Direct assigned_to assignment blocked for security');
+      }
     } else if (updates.assignedTo !== undefined) {
-      target.assignedTo = updates.assignedTo;
+      // Direct assignedTo field - same restriction as assigned_to
+      if (updates.assignedTo === 'Sophia (AI Sales Rep)') {
+        target.assignedTo = updates.assignedTo;
+      } else {
+        console.warn('updateDbLead: Direct assignedTo assignment blocked for security');
+      }
     }
     if (updates.opportunity_angle !== undefined) target.opportunityAngle = updates.opportunity_angle;
     if (updates.opportunityAngle !== undefined) target.opportunityAngle = updates.opportunityAngle;

@@ -361,7 +361,6 @@ export function App() {
         callsCount={getStoredCallRecords().length}
         followUpsCount={getFollowUpTasks().filter((f) => f.status === 'Pending').length}
         approvalsCount={getAIApprovals().filter((a) => a.status === 'Pending').length}
-        currentUserRole={'Agency Owner'}
       />
 
       {/* Main Content Area */}

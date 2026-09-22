@@ -250,10 +250,73 @@ router.post('/leads/bulk', async (req: Request, res: Response) => {
   }
 });
 
-// 7. Leads: Update
-router.put('/leads/:id', async (req: Request, res: Response) => {
+// 7. Leads: Update - Requires authentication for ownership changes
+router.put('/leads/:id', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const updated = await updateDbLead(req.params.id, req.body);
+    const firebaseUid = req.user?.uid;
+    
+    if (!firebaseUid) {
+      return res.status(401).json({ error: 'Unauthorized: Missing user identity' });
+    }
+    
+    // Load authenticated user from Neon database
+    const userResult = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.uid, firebaseUid))
+      .limit(1);
+    
+    if (!userResult || userResult.length === 0) {
+      return res.status(404).json({ error: 'User not found in database' });
+    }
+    
+    const dbUser = userResult[0];
+    const canonicalRole = normalizeAppRole(dbUser.role as string) || dbUser.role;
+    
+    // Handle ownership assignment securely
+    const updates = { ...req.body };
+    
+    // If assigned_user is provided, validate it comes from database
+    if (updates.assigned_user !== undefined) {
+      // For self-assignment or Agency Director reassignment
+      const assignedUser = updates.assigned_user;
+      
+      // If this is a self-claim operation, use the authenticated user's identity
+      if (assignedUser.selfClaim === true || !assignedUser.id) {
+        // Self-claim: assign to authenticated user
+        updates.assigned_user = {
+          id: dbUser.id,
+          firstName: dbUser.firstName || dbUser.displayName,
+          role: canonicalRole,
+        };
+      } else {
+        // Agency Director reassignment: validate target user exists in Neon
+        if (canonicalRole !== 'AGENCY_DIRECTOR') {
+          return res.status(403).json({ error: 'Only Agency Director can reassign leads to other users' });
+        }
+        
+        // Validate target user exists
+        const targetUserResult = await db
+          .select({ id: schema.users.id, firstName: schema.users.firstName, displayName: schema.users.displayName, role: schema.users.role })
+          .from(schema.users)
+          .where(eq(schema.users.id, Number(assignedUser.id)))
+          .limit(1);
+        
+        if (!targetUserResult || targetUserResult.length === 0) {
+          return res.status(400).json({ error: 'Invalid assignment target: User not found' });
+        }
+        
+        const targetUser = targetUserResult[0];
+        const targetCanonicalRole = normalizeAppRole(targetUser.role as string) || targetUser.role;
+        updates.assigned_user = {
+          id: targetUser.id,
+          firstName: targetUser.firstName || targetUser.displayName,
+          role: targetCanonicalRole,
+        };
+      }
+    }
+    
+    const updated = await updateDbLead(req.params.id, updates);
     return res.json({ lead: updated });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
