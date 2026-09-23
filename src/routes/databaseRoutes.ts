@@ -65,7 +65,8 @@ router.get('/users/me', requireAuth, async (req: AuthRequest, res: Response) => 
   }
 });
 
-// Team Performance ... (rest of code)
+// Team Performance endpoint with proper authentication and authorization
+router.get('/team/performance', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     // Get Firebase UID from authenticated request
     const firebaseUid = req.user?.uid;

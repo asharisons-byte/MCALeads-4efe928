@@ -4,12 +4,16 @@ import { initDatabaseDefaults } from './src/db/repository';
 
 async function startDev() {
   const vite = await createServer({
-    server: { middlewareMode: true },
+    server: { 
+      middlewareMode: true,
+      hmr: { port: 3001 }
+    },
     appType: 'spa',
   });
   app.use(vite.middlewares);
   
-  const PORT = process.env.PORT || 3000;
+  const PORT = 3000;
+  console.log(`Starting server on port ${PORT}. Environment PORT: ${process.env.PORT}`);
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Dev server running on port ${PORT}`);
     initDatabaseDefaults().catch((err) => {
