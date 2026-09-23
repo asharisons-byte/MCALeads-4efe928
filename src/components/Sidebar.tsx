@@ -24,7 +24,8 @@ import {
   FileSpreadsheet,
 } from 'lucide-react';
 
-import { canAccessTeamManagement, getCanonicalRole } from '../utils/roleUtils.js';
+import { canAccess } from '../utils/roleUtils.js';
+import { AppRole } from '../constants.js';
 
 export type NavigationItem =
   | 'command_center'
@@ -79,10 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   approvalsCount = 0,
   currentUserRole,
 }) => {
-  // Derive canonical role for Team access check
-  // If currentUserRole is provided (legacy), normalize it; otherwise default to no access
-  const effectiveRole = currentUserRole || '';
-  const canAccessTeam = canAccessTeamManagement(effectiveRole);
+  const canAccessTeam = canAccess(currentUserRole as AppRole, 'TeamManagement', 'READ');
   return (
     <aside
       id="mca-sidebar"

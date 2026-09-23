@@ -1,5 +1,5 @@
-import { AppRole } from '../constants.js';
-import { Role, AccessLevel } from '../types.js';
+import { AppRole, ROLE_DISPLAY_TITLES } from '../constants.js';
+import { AccessLevel } from '../types.js';
 
 // Access level hierarchy
 export const ACCESS_LEVEL_WEIGHT: Record<AccessLevel, number> = {
@@ -10,7 +10,7 @@ export const ACCESS_LEVEL_WEIGHT: Record<AccessLevel, number> = {
 };
 
 // Feature access mapping
-export const FEATURE_ACCESS: Record<string, Record<Role, AccessLevel>> = {
+export const FEATURE_ACCESS: Record<string, Record<AppRole, AccessLevel>> = {
   'TeamManagement': {
     'AGENCY_DIRECTOR': 'ADMIN',
     'SALES_MANAGER': 'ADMIN',
@@ -20,7 +20,6 @@ export const FEATURE_ACCESS: Record<string, Record<Role, AccessLevel>> = {
     'OUTREACH_SPECIALIST': 'NONE',
     'CLIENT_SUCCESS': 'READ',
     'OPERATIONS_ANALYST': 'READ',
-    'USER': 'NONE',
   },
   'LeadDeletion': {
     'AGENCY_DIRECTOR': 'ADMIN',
@@ -31,45 +30,20 @@ export const FEATURE_ACCESS: Record<string, Record<Role, AccessLevel>> = {
     'OUTREACH_SPECIALIST': 'NONE',
     'CLIENT_SUCCESS': 'NONE',
     'OPERATIONS_ANALYST': 'READ',
-    'USER': 'NONE',
   },
 };
 
 /**
  * Check if user can access a feature with a required access level
  */
-export function canAccess(role: string, feature: string, requiredAccess: AccessLevel): boolean {
-  const canonicalRole = getCanonicalRole(role) as Role;
+export function canAccess(role: AppRole, feature: string, requiredAccess: AccessLevel): boolean {
   const featureRoles = FEATURE_ACCESS[feature];
-  
   if (!featureRoles) return false;
   
-  const userAccess = featureRoles[canonicalRole] || 'NONE';
-  
+  const userAccess = featureRoles[role] || 'NONE';
   return ACCESS_LEVEL_WEIGHT[userAccess] >= ACCESS_LEVEL_WEIGHT[requiredAccess];
 }
-export const ROLE_DISPLAY_TITLES: Record<string, string> = {
-  AGENCY_DIRECTOR: 'Agency Director',
-  SALES_MANAGER: 'Sales Manager',
-  SDR: 'Sales Development Rep',
-  ACCOUNT_EXECUTIVE: 'Account Executive',
-  APPOINTMENT_SETTER: 'Appointment Setter',
-  OUTREACH_SPECIALIST: 'Outreach Specialist',
-  CLIENT_SUCCESS: 'Client Success Manager',
-  OPERATIONS_ANALYST: 'Operations Analyst',
-  // Legacy role mappings for display
-  'Super Admin': 'Agency Director',
-  'Agency Owner': 'Agency Director',
-  Admin: 'Agency Director',
-  Manager: 'Sales Manager',
-  Sales: 'Sales Development Rep',
-  'Account Manager': 'Client Success Manager',
-  User: 'User',
-};
 
-/**
- * Normalize legacy role values to canonical AppRole
- */
 export function normalizeAppRole(role: string): AppRole | null {
   switch (role) {
     case 'Super Admin':
@@ -97,55 +71,30 @@ export function normalizeAppRole(role: string): AppRole | null {
       return role as AppRole;
     
     default:
-      // For unknown roles, return null - caller should handle
       return null;
   }
 }
 
-/**
- * Get canonical role for authorization checks
- */
-export function getCanonicalRole(role: string): string {
-  const normalized = normalizeAppRole(role);
-  return normalized || role;
-}
-
-/**
- * Check if user can access Team Management
- * Only AGENCY_DIRECTOR has full team access
- */
 export function canAccessTeamManagement(role: string): boolean {
-  const canonical = getCanonicalRole(role);
-  return ['AGENCY_DIRECTOR', 'SALES_MANAGER'].includes(canonical);
+  const normalized = normalizeAppRole(role);
+  return normalized ? ['AGENCY_DIRECTOR', 'SALES_MANAGER'].includes(normalized) : false;
 }
 
-/**
- * Check if user can assign Sophia as lead owner
- * Sophia is NOT available to SDR or ACCOUNT_EXECUTIVE
- */
 export function canAssignSophia(role: string): boolean {
-  const canonical = getCanonicalRole(role);
-  return !['SDR', 'ACCOUNT_EXECUTIVE'].includes(canonical);
+  const normalized = normalizeAppRole(role);
+  return normalized ? !['SDR', 'ACCOUNT_EXECUTIVE'].includes(normalized) : false;
 }
 
 /**
  * Format owner display name
- * Human owners: "FirstName (Role Title)"
- * Sophia: "Sophia (AI Sales Rep)"
  */
 export function formatOwnerDisplay(firstName: string, role: string): string {
-  // Special case for Sophia - AI Sales Rep
   if (firstName === 'Sophia') {
     return 'Sophia (AI Sales Rep)';
   }
   
-  const roleTitle = ROLE_DISPLAY_TITLES[role] || role;
+  const roleTitle = ROLE_DISPLAY_TITLES[role as AppRole] || role;
   return `${firstName} (${roleTitle})`;
 }
 
-/**
- * Get display title for a role
- */
-export function getRoleDisplayTitle(role: string): string {
-  return ROLE_DISPLAY_TITLES[role] || role;
-}
+export { ROLE_DISPLAY_TITLES };
