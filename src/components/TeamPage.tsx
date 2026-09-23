@@ -46,10 +46,19 @@ interface TeamPerformanceData {
   };
 }
 
+interface AccessLog {
+  id: string;
+  userName: string;
+  feature: string;
+  action: string;
+  timestamp: string;
+}
+
 const TeamPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [users, setUsers] = useState<User[]>([]);
   const [performance, setPerformance] = useState<TeamPerformanceData | null>(null);
+  const [logs, setLogs] = useState<AccessLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('This Month');
@@ -59,6 +68,7 @@ const TeamPage: React.FC = () => {
   useEffect(() => {
     fetchUsers();
     fetchPerformance();
+    fetchLogs();
   }, [selectedPeriod]);
 
   const fetchUsers = async () => {
@@ -101,6 +111,14 @@ const TeamPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchLogs = async () => {
+    // In a real app, fetch from /api/access-logs
+    setLogs([
+      { id: '1', userName: 'John Doe', feature: 'Lead Management', action: 'Delete Lead', timestamp: new Date().toISOString() },
+      { id: '2', userName: 'Jane Smith', feature: 'Client Portal', action: 'View Document', timestamp: new Date().toISOString() },
+    ]);
   };
 
   const handleRoleChange = async (userId: number, newRole: string) => {
@@ -209,6 +227,7 @@ const TeamPage: React.FC = () => {
         <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)}>
           <Tab label="Members" />
           <Tab label="Performance" />
+          <Tab label="Access Logs" />
         </Tabs>
       </Card>
 
@@ -374,6 +393,31 @@ const TeamPage: React.FC = () => {
             </Table>
           </Card>
         </>
+      )}
+
+      {activeTab === 2 && (
+        <Card>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>User</TableCell>
+                <TableCell>Feature</TableCell>
+                <TableCell>Action</TableCell>
+                <TableCell>Timestamp</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {logs.map((log) => (
+                <TableRow key={log.id}>
+                  <TableCell>{log.userName}</TableCell>
+                  <TableCell>{log.feature}</TableCell>
+                  <TableCell>{log.action}</TableCell>
+                  <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
       )}
 
       <InviteMemberModal
