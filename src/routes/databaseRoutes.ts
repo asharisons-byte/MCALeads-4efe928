@@ -895,6 +895,11 @@ router.put('/users/:id/role', requireAuth, async (req: AuthRequest, res: Respons
       return res.status(400).json({ error: 'Role is required' });
     }
 
+    const canonicalRole = normalizeAppRole(role);
+    if (!canonicalRole) {
+      return res.status(400).json({ error: 'Invalid role provided' });
+    }
+
     // Get current user
     const currentUserResult = await db
       .select()
@@ -907,10 +912,10 @@ router.put('/users/:id/role', requireAuth, async (req: AuthRequest, res: Respons
     }
 
     const currentUser = currentUserResult[0];
-    const canonicalRole = normalizeAppRole(currentUser.role);
+    const currentUserRole = normalizeAppRole(currentUser.role);
 
     // Only Agency Director can update roles
-    if (canonicalRole !== 'AGENCY_DIRECTOR') {
+    if (currentUserRole !== 'AGENCY_DIRECTOR') {
       return res.status(403).json({ error: 'Forbidden: Only Agency Director can update roles' });
     }
 
@@ -932,7 +937,7 @@ router.put('/users/:id/role', requireAuth, async (req: AuthRequest, res: Respons
 
     const [updatedUser] = await db
       .update(schema.users)
-      .set({ role, updatedAt: new Date() })
+      .set({ role: canonicalRole, updatedAt: new Date() })
       .where(eq(schema.users.id, Number(id)))
       .returning();
 

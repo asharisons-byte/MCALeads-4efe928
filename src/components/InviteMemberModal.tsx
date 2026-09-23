@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { auth } from '../lib/firebase';
 import { User } from 'firebase/auth';
 import { X, Copy, Check, Mail, User as UserIcon, Briefcase, Send } from 'lucide-react';
+import { ROLE_DISPLAY_TITLES } from '../utils/roleUtils.js';
 
 interface InviteMemberModalProps {
   open: boolean;
@@ -16,16 +17,7 @@ interface FormData {
   role: string;
 }
 
-const ROLES = [
-  { value: 'AGENCY_DIRECTOR', label: 'Agency Director' },
-  { value: 'SALES_MANAGER', label: 'Sales Manager' },
-  { value: 'SDR', label: 'Sales Development Rep' },
-  { value: 'ACCOUNT_EXECUTIVE', label: 'Account Executive' },
-  { value: 'APPOINTMENT_SETTER', label: 'Appointment Setter' },
-  { value: 'OUTREACH_SPECIALIST', label: 'Outreach Specialist' },
-  { value: 'CLIENT_SUCCESS', label: 'Client Success Manager' },
-  { value: 'OPERATIONS_ANALYST', label: 'Operations Analyst' },
-];
+// (Remove ROLES array declaration)
 
 const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ open, onClose, onSuccess }) => {
   const [formData, setFormData] = useState<FormData>({
@@ -197,9 +189,9 @@ const InviteMemberModal: React.FC<InviteMemberModalProps> = ({ open, onClose, on
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 pl-10 pr-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none cursor-pointer"
                     required
                   >
-                    {ROLES.map((role) => (
-                      <option key={role.value} value={role.value}>
-                        {role.label}
+                    {Object.entries(ROLE_DISPLAY_TITLES).map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
                       </option>
                     ))}
                   </select>

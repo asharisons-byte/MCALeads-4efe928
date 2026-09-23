@@ -22,7 +22,7 @@ import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import InviteMemberModal from './InviteMemberModal';
 
-import { AppRole } from '../constants.js';
+import { AppRole, ROLE_DISPLAY_TITLES } from '../utils/roleUtils.js';
 import { canAccess } from '../utils/roleUtils.js';
 
 interface User {
@@ -180,6 +180,10 @@ const TeamPage: React.FC = () => {
     return { label: 'Viewer', color: 'success' as const };
   };
 
+  const getRoleTitle = (role: string) => {
+    return ROLE_DISPLAY_TITLES[role as AppRole] || role;
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
@@ -270,9 +274,9 @@ const TeamPage: React.FC = () => {
                         onChange={(e) => handleRoleChange(user.id, e.target.value)}
                         disabled={user.status === 'suspended'}
                       >
-                        {ROLES.map((role) => (
-                          <MenuItem key={role.value} value={role.value}>
-                            {role.label}
+                        {Object.entries(ROLE_DISPLAY_TITLES).map(([value, label]) => (
+                          <MenuItem key={value} value={value}>
+                            {label}
                           </MenuItem>
                         ))}
                       </Select>
@@ -380,7 +384,7 @@ const TeamPage: React.FC = () => {
                 {performance.members.map((member: any) => (
                   <TableRow key={member.id}>
                     <TableCell>{member.firstName} {member.lastName}</TableCell>
-                    <TableCell>{member.role}</TableCell>
+                    <TableCell>{getRoleTitle(member.role)}</TableCell>
                     <TableCell>{member.status}</TableCell>
                     <TableCell>{formatDate(member.lastLogin)}</TableCell>
                     <TableCell>{member.assignedLeads}</TableCell>
