@@ -62,12 +62,6 @@ import {
 import { analyzeLeadWithAI, batchAnalyzeLeads } from './services/geminiService';
 import { Lead, ActivityEvent, PipelineStage, CallRecord } from './types';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { onAuthStateChanged, signInWithPopup, User } from 'firebase/auth';
-import { auth, googleAuthProvider } from './lib/firebase';
-import { Sidebar, NavigationItem } from './components/Sidebar';
-// ... (rest of imports)
-
 export function App() {
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -133,25 +127,7 @@ export function App() {
     );
   }
 
-  return (
-    <div id="mca-app-root" className="flex h-screen bg-[#090d16] text-slate-100 antialiased overflow-hidden font-sans">
-      {/* Sidebar */}
-      <Sidebar
-        currentUserRole={currentUserRole}
-        currentTab={currentTab}
-        onNavigate={(tab) => {
-          setSelectedLead(null);
-          setCurrentTab(tab);
-        }}
-        onOpenImport={() => setImportModalOpen(true)}
-        leadsCount={leads.length}
-        hotCount={leads.filter((l) => l.is_hot_target).length}
-        draftsCount={getEmailDrafts().length}
-        smsCount={smsCount}
-        callsCount={getStoredCallRecords().length}
-        followUpsCount={getFollowUpTasks().filter((f) => f.status === 'Pending').length}
-        approvalsCount={getAIApprovals().filter((a) => a.status === 'Pending').length}
-      />
+
 
   // Modals
   const [importModalOpen, setImportModalOpen] = useState(false);
