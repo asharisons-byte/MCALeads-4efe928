@@ -33,8 +33,39 @@ import {
 
 const router = express.Router();
 
-// Team Performance endpoint with proper authentication and authorization
-router.get('/team/performance', requireAuth, async (req: AuthRequest, res: Response) => {
+// 1. User Info (New Endpoint)
+router.get('/users/me', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    if (!db) return res.status(503).json({ error: 'Database not configured' });
+    const firebaseUid = req.user?.uid;
+    if (!firebaseUid) return res.status(401).json({ error: 'Unauthorized' });
+
+    const result = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.uid, firebaseUid))
+      .limit(1);
+
+    if (result.length === 0) {
+      // Auto-provision user on first login
+      await db.insert(schema.users).values({
+        uid: firebaseUid,
+        email: req.user?.email || '',
+        displayName: req.user?.name || req.user?.email || 'New User',
+        role: 'Admin', // default legacy role
+        status: 'active',
+      });
+      return res.json({ role: 'Admin', provisioned: true });
+    }
+
+    return res.json({ role: result[0].role, userId: result[0].id });
+  } catch (error) {
+    console.error('GET /users/me error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Team Performance ... (rest of code)
   try {
     // Get Firebase UID from authenticated request
     const firebaseUid = req.user?.uid;

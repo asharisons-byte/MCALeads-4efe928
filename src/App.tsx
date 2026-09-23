@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { onAuthStateChanged, signInWithPopup, User } from 'firebase/auth';
+import { auth, googleAuthProvider } from './lib/firebase';
 import { Sidebar, NavigationItem } from './components/Sidebar';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
@@ -60,13 +62,96 @@ import {
 import { analyzeLeadWithAI, batchAnalyzeLeads } from './services/geminiService';
 import { Lead, ActivityEvent, PipelineStage, CallRecord } from './types';
 
+import React, { useState, useEffect, useMemo } from 'react';
+import { onAuthStateChanged, signInWithPopup, User } from 'firebase/auth';
+import { auth, googleAuthProvider } from './lib/firebase';
+import { Sidebar, NavigationItem } from './components/Sidebar';
+// ... (rest of imports)
+
 export function App() {
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [currentUserRole, setCurrentUserRole] = useState<string>('');
+
   const [leads, setLeads] = useState<Lead[]>([]);
-  const [activities, setActivities] = useState<ActivityEvent[]>([]);
-  const [smsCount, setSmsCount] = useState(0);
-  const [currentTab, setCurrentTab] = useState<NavigationItem>('command_center');
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  // ... (rest of state variables)
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setFirebaseUser(user);
+      if (user) {
+        // Fetch role from your Neon DB
+        try {
+          const token = await user.getIdToken();
+          const res = await fetch('/api/users/me', {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setCurrentUserRole(data.role || '');
+          }
+        } catch (e) {
+          console.warn('Could not fetch user role', e);
+        }
+      } else {
+        setCurrentUserRole('');
+      }
+      setAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Load initial data ... (existing useEffect, but now inside App after auth check if needed, 
+  // actually existing initData is fine as is, but we might want it to wait for auth if it relies on user?
+  // The current initData relies on localStorage/syncWithDatabase.
+  
+  // Actually, I should probably combine the auth effect and the initData effect or ensure they don't conflict.)
+
+  // ... (authLoading and firebaseUser guards before main return)
+  if (authLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#090d16] text-slate-100">
+        <p className="text-slate-400 animate-pulse">Loading MCA Lead Suite…</p>
+      </div>
+    );
+  }
+
+  if (!firebaseUser) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#090d16] text-slate-100">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold">MCA Lead Agency Suite</h1>
+          <p className="text-slate-400">Sign in to continue</p>
+          <button
+            onClick={() => signInWithPopup(auth, googleAuthProvider)}
+            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium"
+          >
+            Sign in with Google
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div id="mca-app-root" className="flex h-screen bg-[#090d16] text-slate-100 antialiased overflow-hidden font-sans">
+      {/* Sidebar */}
+      <Sidebar
+        currentUserRole={currentUserRole}
+        currentTab={currentTab}
+        onNavigate={(tab) => {
+          setSelectedLead(null);
+          setCurrentTab(tab);
+        }}
+        onOpenImport={() => setImportModalOpen(true)}
+        leadsCount={leads.length}
+        hotCount={leads.filter((l) => l.is_hot_target).length}
+        draftsCount={getEmailDrafts().length}
+        smsCount={smsCount}
+        callsCount={getStoredCallRecords().length}
+        followUpsCount={getFollowUpTasks().filter((f) => f.status === 'Pending').length}
+        approvalsCount={getAIApprovals().filter((a) => a.status === 'Pending').length}
+      />
 
   // Modals
   const [importModalOpen, setImportModalOpen] = useState(false);

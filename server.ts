@@ -3366,23 +3366,9 @@ Provide a clear, client-friendly explanation:`;
   }
 });
 
-// Start Server and mount Vite middleware
-async function startServer() {
-  if (process.env.NODE_ENV !== 'production') {
-    const { createServer: createViteServer } = await import('vite');
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.join(process.cwd(), 'dist');
-    app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
-    });
-  }
-
+// Start Server (only for non-Vercel environments)
+const PORT = process.env.PORT || 3000;
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`MCA Lead Agency Suite server running on http://0.0.0.0:${PORT}`);
     // Run core database foundation initialization
@@ -3390,9 +3376,4 @@ async function startServer() {
       console.error('[Cloud SQL Initializer Warning]:', err);
     });
   });
-}
-
-// Only start the server when this file is executed directly, not when imported
-if (process.env.VERCEL !== '1') {
-  startServer();
 }
