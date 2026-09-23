@@ -3367,13 +3367,4 @@ Provide a clear, client-friendly explanation:`;
 });
 
 // Start Server (only for non-Vercel environments)
-const PORT = process.env.PORT || 3000;
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`MCA Lead Agency Suite server running on http://0.0.0.0:${PORT}`);
-    // Run core database foundation initialization
-    initDatabaseDefaults().catch((err) => {
-      console.error('[Cloud SQL Initializer Warning]:', err);
-    });
-  });
-}
+
