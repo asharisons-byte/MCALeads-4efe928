@@ -86,6 +86,22 @@ export function App() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [currentTab, setCurrentTab] = useState<NavigationItem>('dashboard');
 
+  // Global search filtering
+  const searchResults = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase();
+    return leads.filter(
+      (l) =>
+        l.business_name.toLowerCase().includes(q) ||
+        l.phone?.toLowerCase().includes(q) ||
+        l.email?.toLowerCase().includes(q) ||
+        l.niche?.toLowerCase().includes(q) ||
+        l.city?.toLowerCase().includes(q) ||
+        l.lead_id?.toLowerCase().includes(q) ||
+        l.opportunity_angle?.toLowerCase().includes(q)
+    );
+  }, [leads, searchQuery]);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user);
@@ -137,6 +153,7 @@ export function App() {
   }, [firebaseUser]);
 
 
+
   // Early returns
   if (authLoading) {
     return (
@@ -162,51 +179,6 @@ export function App() {
       </div>
     );
   }
-
-
-
-
-  // Load initial data from localStorage and sync with Cloud SQL PostgreSQL
-  useEffect(() => {
-    async function initData() {
-      const loadedLeads = await getLeads();
-      setLeads(loadedLeads);
-      const loadedActivities = getActivities();
-      setActivities(loadedActivities);
-      const messages = await getSMSMessages();
-      setSmsCount(messages.length);
-
-      // Synchronize state with Cloud SQL PostgreSQL
-      syncWithDatabase().then((dbLeads) => {
-        if (dbLeads && dbLeads.length > 0) {
-          setLeads(dbLeads);
-        }
-      });
-
-      // Restore active client portal session if one exists
-      const activePortalSession = getCurrentClientPortalSession();
-      if (activePortalSession && activePortalSession.user) {
-        setClientPortalActiveUser(activePortalSession.user);
-      }
-    }
-    initData();
-  }, []);
-
-  // Global search filtering
-  const searchResults = useMemo(() => {
-    if (!searchQuery.trim()) return [];
-    const q = searchQuery.toLowerCase();
-    return leads.filter(
-      (l) =>
-        l.business_name.toLowerCase().includes(q) ||
-        l.phone?.toLowerCase().includes(q) ||
-        l.email?.toLowerCase().includes(q) ||
-        l.niche?.toLowerCase().includes(q) ||
-        l.city?.toLowerCase().includes(q) ||
-        l.lead_id?.toLowerCase().includes(q) ||
-        l.opportunity_angle?.toLowerCase().includes(q)
-    );
-  }, [leads, searchQuery]);
 
   // Lead CRUD handlers
   const handleAddLead = async (newLead: Lead) => {
