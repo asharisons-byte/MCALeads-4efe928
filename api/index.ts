@@ -1,22 +1,17 @@
-import express from 'express';
-import type { Request, Response } from 'express';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Inline a minimal bootstrap that re-uses the compiled server bundle
-// produced by the build script: esbuild server.ts → dist/server.cjs
-let appHandler: ((req: Request, res: Response) => void) | null = null;
+let handler: ((req: any, res: any) => void) | null = null;
 
-async function getApp() {
-  if (!appHandler) {
-    const mod = await import('../dist/server.cjs');
-    appHandler = mod.app || mod.default;
+async function getHandler() {
+  if (!handler) {
+    const mod = await import('../dist/server.mjs');
+    handler = mod.app ?? mod.default;
   }
-  return appHandler;
+  return handler;
 }
 
-export default async function handler(req: Request, res: Response) {
-  const app = await getApp();
-  if (!app) {
-    return res.status(500).json({ error: 'Server failed to initialize' });
-  }
-  return (app as any)(req, res);
+export default async function (req: VercelRequest, res: VercelResponse) {
+  const h = await getHandler();
+  if (!h) return res.status(500).json({ error: 'Server failed to initialize' });
+  return h(req, res);
 }
