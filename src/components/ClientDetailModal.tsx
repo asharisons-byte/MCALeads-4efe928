@@ -175,8 +175,8 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
     const userToLaunch = portalUsers[0] || {
       user_id: `usr_${Date.now()}`,
       client_id: currentClient.client_id,
-      name: currentClient.contact_name || 'Client Principal',
-      email: currentClient.email || 'client@company.com',
+      name: currentClient.primary_contact.name || 'Client Principal',
+      email: currentClient.primary_contact.email || 'client@company.com',
       role: 'Client Owner',
       title: 'Managing Principal',
       status: 'Active',
@@ -819,7 +819,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                       <div>
                         <span className="font-bold text-slate-900 block">{act.user_name}</span>
                         <span className="text-[11px] text-slate-400 font-mono">
-                          {new Date(act.timestamp).toLocaleString()}
+                          {new Date(act.created_at).toLocaleString()}
                         </span>
                       </div>
                       <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-200">

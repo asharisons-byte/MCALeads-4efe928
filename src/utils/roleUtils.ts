@@ -1,6 +1,53 @@
 import { AppRole } from '../constants.js';
+import { Role, AccessLevel } from '../types.js';
 
-// Canonical role display titles
+// Access level hierarchy
+export const ACCESS_LEVEL_WEIGHT: Record<AccessLevel, number> = {
+  NONE: 0,
+  READ: 1,
+  WRITE: 2,
+  ADMIN: 3,
+};
+
+// Feature access mapping
+export const FEATURE_ACCESS: Record<string, Record<Role, AccessLevel>> = {
+  'TeamManagement': {
+    'AGENCY_DIRECTOR': 'ADMIN',
+    'SALES_MANAGER': 'ADMIN',
+    'SDR': 'NONE',
+    'ACCOUNT_EXECUTIVE': 'NONE',
+    'APPOINTMENT_SETTER': 'NONE',
+    'OUTREACH_SPECIALIST': 'NONE',
+    'CLIENT_SUCCESS': 'READ',
+    'OPERATIONS_ANALYST': 'READ',
+    'USER': 'NONE',
+  },
+  'LeadDeletion': {
+    'AGENCY_DIRECTOR': 'ADMIN',
+    'SALES_MANAGER': 'WRITE',
+    'SDR': 'NONE',
+    'ACCOUNT_EXECUTIVE': 'NONE',
+    'APPOINTMENT_SETTER': 'NONE',
+    'OUTREACH_SPECIALIST': 'NONE',
+    'CLIENT_SUCCESS': 'NONE',
+    'OPERATIONS_ANALYST': 'READ',
+    'USER': 'NONE',
+  },
+};
+
+/**
+ * Check if user can access a feature with a required access level
+ */
+export function canAccess(role: string, feature: string, requiredAccess: AccessLevel): boolean {
+  const canonicalRole = getCanonicalRole(role) as Role;
+  const featureRoles = FEATURE_ACCESS[feature];
+  
+  if (!featureRoles) return false;
+  
+  const userAccess = featureRoles[canonicalRole] || 'NONE';
+  
+  return ACCESS_LEVEL_WEIGHT[userAccess] >= ACCESS_LEVEL_WEIGHT[requiredAccess];
+}
 export const ROLE_DISPLAY_TITLES: Record<string, string> = {
   AGENCY_DIRECTOR: 'Agency Director',
   SALES_MANAGER: 'Sales Manager',
@@ -69,7 +116,7 @@ export function getCanonicalRole(role: string): string {
  */
 export function canAccessTeamManagement(role: string): boolean {
   const canonical = getCanonicalRole(role);
-  return canonical === 'AGENCY_DIRECTOR';
+  return ['AGENCY_DIRECTOR', 'SALES_MANAGER'].includes(canonical);
 }
 
 /**

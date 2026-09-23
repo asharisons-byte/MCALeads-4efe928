@@ -7,6 +7,19 @@ export type PipelineStage =
   | 'Retainer'
   | 'Archived';
 
+export type Role =
+  | 'AGENCY_DIRECTOR'
+  | 'SALES_MANAGER'
+  | 'SDR'
+  | 'ACCOUNT_EXECUTIVE'
+  | 'APPOINTMENT_SETTER'
+  | 'OUTREACH_SPECIALIST'
+  | 'CLIENT_SUCCESS'
+  | 'OPERATIONS_ANALYST'
+  | 'USER';
+
+export type AccessLevel = 'NONE' | 'READ' | 'WRITE' | 'ADMIN';
+
 export interface ScoreBreakdown {
   business_fit: number; // Max 15
   gmb_opportunity: number; // Max 15

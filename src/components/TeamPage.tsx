@@ -149,6 +149,16 @@ const TeamPage: React.FC = () => {
     }
   };
 
+  const getRoleBadge = (role: string) => {
+    if (['AGENCY_DIRECTOR', 'SALES_MANAGER'].includes(role)) {
+      return { label: 'Admin', color: 'error' as const };
+    }
+    if (['ACCOUNT_EXECUTIVE', 'CLIENT_SUCCESS', 'OPERATIONS_ANALYST'].includes(role)) {
+      return { label: 'Editor', color: 'primary' as const };
+    }
+    return { label: 'Viewer', color: 'success' as const };
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
@@ -218,7 +228,16 @@ const TeamPage: React.FC = () => {
             <TableBody>
               {users.map((user) => (
                 <TableRow key={user.id}>
-                  <TableCell>{user.displayName}</TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      {user.displayName}
+                      <Chip
+                        label={getRoleBadge(user.role).label}
+                        color={getRoleBadge(user.role).color as any}
+                        size="small"
+                      />
+                    </Box>
+                  </TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
                     <FormControl size="small" sx={{ minWidth: 200 }}>
