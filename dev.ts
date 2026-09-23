@@ -6,7 +6,7 @@ async function startDev() {
   const vite = await createServer({
     server: { 
       middlewareMode: true,
-      hmr: { port: 3001 }
+      hmr: false
     },
     appType: 'spa',
   });

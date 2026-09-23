@@ -66,9 +66,25 @@ export function App() {
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [currentUserRole, setCurrentUserRole] = useState<string>('');
-
   const [leads, setLeads] = useState<Lead[]>([]);
-  // ... (rest of state variables)
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [importInitialMode, setImportInitialMode] = useState<'upload' | 'sheets' | 'paste' | 'preset'>('upload');
+  const [addLeadModalOpen, setAddLeadModalOpen] = useState(false);
+  const [sophiaModalOpen, setSophiaModalOpen] = useState(false);
+  const [composerLead, setComposerLead] = useState<Lead | null>(null);
+  const [smsComposerLead, setSmsComposerLead] = useState<Lead | null>(null);
+  const [dialerModalOpen, setDialerModalOpen] = useState(false);
+  const [dialerLead, setDialerLead] = useState<Lead | null>(null);
+  const [dialerPhoneNumber, setDialerPhoneNumber] = useState<string>('');
+  const [sophiaAICallLead, setSophiaAICallLead] = useState<Lead | null>(null);
+  const [selectedCallRecord, setSelectedCallRecord] = useState<CallRecord | null>(null);
+  const [clientPortalScreen, setClientPortalScreen] = useState<'none' | 'login' | 'portal'>('none');
+  const [clientPortalActiveUser, setClientPortalActiveUser] = useState<ClientPortalUser | null>(null);
+  const [activities, setActivities] = useState<ActivityEvent[]>([]);
+  const [smsCount, setSmsCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [currentTab, setCurrentTab] = useState<NavigationItem>('dashboard');
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -95,13 +111,33 @@ export function App() {
     return () => unsubscribe();
   }, []);
 
-  // Load initial data ... (existing useEffect, but now inside App after auth check if needed, 
-  // actually existing initData is fine as is, but we might want it to wait for auth if it relies on user?
-  // The current initData relies on localStorage/syncWithDatabase.
-  
-  // Actually, I should probably combine the auth effect and the initData effect or ensure they don't conflict.)
+  // Data Loading Effect
+  useEffect(() => {
+    if (!firebaseUser) return;
+    async function initData() {
+      const loadedLeads = await getLeads();
+      setLeads(loadedLeads);
+      const loadedActivities = getActivities();
+      setActivities(loadedActivities);
+      const messages = await getSMSMessages();
+      setSmsCount(messages.length);
 
-  // ... (authLoading and firebaseUser guards before main return)
+      syncWithDatabase().then((dbLeads) => {
+        if (dbLeads && dbLeads.length > 0) {
+          setLeads(dbLeads);
+        }
+      });
+
+      const activePortalSession = getCurrentClientPortalSession();
+      if (activePortalSession && activePortalSession.user) {
+        setClientPortalActiveUser(activePortalSession.user);
+      }
+    }
+    initData();
+  }, [firebaseUser]);
+
+
+  // Early returns
   if (authLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#090d16] text-slate-100">
@@ -129,22 +165,6 @@ export function App() {
 
 
 
-  // Modals
-  const [importModalOpen, setImportModalOpen] = useState(false);
-  const [importInitialMode, setImportInitialMode] = useState<'upload' | 'sheets' | 'paste' | 'preset'>('upload');
-  const [addLeadModalOpen, setAddLeadModalOpen] = useState(false);
-  const [sophiaModalOpen, setSophiaModalOpen] = useState(false);
-  const [composerLead, setComposerLead] = useState<Lead | null>(null);
-  const [smsComposerLead, setSmsComposerLead] = useState<Lead | null>(null);
-  const [dialerModalOpen, setDialerModalOpen] = useState(false);
-  const [dialerLead, setDialerLead] = useState<Lead | null>(null);
-  const [dialerPhoneNumber, setDialerPhoneNumber] = useState<string>('');
-  const [sophiaAICallLead, setSophiaAICallLead] = useState<Lead | null>(null);
-  const [selectedCallRecord, setSelectedCallRecord] = useState<CallRecord | null>(null);
-
-  // Client Portal States (Phase 4B)
-  const [clientPortalScreen, setClientPortalScreen] = useState<'none' | 'login' | 'portal'>('none');
-  const [clientPortalActiveUser, setClientPortalActiveUser] = useState<ClientPortalUser | null>(null);
 
   // Load initial data from localStorage and sync with Cloud SQL PostgreSQL
   useEffect(() => {

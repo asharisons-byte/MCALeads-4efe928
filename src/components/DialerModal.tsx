@@ -1510,7 +1510,7 @@ ${callScript.closing}
                           <div className="font-bold text-white">Previous Notes ({activeLead.notes.length})</div>
                           <div className="space-y-1 max-h-36 overflow-y-auto">
                             {activeLead.notes.slice(0, 3).map((n) => (
-                              <div key={n.note_id} className="p-2 rounded bg-slate-950 text-[11px] text-slate-300">
+                              <div key={n.id} className="p-2 rounded bg-slate-950 text-[11px] text-slate-300">
                                 {n.content}
                               </div>
                             ))}
