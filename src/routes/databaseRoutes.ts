@@ -40,11 +40,29 @@ router.get('/users/me', requireAuth, async (req: AuthRequest, res: Response) => 
     const firebaseUid = req.user?.uid;
     if (!firebaseUid) return res.status(401).json({ error: 'Unauthorized' });
 
-    const result = await db
+    let result = await db
       .select()
       .from(schema.users)
       .where(eq(schema.users.uid, firebaseUid))
       .limit(1);
+
+    if (result.length === 0 && req.user?.email) {
+      const email = req.user.email.toLowerCase();
+      const existing = await db
+        .select()
+        .from(schema.users)
+        .where(eq(schema.users.email, email))
+        .limit(1);
+
+      if (existing.length > 0) {
+        // Link existing user to new UID
+        await db
+          .update(schema.users)
+          .set({ uid: firebaseUid, updatedAt: new Date() })
+          .where(eq(schema.users.id, existing[0].id));
+        result = [ { ...existing[0], uid: firebaseUid } ];
+      }
+    }
 
     if (result.length === 0) {
       // Auto-provision user on first login
@@ -55,7 +73,7 @@ router.get('/users/me', requireAuth, async (req: AuthRequest, res: Response) => 
       
       await db.insert(schema.users).values({
         uid: firebaseUid,
-        email: req.user?.email || '',
+        email: req.user?.email?.toLowerCase() || '',
         displayName: req.user?.name || req.user?.email || 'New User',
         firstName: nameParts[0] || null,
         lastName: nameParts.length > 1 ? nameParts.slice(1).join(' ') : null,
