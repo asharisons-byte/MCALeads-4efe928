@@ -545,7 +545,7 @@ export const DialerModal: React.FC<DialerModalProps> = ({
 ${callScript.opening}
 
 2. DISCOVERY QUESTIONS:
-${callScript.discovery_questions.map((q, i) => `${i + 1}. ${q}`).join('\n')}
+${callScript.discovery_questions?.map((q, i) => `${i + 1}. ${q}`).join('\n')}
 
 3. OPPORTUNITY DISCUSSION:
 ${callScript.opportunity_discussion}
@@ -554,7 +554,7 @@ ${callScript.opportunity_discussion}
 ${callScript.service_introduction}
 
 5. COMMON OBJECTIONS:
-${callScript.common_objections.map((o) => `• Objection: ${o.objection}\n  Counter: ${o.counter}`).join('\n\n')}
+${callScript.common_objections?.map((o) => `• Objection: ${o.objection}\n  Counter: ${o.counter}`).join('\n\n')}
 
 6. CLOSING:
 ${callScript.closing}

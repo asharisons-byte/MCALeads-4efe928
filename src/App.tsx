@@ -63,6 +63,7 @@ import {
 import { analyzeLeadWithAI, batchAnalyzeLeads } from './services/geminiService';
 import { Lead, ActivityEvent, PipelineStage, CallRecord } from './types';
 import { AppRole } from './constants.js';
+import { normalizeAppRole } from './utils/roleUtils';
 import AcceptInvitePage from './components/AcceptInvitePage.js';
 
 export function App() {
@@ -117,7 +118,7 @@ export function App() {
           });
           if (res.ok) {
             const data = await res.json();
-            setCurrentUserRole(data.role || '');
+            setCurrentUserRole(normalizeAppRole(data.role) || '');
           }
         } catch (e) {
           console.warn('Could not fetch user role', e);

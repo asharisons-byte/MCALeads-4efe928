@@ -678,7 +678,7 @@ export const LeadIntelligenceView: React.FC<LeadIntelligenceViewProps> = ({
                       </td>
                       <td className="py-3.5 px-4">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          {missing.map((m, i) => (
+                          {missing?.map((m, i) => (
                             <span
                               key={i}
                               className="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300"

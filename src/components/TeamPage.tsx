@@ -346,24 +346,24 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
           <Card sx={{ mb: 3 }}>
             <Box sx={{ p: 2, display: 'flex', gap: 3 }}>
               <Box>
-                <Typography variant="h6">{performance.summary.totalMembers}</Typography>
+                <Typography variant="h6">{performance.summary?.totalMembers ?? 0}</Typography>
                 <Typography>Total Members</Typography>
               </Box>
               <Box>
-                <Typography variant="h6">{performance.summary.activeMembers}</Typography>
+                <Typography variant="h6">{performance.summary?.activeMembers ?? 0}</Typography>
                 <Typography>Active Members</Typography>
               </Box>
               <Box>
-                <Typography variant="h6">{performance.summary.totalLeads}</Typography>
+                <Typography variant="h6">{performance.summary?.totalLeads ?? 0}</Typography>
                 <Typography>Total Leads</Typography>
               </Box>
               <Box>
-                <Typography variant="h6">{performance.summary.totalDeals}</Typography>
+                <Typography variant="h6">{performance.summary?.totalDeals ?? 0}</Typography>
                 <Typography>Closed Deals</Typography>
               </Box>
               <Box>
                 <Typography variant="h6">
-                  ${performance.summary.totalRevenue.toLocaleString()}
+                  ${(performance.summary?.totalRevenue ?? 0).toLocaleString()}
                 </Typography>
                 <Typography>Total Revenue</Typography>
               </Box>
@@ -390,7 +390,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {performance.members.map((member: any) => (
+                {performance.members?.map((member: any) => (
                   <TableRow key={member.id}>
                     <TableCell>{member.firstName} {member.lastName}</TableCell>
                     <TableCell>{getRoleTitle(member.role)}</TableCell>

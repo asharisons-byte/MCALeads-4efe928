@@ -30,6 +30,10 @@ export const requireAuth = async (
   }
 
   const token = authHeader.split('Bearer ')[1];
+  if (!token || token.split('.').length !== 3) {
+    return res.status(401).json({ error: 'Unauthorized: Malformed token' });
+  }
+
   try {
     const { payload } = await jwtVerify(token, JWKS, {
       issuer: `https://securetoken.google.com/${PROJECT_ID}`,

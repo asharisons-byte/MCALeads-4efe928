@@ -464,7 +464,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
 
                           {isExpanded && (
                             <div className="mt-2 p-3 rounded-lg bg-slate-950 border border-slate-800/80 text-[11px] font-mono text-slate-300 space-y-1">
-                              {Object.entries(act.metadata).map(([key, val]) => (
+                              {Object.entries(act.metadata ?? {}).map(([key, val]) => (
                                 <div key={key} className="flex gap-2">
                                   <span className="text-slate-500 capitalize">{key.replace(/_/g, ' ')}:</span>
                                   <span className="text-slate-200">
