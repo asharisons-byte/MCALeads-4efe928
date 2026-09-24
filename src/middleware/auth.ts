@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 
-const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'ai-studio-applet-webapp-cf859';
+const PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'mcaleads';
 
 const JWKS = createRemoteJWKSet(
   new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com')
