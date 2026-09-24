@@ -22,6 +22,8 @@ import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import InviteMemberModal from './InviteMemberModal';
 
+import { auth } from '../lib/firebase';
+
 import { AppRole, ROLE_DISPLAY_TITLES, canAccessTeamManagement } from '../utils/roleUtils.js';
 
 interface User {
@@ -81,8 +83,9 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('firebaseToken');
-      if (!token) return;
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      const token = await currentUser.getIdToken();
 
       const response = await fetch('/api/users', {
         headers: {
@@ -101,8 +104,9 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
 
   const fetchPerformance = async () => {
     try {
-      const token = localStorage.getItem('firebaseToken');
-      if (!token) return;
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      const token = await currentUser.getIdToken();
 
       const response = await fetch(`/api/team/performance?period=${encodeURIComponent(selectedPeriod)}`, {
         headers: {
