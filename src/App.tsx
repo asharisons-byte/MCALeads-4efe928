@@ -62,6 +62,7 @@ import {
 } from './services/leadService';
 import { analyzeLeadWithAI, batchAnalyzeLeads } from './services/geminiService';
 import { Lead, ActivityEvent, PipelineStage, CallRecord } from './types';
+import { AppRole } from './constants.js';
 
 export function App() {
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
@@ -648,7 +649,7 @@ export function App() {
           ) : currentTab === 'integrations' ? (
             <IntegrationsView />
           ) : currentTab === 'team' ? (
-            <TeamPage />
+            <TeamPage currentUserRole={currentUserRole as AppRole} />
           ) : (
             <LeadsTable
               leads={leads}

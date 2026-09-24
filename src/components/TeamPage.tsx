@@ -56,7 +56,11 @@ interface AccessLog {
   timestamp: string;
 }
 
-const TeamPage: React.FC = () => {
+interface TeamPageProps {
+  currentUserRole: AppRole;
+}
+
+const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
   const [activeTab, setActiveTab] = useState(0);
   const [users, setUsers] = useState<User[]>([]);
   const [performance, setPerformance] = useState<TeamPerformanceData | null>(null);
@@ -64,6 +68,7 @@ const TeamPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('This Month');
+  const isAgencyDirector = currentUserRole === 'AGENCY_DIRECTOR';
 
   const periods = ['Today', 'This Week', 'This Month', 'Last Month', 'All Time'];
 
@@ -224,7 +229,7 @@ const TeamPage: React.FC = () => {
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4">Team Management</Typography>
-        <Button variant="contained" onClick={() => setInviteModalOpen(true)}>
+        <Button variant="contained" onClick={() => setInviteModalOpen(true)} disabled={!isAgencyDirector}>
           Invite Member
         </Button>
       </Box>
@@ -271,7 +276,7 @@ const TeamPage: React.FC = () => {
                       <Select
                         value={user.role}
                         onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                        disabled={user.status === 'suspended'}
+                        disabled={user.status === 'suspended' || !isAgencyDirector}
                       >
                         {Object.entries(ROLE_DISPLAY_TITLES).map(([value, label]) => (
                           <MenuItem key={value} value={value}>
@@ -298,7 +303,7 @@ const TeamPage: React.FC = () => {
                           user.status === 'active' ? 'suspended' : 'active'
                         )
                       }
-                      disabled={user.status === 'invited'}
+                      disabled={user.status === 'invited' || !isAgencyDirector}
                     >
                       {user.status === 'active' ? (
                         <BlockIcon fontSize="small" />
