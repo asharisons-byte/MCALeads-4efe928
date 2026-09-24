@@ -94,6 +94,11 @@ export const ExcelColumnConverterModal: React.FC<ExcelColumnConverterModalProps>
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
 
+  const convertedLeads = useMemo(() => {
+    if (rawRows.length === 0 || mappings.length === 0) return [];
+    return convertRowsToLeads(rawRows, mappings);
+  }, [rawRows, mappings]);
+
   if (!isOpen) return null;
 
   const handleParseData = (text: string) => {
@@ -125,11 +130,6 @@ export const ExcelColumnConverterModal: React.FC<ExcelColumnConverterModalProps>
       prev.map((m) => (m.rawColumn === rawCol ? { ...m, mappedField: targetField, confidence: 1.0 } : m))
     );
   };
-
-  const convertedLeads = useMemo(() => {
-    if (rawRows.length === 0 || mappings.length === 0) return [];
-    return convertRowsToLeads(rawRows, mappings);
-  }, [rawRows, mappings]);
 
   // Generate tab-delimited text for copying directly into Excel / Google Sheets
   const handleCopyConvertedForExcel = () => {
