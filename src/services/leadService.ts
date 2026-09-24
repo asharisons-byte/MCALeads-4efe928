@@ -162,9 +162,13 @@ export async function syncWithDatabase(): Promise<Lead[]> {
 }
 
 // Get all leads from Neon database
+// Get all leads from Neon database
 export async function getLeads(): Promise<Lead[]> {
   try {
-    const res = await fetch('/api/leads?limit=1000');
+    const token = await getAuthToken();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch('/api/leads?limit=1000', { headers });
     if (res.ok) {
       const data = await res.json();
       if (data && Array.isArray(data.leads)) {
