@@ -22,8 +22,7 @@ import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import InviteMemberModal from './InviteMemberModal';
 
-import { AppRole, ROLE_DISPLAY_TITLES } from '../utils/roleUtils.js';
-import { canAccess } from '../utils/roleUtils.js';
+import { AppRole, ROLE_DISPLAY_TITLES, canAccessTeamManagement } from '../utils/roleUtils.js';
 
 interface User {
   id: number;
@@ -257,7 +256,7 @@ const TeamPage: React.FC = () => {
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       {user.displayName}
-                      {canManageTeam(user.role) && (
+                      {canAccessTeamManagement(user.role) && (
                         <Chip
                           label={getRoleBadge(user.role).label}
                           color={getRoleBadge(user.role).color as any}
