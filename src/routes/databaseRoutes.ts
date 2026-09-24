@@ -48,12 +48,20 @@ router.get('/users/me', requireAuth, async (req: AuthRequest, res: Response) => 
 
     if (result.length === 0) {
       // Auto-provision user on first login
+      const orgs = await db.select({ id: schema.organizations.id }).from(schema.organizations).limit(1);
+      const organizationId = orgs[0]?.id;
+      
+      const nameParts = (req.user?.name || '').split(' ');
+      
       await db.insert(schema.users).values({
         uid: firebaseUid,
         email: req.user?.email || '',
         displayName: req.user?.name || req.user?.email || 'New User',
+        firstName: nameParts[0] || null,
+        lastName: nameParts.length > 1 ? nameParts.slice(1).join(' ') : null,
         role: 'Admin', // default legacy role
         status: 'active',
+        organizationId,
       });
       return res.json({ role: 'Admin', provisioned: true });
     }
