@@ -4,6 +4,7 @@ import { auth, googleAuthProvider } from './lib/firebase';
 import { Sidebar, NavigationItem } from './components/Sidebar';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
+import { LeadsPage } from './components/LeadsPage';
 import { LeadsTable } from './components/LeadsTable';
 import { LeadDetail } from './components/LeadDetail';
 import { PipelineView } from './components/PipelineView';
@@ -555,7 +556,7 @@ export function App() {
             currentTab === 'ai_analysis' ||
             currentTab === 'lead_scoring' ||
             currentTab === 'opportunities' ? (
-            <LeadsTable
+            <LeadsPage
               leads={leads}
               onSelectLead={(lead) => setSelectedLead(lead)}
               onOpenImport={(mode) => {
