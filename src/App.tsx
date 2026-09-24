@@ -554,6 +554,7 @@ export function App() {
               }}
             />
           ) : currentTab === 'leads' ||
+            currentTab === 'import_leads' ||
             currentTab === 'ai_analysis' ||
             currentTab === 'lead_scoring' ||
             currentTab === 'opportunities' ? (
