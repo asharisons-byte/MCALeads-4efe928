@@ -24,7 +24,7 @@ import {
   FileSpreadsheet,
 } from 'lucide-react';
 
-import { canAccess } from '../utils/roleUtils.js';
+import { canAccess, normalizeAppRole } from '../utils/roleUtils.js';
 import { AppRole } from '../constants.js';
 
 export type NavigationItem =
@@ -80,7 +80,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   approvalsCount = 0,
   currentUserRole,
 }) => {
-  const canAccessTeam = canAccess(currentUserRole as AppRole, 'TeamManagement', 'READ');
+  const normalizedRole = normalizeAppRole(currentUserRole || '') || currentUserRole as AppRole;
+  const canAccessTeam = canAccess(normalizedRole as AppRole, 'TeamManagement', 'READ');
   return (
     <aside
       id="mca-sidebar"
