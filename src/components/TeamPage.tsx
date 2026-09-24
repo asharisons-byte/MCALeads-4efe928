@@ -68,6 +68,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
   const [loading, setLoading] = useState(true);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState('This Month');
+  const canInvite = currentUserRole === 'AGENCY_DIRECTOR' || currentUserRole === 'SALES_MANAGER';
   const isAgencyDirector = currentUserRole === 'AGENCY_DIRECTOR';
 
   const periods = ['Today', 'This Week', 'This Month', 'Last Month', 'All Time'];
@@ -229,7 +230,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4">Team Management</Typography>
-        <Button variant="contained" onClick={() => setInviteModalOpen(true)} disabled={!isAgencyDirector}>
+        <Button variant="contained" onClick={() => setInviteModalOpen(true)} disabled={!canInvite}>
           Invite Member
         </Button>
       </Box>
@@ -276,7 +277,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
                       <Select
                         value={user.role}
                         onChange={(e) => handleRoleChange(user.id, e.target.value)}
-                        disabled={user.status === 'suspended' || !isAgencyDirector}
+                        disabled={user.status === 'suspended' || !canInvite}
                       >
                         {Object.entries(ROLE_DISPLAY_TITLES).map(([value, label]) => (
                           <MenuItem key={value} value={value}>
@@ -303,7 +304,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
                           user.status === 'active' ? 'suspended' : 'active'
                         )
                       }
-                      disabled={user.status === 'invited' || !isAgencyDirector}
+                      disabled={user.status === 'invited' || !canInvite}
                     >
                       {user.status === 'active' ? (
                         <BlockIcon fontSize="small" />

@@ -63,6 +63,7 @@ import {
 import { analyzeLeadWithAI, batchAnalyzeLeads } from './services/geminiService';
 import { Lead, ActivityEvent, PipelineStage, CallRecord } from './types';
 import { AppRole } from './constants.js';
+import AcceptInvitePage from './components/AcceptInvitePage.js';
 
 export function App() {
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
@@ -157,6 +158,10 @@ export function App() {
 
 
   // Early returns
+  if (window.location.pathname === '/accept-invite') {
+    return <AcceptInvitePage />;
+  }
+
   if (authLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#090d16] text-slate-100">
