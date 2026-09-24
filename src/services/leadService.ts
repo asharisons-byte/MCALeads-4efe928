@@ -34,11 +34,23 @@ export function getDatabaseSyncStatus() {
 }
 
 // Background API helper that never throws or blocks UI execution
+async function getAuthToken(): Promise<string | null> {
+  try {
+    const { auth } = await import('../lib/firebase.js');
+    return auth.currentUser ? await auth.currentUser.getIdToken() : null;
+  } catch {
+    return null;
+  }
+}
+
 async function bgApiCall(endpoint: string, method = 'GET', data?: any): Promise<any> {
   try {
+    const token = await getAuthToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
     const res = await fetch(endpoint, {
       method,
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: data ? JSON.stringify(data) : undefined,
     });
     if (res.ok) {
