@@ -346,6 +346,14 @@ router.post('/leads/bulk', async (req: Request, res: Response) => {
 // 7. Leads: Update - Requires authentication for ownership changes
 router.put('/leads/:id', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
+    // Diagnostic log: Inspect authentication context
+    console.log('[DEBUG] Reassign Handler - Auth Context:', {
+      fullUserObject: req.user,
+      userRoleField: (req.user as any)?.role,
+      uid: req.user?.uid,
+      email: (req.user as any)?.email
+    });
+
     const firebaseUid = req.user?.uid;
     
     if (!firebaseUid) {
@@ -364,7 +372,27 @@ router.put('/leads/:id', requireAuth, async (req: AuthRequest, res: Response) =>
     }
     
     const dbUser = userResult[0];
+    
+    // Explicit requested diagnostic log
+    console.log('[DEBUG] Role Verification:', {
+        reqUserRole: (req as any).user?.role,
+        matchesDirector: (req as any).user?.role === 'Director'
+    });
+    
+    // Diagnostic log
+    console.log('[DEBUG] Reassign Request:', {
+      leadId: req.params.id,
+      firebaseUid,
+      dbUser: { id: dbUser.id, role: dbUser.role },
+      payload: req.body
+    });
+
     const canonicalRole = normalizeAppRole(dbUser.role as string) || dbUser.role;
+    
+    console.log('[DEBUG] Role Normalization:', {
+        originalRole: dbUser.role,
+        canonicalRole: canonicalRole
+    });
     
     // Load existing lead to check current ownership
     const existingLead = await getDbLeadById(req.params.id);
