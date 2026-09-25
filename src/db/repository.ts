@@ -226,6 +226,7 @@ export async function getDbLeads(params: {
       return rows || [];
     } catch (error: any) {
       console.warn('getDbLeads DB query skipped (using in-memory store):', error?.message);
+      // Proceed to fallback
     }
   }
 
