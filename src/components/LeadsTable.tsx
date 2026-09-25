@@ -73,6 +73,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   const [stageFilter, setStageFilter] = useState<string>('All');
   const [nicheFilter, setNicheFilter] = useState<string>('All');
   const [countryFilter, setCountryFilter] = useState<string>('All');
+  const [scoreRange, setScoreRange] = useState<[number, number]>([0, 100]); // [min, max]
   const [sortField, setSortField] = useState<keyof Lead>('lead_score');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [localPage, setLocalPage] = useState(1);
@@ -125,8 +126,8 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       // Country Filter
       if (countryFilter !== 'All' && l.country !== countryFilter) return false;
 
-      // Country Filter
-      if (countryFilter !== 'All' && l.country !== countryFilter) return false;
+      // Score Range Filter
+      if (l.lead_score < scoreRange[0] || l.lead_score > scoreRange[1]) return false;
 
       // Search Query
       if (searchQuery.trim()) {
@@ -607,12 +608,35 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             </select>
           </div>
 
+          <div>
+            <label className="block text-slate-400 font-semibold mb-1.5">Lead Score Range</label>
+            <div className="flex gap-2">
+              <input
+                type="number"
+                value={scoreRange[0]}
+                onChange={(e) => setScoreRange([Number(e.target.value), scoreRange[1]])}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-200"
+                min="0"
+                max="100"
+              />
+              <input
+                type="number"
+                value={scoreRange[1]}
+                onChange={(e) => setScoreRange([scoreRange[0], Number(e.target.value)])}
+                className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-200"
+                min="0"
+                max="100"
+              />
+            </div>
+          </div>
+
           <div className="flex items-end">
             <button
               onClick={() => {
                 setStageFilter('All');
                 setNicheFilter('All');
                 setCountryFilter('All');
+                setScoreRange([0, 100]);
                 setSearchQuery('');
               }}
               className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold"
