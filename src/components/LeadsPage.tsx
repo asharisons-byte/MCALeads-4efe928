@@ -14,11 +14,13 @@ interface LeadsPageProps {
   onOpenDialer: (lead: Lead) => void;
   onOpenAICall: (lead: Lead) => void;
   onImportComplete: () => void;
+  currentPage: number;
+  onPageChange: (page: number) => void;
 }
 
 export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-4 w-full">
       <LeadsTable {...props} />
     </div>
   );

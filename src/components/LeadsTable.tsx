@@ -63,6 +63,8 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   onOpenDialer,
   onOpenAICall,
   onImportComplete,
+  currentPage: propCurrentPage,
+  onPageChange,
 }) => {
   // State
   const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
@@ -73,7 +75,12 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   const [countryFilter, setCountryFilter] = useState<string>('All');
   const [sortField, setSortField] = useState<keyof Lead>('lead_score');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [localPage, setLocalPage] = useState(1);
+  const currentPage = propCurrentPage ?? localPage;
+  const setCurrentPage = (page: number) => {
+    setLocalPage(page);
+    onPageChange?.(page);
+  };
   const pageSize = 15;
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showBulkStageModal, setShowBulkStageModal] = useState(false);
@@ -622,8 +629,8 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-slate-800 bg-slate-900/60 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
-                <th className="p-3.5 w-10 text-center"></th>
-                <th className="p-3.5 w-10 text-center">
+                <th className="p-2.5 w-10 text-center"></th>
+                <th className="p-2.5 w-10 text-center">
                   <input
                     type="checkbox"
                     checked={
@@ -636,19 +643,22 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 </th>
                 <th
                   onClick={() => handleSort('business_name')}
-                  className="p-3.5 cursor-pointer hover:text-white"
+                  className="p-2.5 cursor-pointer hover:text-white w-48"
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Business</span>
                     <ArrowUpDown className="w-3 h-3 text-slate-400" />
                   </div>
                 </th>
-                <th className="p-3.5">Location</th>
-                <th className="p-3.5">Country</th>
-                <th className="p-3.5">Contact</th>
+                <th className="p-2.5">Location</th>
+                <th className="p-2.5">Contact</th>
+                <th className="p-2.5">GMB</th>
+                <th className="p-2.5">Website</th>
+                <th className="p-2.5 w-36">Marketing Gaps</th>
+                <th className="p-2.5 w-36">Opportunity</th>
                 <th
                   onClick={() => handleSort('lead_score')}
-                  className="p-3.5 cursor-pointer hover:text-white text-center"
+                  className="p-2.5 cursor-pointer hover:text-white text-center"
                 >
                   <div className="flex items-center justify-center gap-1.5">
                     <span>Score</span>
@@ -657,15 +667,15 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 </th>
                 <th
                   onClick={() => handleSort('estimated_retainer')}
-                  className="p-3.5 cursor-pointer hover:text-white text-right"
+                  className="p-2.5 cursor-pointer hover:text-white text-right"
                 >
                   <div className="flex items-center justify-end gap-1.5">
                     <span>Est. Retainer</span>
                     <ArrowUpDown className="w-3 h-3 text-slate-400" />
                   </div>
                 </th>
-                <th className="p-3.5 text-center">Stage</th>
-                <th className="p-3.5 text-center">Actions</th>
+                <th className="p-2.5 text-center w-28">Stage</th>
+                <th className="p-2.5 text-center w-24">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
@@ -684,12 +694,12 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                       <tr
                         className={`hover:bg-slate-800/40 transition-colors group ${isSelected ? 'bg-indigo-950/20' : ''}`}
                       >
-                        <td className="p-3.5 text-center">
+                        <td className="p-2.5 text-center">
                           <button onClick={() => setExpandedLeadId(isExpanded ? null : lead.lead_id)}>
                             {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
                           </button>
                         </td>
-                        <td className="p-3.5 text-center">
+                        <td className="p-2.5 text-center">
                           <input
                             type="checkbox"
                             checked={isSelected}
@@ -697,7 +707,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                             className="rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
                           />
                         </td>
-                        <td className="p-3.5">
+                        <td className="p-2.5 w-48">
                           <div
                             onClick={() => onSelectLead(lead)}
                             className="cursor-pointer group-hover:text-indigo-300 font-bold text-slate-100 flex items-center gap-1.5"
@@ -708,17 +718,20 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                             )}
                           </div>
                         </td>
-                        <td className="p-3.5 text-slate-300 whitespace-nowrap">{lead.city || 'Portland'}</td>
-                        <td className="p-3.5 text-slate-300 whitespace-nowrap">{lead.country || 'USA'}</td>
-                        <td className="p-3.5 whitespace-nowrap">{lead.phone}</td>
-                        <td className="p-3.5 text-center font-mono font-bold text-slate-200">
+                        <td className="p-2.5 text-slate-300 whitespace-nowrap">{lead.city || 'Portland'}</td>
+                        <td className="p-2.5 whitespace-nowrap">{lead.phone}</td>
+                        <td className="p-2.5 whitespace-nowrap">{lead.gmb_status || 'Established'}</td>
+                        <td className="p-2.5 whitespace-nowrap">{lead.website || 'No Website'}</td>
+                        <td className="p-2.5 w-36">{lead.gaps.join(', ')}</td>
+                        <td className="p-2.5 w-36">{lead.recommended_service}</td>
+                        <td className="p-2.5 text-center font-mono font-bold text-slate-200">
                            {lead.lead_score}
                         </td>
-                        <td className="p-3.5 text-right whitespace-nowrap font-mono text-emerald-400">
+                        <td className="p-2.5 text-right whitespace-nowrap font-mono text-emerald-400">
                            ${lead.estimated_retainer?.toLocaleString()}/mo
                         </td>
-                        <td className="p-3.5 text-center">{lead.pipeline_stage}</td>
-                        <td className="p-3.5 text-center">
+                        <td className="p-2.5 text-center w-28">{lead.pipeline_stage}</td>
+                        <td className="p-2.5 text-center w-24">
                            <button onClick={() => onSelectLead(lead)} className="text-xs text-indigo-400 hover:text-indigo-300">View</button>
                         </td>
                       </tr>
