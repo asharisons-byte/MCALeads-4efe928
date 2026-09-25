@@ -165,6 +165,7 @@ export async function getDbLeads(params: {
   niche?: string;
   city?: string;
   isHotTarget?: boolean;
+  assignedTo?: string;
   limit?: number;
   offset?: number;
 }) {
@@ -205,6 +206,10 @@ export async function getDbLeads(params: {
 
       if (params.isHotTarget) {
         conditions.push(eq(schema.leads.isHotTarget, true));
+      }
+
+      if (params.assignedTo) {
+        conditions.push(eq(schema.leads.assignedTo, params.assignedTo));
       }
 
       const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -256,6 +261,10 @@ export async function getDbLeads(params: {
 
   if (params.isHotTarget) {
     filtered = filtered.filter((l) => l.isHotTarget === true);
+  }
+
+  if (params.assignedTo) {
+    filtered = filtered.filter((l) => l.assignedTo === params.assignedTo);
   }
 
   // Sort by lead score desc, then createdAt desc

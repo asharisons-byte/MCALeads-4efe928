@@ -222,6 +222,50 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
     { value: 'OPERATIONS_ANALYST', label: 'Operations Analyst' },
   ];
 
+  const [assignLeads, setAssignLeads] = useState<any[]>([]);
+  const [selectedMemberId, setSelectedMemberId] = useState<string>('');
+
+  async function getCurrentToken() {
+    return auth.currentUser ? await auth.currentUser.getIdToken() : '';
+  }
+
+  useEffect(() => {
+    if (activeTab === 3) {
+      getCurrentToken().then(token => {
+        fetch('/api/leads?limit=1000', {
+          headers: { Authorization: `Bearer ${token}` }
+        }).then(r => r.json()).then(d => setAssignLeads(d.leads || []));
+      });
+    }
+  }, [activeTab]);
+
+  const handleAssignLead = async (leadId: string, memberId: string) => {
+    try {
+      const token = await getCurrentToken();
+      const response = await fetch(`/api/leads/${leadId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ assigned_user_id: memberId }),
+      });
+      if (response.ok) {
+        // Refresh leads
+        const leadsRes = await fetch('/api/leads?limit=1000', {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        const d = await leadsRes.json();
+        setAssignLeads(d.leads || []);
+      } else {
+        alert('Failed to assign lead');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Error assigning lead');
+    }
+  };
+
   if (loading && activeTab === 1) {
     return (
       <Box sx={{ p: 3, textAlign: 'center' }}>
@@ -244,8 +288,58 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
           <Tab label="Members" />
           <Tab label="Performance" />
           <Tab label="Access Logs" />
+          <Tab label="Lead Assignment" />
         </Tabs>
       </Card>
+
+      {activeTab === 3 && (
+        <Card sx={{ p: 2 }}>
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Select Team Member</InputLabel>
+            <Select
+              value={selectedMemberId}
+              label="Select Team Member"
+              onChange={(e) => setSelectedMemberId(e.target.value)}
+            >
+              {users
+                .filter(u => ['SDR', 'ACCOUNT_EXECUTIVE'].includes(u.role))
+                .map(u => (
+                  <MenuItem key={u.id} value={String(u.id)}>
+                    {u.displayName} ({u.role})
+                  </MenuItem>
+                ))
+              }
+            </Select>
+          </FormControl>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Business Name</TableCell>
+                <TableCell>Assigned To</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {assignLeads.map((lead: any, index) => (
+                <TableRow key={lead.lead_id || index}>
+                  <TableCell>{lead.businessName}</TableCell>
+                  <TableCell>{lead.assignedTo}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      disabled={!selectedMemberId}
+                      onClick={() => handleAssignLead(lead.lead_id, selectedMemberId)}
+                    >
+                      Assign
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
 
       {activeTab === 0 && (
         <Card>
@@ -315,6 +409,17 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
                         <CheckCircleIcon fontSize="small" color="success" />
                       )}
                     </IconButton>
+                    {user.status === 'invited' && canInvite && (
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="success"
+                        onClick={() => handleStatusChange(user.id, 'active')}
+                        sx={{ ml: 1, fontSize: '0.7rem', py: 0.3 }}
+                      >
+                        Activate
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
@@ -389,8 +494,8 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {performance.members?.map((member: any) => (
-                  <TableRow key={member.id}>
+                {performance.members?.map((member: any, index) => (
+                  <TableRow key={member.id || index}>
                     <TableCell>{member.firstName} {member.lastName}</TableCell>
                     <TableCell>{getRoleTitle(member.role)}</TableCell>
                     <TableCell>{member.status}</TableCell>
@@ -424,8 +529,8 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {logs.map((log) => (
-                <TableRow key={log.id}>
+              {logs.map((log, index) => (
+                <TableRow key={log.id || index}>
                   <TableCell>{log.userName}</TableCell>
                   <TableCell>{log.feature}</TableCell>
                   <TableCell>{log.action}</TableCell>

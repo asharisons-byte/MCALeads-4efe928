@@ -82,6 +82,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const normalizedRole = normalizeAppRole(currentUserRole || '') || currentUserRole as AppRole;
   const canAccessTeam = canAccess(normalizedRole as AppRole, 'TeamManagement', 'READ');
+  const isSalesRep = ['SDR', 'APPOINTMENT_SETTER', 'OUTREACH_SPECIALIST'].includes(normalizedRole as string);
+
   return (
     <aside
       id="mca-sidebar"
@@ -112,35 +114,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
             Workspace
           </div>
           <div className="space-y-1">
-            <button
-              id="nav-command-center"
-              onClick={() => onNavigate('command_center')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'command_center'
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <LayoutDashboard className="w-4 h-4 text-indigo-400" />
-                <span>Command Center</span>
-              </div>
-            </button>
+            {!isSalesRep && (
+              <button
+                id="nav-command-center"
+                onClick={() => onNavigate('command_center')}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  currentTab === 'command_center'
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <LayoutDashboard className="w-4 h-4 text-indigo-400" />
+                  <span>Command Center</span>
+                </div>
+              </button>
+            )}
 
-            <button
-              id="nav-dashboard"
-              onClick={() => onNavigate('dashboard')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'dashboard'
-                  ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <LayoutDashboard className="w-4 h-4 text-indigo-400" />
-                <span>Dashboard</span>
-              </div>
-            </button>
+            {!isSalesRep && (
+              <button
+                id="nav-dashboard"
+                onClick={() => onNavigate('dashboard')}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  currentTab === 'dashboard'
+                    ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <LayoutDashboard className="w-4 h-4 text-indigo-400" />
+                  <span>Dashboard</span>
+                </div>
+              </button>
+            )}
 
             <button
               id="nav-leads"
@@ -198,23 +204,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span>AI Workforce</span>
           </div>
           <div className="space-y-1">
-            <button
-              id="nav-ai-workforce"
-              onClick={() => onNavigate('ai_workforce')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'ai_workforce'
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <Bot className="w-4 h-4 text-indigo-400" />
-                <span>Agency AI Workforce</span>
-              </div>
-              <span className="px-1.5 py-0.5 text-[9px] rounded font-bold bg-indigo-500/20 text-indigo-300">
-                7 Agents
-              </span>
-            </button>
+            {!isSalesRep && (
+              <button
+                id="nav-ai-workforce"
+                onClick={() => onNavigate('ai_workforce')}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  currentTab === 'ai_workforce'
+                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Bot className="w-4 h-4 text-indigo-400" />
+                  <span>Agency AI Workforce</span>
+                </div>
+                <span className="px-1.5 py-0.5 text-[9px] rounded font-bold bg-indigo-500/20 text-indigo-300">
+                  7 Agents
+                </span>
+              </button>
+            )}
 
             <button
               id="nav-ai-approvals"
@@ -486,20 +494,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
             Reporting
           </div>
           <div className="space-y-1">
-            <button
-              id="nav-analytics"
-              onClick={() => onNavigate('analytics')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'analytics'
-                  ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <BarChart3 className="w-4 h-4 text-emerald-400" />
-                <span>Analytics</span>
-              </div>
-            </button>
+            {!isSalesRep && (
+              <button
+                id="nav-analytics"
+                onClick={() => onNavigate('analytics')}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  currentTab === 'analytics'
+                    ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <BarChart3 className="w-4 h-4 text-emerald-400" />
+                  <span>Analytics</span>
+                </div>
+              </button>
+            )}
 
             <button
               id="nav-revenue"
@@ -524,35 +534,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
             Settings
           </div>
           <div className="space-y-1">
-            <button
-              id="nav-agency-settings"
-              onClick={() => onNavigate('agency_settings')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'agency_settings'
-                  ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <Settings className="w-4 h-4 text-slate-400" />
-                <span>Agency Settings</span>
-              </div>
-            </button>
+            {!isSalesRep && (
+              <button
+                id="nav-agency-settings"
+                onClick={() => onNavigate('agency_settings')}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  currentTab === 'agency_settings'
+                    ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Settings className="w-4 h-4 text-slate-400" />
+                  <span>Agency Settings</span>
+                </div>
+              </button>
+            )}
 
-            <button
-              id="nav-integrations"
-              onClick={() => onNavigate('integrations')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'integrations'
-                  ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <Puzzle className="w-4 h-4 text-slate-400" />
-                <span>Integrations</span>
-              </div>
-            </button>
+            {!isSalesRep && (
+              <button
+                id="nav-integrations"
+                onClick={() => onNavigate('integrations')}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  currentTab === 'integrations'
+                    ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <Puzzle className="w-4 h-4 text-slate-400" />
+                  <span>Integrations</span>
+                </div>
+              </button>
+            )}
 
             {canAccessTeam && (
               <button

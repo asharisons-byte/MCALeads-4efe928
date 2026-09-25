@@ -471,7 +471,13 @@ export function App() {
                   setDialerModalOpen(true);
                 }}
                 onStartAICall={(leadId) => {
-                  const targetLead = leads.find((l) => l.lead_id === leadId) || leads[0];
+                  const normalizedRole = normalizeAppRole(currentUserRole || '') || currentUserRole;
+                  const blockedRoles = ['SDR', 'APPOINTMENT_SETTER', 'OUTREACH_SPECIALIST'];
+                  if (blockedRoles.includes(normalizedRole as string)) {
+                    alert('AI calling is not available for your role. Please use the manual dialer.');
+                    return;
+                  }
+                  const targetLead = leads.find((l) => l.lead_id === leadId);
                   if (targetLead) setSophiaAICallLead(targetLead);
                 }}
                 onOpenEmailModal={(leadId) => {
@@ -505,7 +511,15 @@ export function App() {
                 setDialerPhoneNumber(phone || lead?.phone || '');
                 setDialerModalOpen(true);
               }}
-              onOpenAICall={(lead) => setSophiaAICallLead(lead)}
+              onOpenAICall={(lead) => {
+                const normalizedRole = normalizeAppRole(currentUserRole || '') || currentUserRole;
+                const blockedRoles = ['SDR', 'APPOINTMENT_SETTER', 'OUTREACH_SPECIALIST'];
+                if (blockedRoles.includes(normalizedRole as string)) {
+                  alert('AI calling is not available for your role. Please use the manual dialer.');
+                  return;
+                }
+                setSophiaAICallLead(lead);
+              }}
             />
           ) : currentTab === 'follow_ups' ? (
             <FollowUpQueueView
@@ -518,7 +532,15 @@ export function App() {
                 setDialerPhoneNumber(phone || lead?.phone || '');
                 setDialerModalOpen(true);
               }}
-              onOpenAICall={(lead) => setSophiaAICallLead(lead)}
+              onOpenAICall={(lead) => {
+                const normalizedRole = normalizeAppRole(currentUserRole || '') || currentUserRole;
+                const blockedRoles = ['SDR', 'APPOINTMENT_SETTER', 'OUTREACH_SPECIALIST'];
+                if (blockedRoles.includes(normalizedRole as string)) {
+                  alert('AI calling is not available for your role. Please use the manual dialer.');
+                  return;
+                }
+                setSophiaAICallLead(lead);
+              }}
             />
           ) : currentTab === 'ai_workforce' || currentTab === 'ai_approvals' ? (
             <div className="p-6 max-w-7xl mx-auto">
@@ -550,6 +572,12 @@ export function App() {
                 setDialerModalOpen(true);
               }}
               onOpenAICall={(lead) => {
+                const normalizedRole = normalizeAppRole(currentUserRole || '') || currentUserRole;
+                const blockedRoles = ['SDR', 'APPOINTMENT_SETTER', 'OUTREACH_SPECIALIST'];
+                if (blockedRoles.includes(normalizedRole as string)) {
+                  alert('AI calling is not available for your role. Please use the manual dialer.');
+                  return;
+                }
                 setSophiaAICallLead(lead);
               }}
               onOpenEmail={(lead) => {
@@ -582,6 +610,12 @@ export function App() {
                 setDialerModalOpen(true);
               }}
               onOpenAICall={(lead) => {
+                const normalizedRole = normalizeAppRole(currentUserRole || '') || currentUserRole;
+                const blockedRoles = ['SDR', 'APPOINTMENT_SETTER', 'OUTREACH_SPECIALIST'];
+                if (blockedRoles.includes(normalizedRole as string)) {
+                  alert('AI calling is not available for your role. Please use the manual dialer.');
+                  return;
+                }
                 setSophiaAICallLead(lead);
               }}
               onImportComplete={handleImportComplete}

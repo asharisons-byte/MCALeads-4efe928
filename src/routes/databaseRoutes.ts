@@ -205,14 +205,49 @@ router.get('/db-details', async (req: Request, res: Response) => {
 
 // 2. Leads: List & Search
 router.get('/leads', async (req: Request, res: Response) => {
+  // Optional auth — extract user if token provided, don't reject if missing
+  let callerRole = 'AGENCY_DIRECTOR';
+  let callerUid = '';
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) {
+    try {
+      const { createRemoteJWKSet, jwtVerify } = await import('jose');
+      const JWKS = createRemoteJWKSet(new URL('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com'));
+      const { payload } = await jwtVerify(authHeader.split('Bearer ')[1], JWKS, {
+        issuer: `https://securetoken.google.com/${process.env.FIREBASE_PROJECT_ID || 'ai-studio-applet-webapp-cf859'}`,
+        audience: process.env.FIREBASE_PROJECT_ID || 'ai-studio-applet-webapp-cf859',
+      });
+      callerUid = payload.sub as string;
+      if (db && callerUid) {
+        const userRows = await db.select().from(schema.users).where(eq(schema.users.uid, callerUid)).limit(1);
+        if (userRows[0]) callerRole = userRows[0].role;
+      }
+    } catch {}
+  }
+
   try {
     const { search, status, niche, city, isHotTarget, limit, offset } = req.query;
+    
+    const normalizedCallerRole = normalizeAppRole(callerRole) || callerRole;
+    
+    // SDR and APPOINTMENT_SETTER see only their assigned leads
+    const restrictedRoles = ['SDR', 'APPOINTMENT_SETTER', 'OUTREACH_SPECIALIST'];
+    let assignedToFilter: string | undefined = undefined;
+    
+    if (restrictedRoles.includes(normalizedCallerRole) && db && callerUid) {
+      const userRows = await db.select().from(schema.users).where(eq(schema.users.uid, callerUid)).limit(1);
+      if (userRows[0]) {
+        assignedToFilter = userRows[0].displayName || userRows[0].firstName || undefined;
+      }
+    }
+
     const leads = await getDbLeads({
       search: search ? String(search) : undefined,
       status: status ? String(status) : undefined,
       niche: niche ? String(niche) : undefined,
       city: city ? String(city) : undefined,
       isHotTarget: isHotTarget === 'true',
+      assignedTo: assignedToFilter,
       limit: limit ? Number(limit) : undefined,
       offset: offset ? Number(offset) : undefined,
     });
@@ -993,8 +1028,8 @@ router.put('/users/:id/status', requireAuth, async (req: AuthRequest, res: Respo
     const { id } = req.params;
     const { status } = req.body;
 
-    if (!status || !['active', 'suspended'].includes(status)) {
-      return res.status(400).json({ error: 'Status must be "active" or "suspended"' });
+    if (!status || !['active', 'suspended', 'invited'].includes(status)) {
+      return res.status(400).json({ error: 'Status must be "active", "suspended", or "invited"' });
     }
 
     // Get current user
