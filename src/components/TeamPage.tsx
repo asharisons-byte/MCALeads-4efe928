@@ -266,13 +266,12 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       {user.displayName}
-                      {canAccessTeamManagement(user.role) && (
-                        <Chip
-                          label={getRoleBadge(user.role).label}
-                          color={getRoleBadge(user.role).color as any}
-                          size="small"
-                        />
-                      )}
+                      <Chip
+                        label={getRoleTitle(user.role)}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
                     </Box>
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
