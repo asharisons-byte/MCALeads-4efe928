@@ -77,7 +77,9 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   const pageSize = 15;
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showBulkStageModal, setShowBulkStageModal] = useState(false);
+  const [showBulkReassignModal, setShowBulkReassignModal] = useState(false);
   const [bulkStageTarget, setBulkStageTarget] = useState<PipelineStage>('Contacted');
+  const [newOwner, setNewOwner] = useState('');
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
   const [showColumnConverter, setShowColumnConverter] = useState(false);
@@ -523,7 +525,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             </span>
             <div className="h-4 w-px bg-indigo-500/30" />
             <button
-              onClick={() => { /* Need a modal for assignment */ }}
+              onClick={() => setShowBulkReassignModal(true)}
               className="text-xs text-sky-400 hover:text-sky-300 font-semibold"
             >
               Bulk Assign
@@ -817,6 +819,46 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-500"
               >
                 Update Leads
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Reassign Modal */}
+      {showBulkReassignModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">
+            <h3 className="text-sm font-bold text-white border-b border-slate-800 pb-3">
+              Bulk Reassign ({selectedLeadIds.length} Leads)
+            </h3>
+            <input
+              type="text"
+              placeholder="Enter New Owner Name/ID"
+              value={newOwner}
+              onChange={(e) => setNewOwner(e.target.value)}
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200"
+            />
+            <div className="flex justify-end gap-2 pt-3">
+              <button
+                onClick={() => setShowBulkReassignModal(false)}
+                className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  for (const id of selectedLeadIds) {
+                      // Call backend API
+                      // await fetch(`/api/leads/${id}`, { method: 'PUT', body: JSON.stringify({ owner: newOwner }) ... })
+                  }
+                  setShowBulkReassignModal(false);
+                  setNewOwner('');
+                  setSelectedLeadIds([]);
+                }}
+                className="px-4 py-1.5 rounded-lg bg-sky-600 text-white text-xs font-semibold hover:bg-sky-500"
+              >
+                Reassign Leads
               </button>
             </div>
           </div>

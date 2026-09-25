@@ -75,6 +75,12 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
   const isAgencyDirector = currentUserRole === 'AGENCY_DIRECTOR';
   const canAssignReassign = ['AGENCY_DIRECTOR', 'SALES_MANAGER'].includes(currentUserRole);
 
+  const handleMarkNoConnect = async (leadId: string) => {
+    // Logic to mark as 'No Connect' and potentially auto-reassign
+    alert('Lead marked as No Connect. Please reassign.');
+    // In a real app, call /api/leads/${leadId}/no-connect
+  };
+
   const periods = ['Today', 'This Week', 'This Month', 'Last Month', 'All Time'];
 
   useEffect(() => {
@@ -227,6 +233,8 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
   const [assignLeads, setAssignLeads] = useState<any[]>([]);
   const [selectedMemberId, setSelectedMemberId] = useState<string>('');
   const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
+  const [leadToReassign, setLeadToReassign] = useState<any>(null);
+  const [newAssigneeId, setNewAssigneeId] = useState<string>('');
 
   async function getCurrentToken() {
     return auth.currentUser ? await auth.currentUser.getIdToken() : '';
@@ -381,7 +389,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
                       <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                         {lead.assignedTo}
                         {canAssignReassign && (
-                          <Button size="small" onClick={() => handleAssignLead(lead.lead_id, selectedMemberId || '0')}>
+                          <Button size="small" onClick={() => setLeadToReassign(lead)}>
                             Reassign
                           </Button>
                         )}
@@ -398,8 +406,10 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
                     )}
                   </TableCell>
                   <TableCell>
-                    {!lead.assignedTo && (
-                        <Button size="small" color="error">No Connect</Button>
+                    {lead.assignedTo && (
+                        <Button size="small" color="error" onClick={() => handleMarkNoConnect(lead.lead_id)}>
+                          No Connect
+                        </Button>
                     )}
                   </TableCell>
                 </TableRow>
@@ -618,6 +628,30 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
           setInviteModalOpen(false);
         }}
       />
+      {/* Reassign Dialog */}
+      {leadToReassign && (
+        <Box sx={{ position: 'fixed', inset: 0, bgcolor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+            <Card sx={{ p: 3, width: 400 }}>
+                <Typography variant="h6">Reassign {leadToReassign.businessName}</Typography>
+                <FormControl fullWidth sx={{ mt: 2 }}>
+                    <InputLabel>New Assignee</InputLabel>
+                    <Select value={newAssigneeId} onChange={e => setNewAssigneeId(e.target.value as string)}>
+                        {users.filter(u => ['SDR', 'ACCOUNT_EXECUTIVE'].includes(u.role)).map(u => (
+                            <MenuItem key={u.id} value={String(u.id)}>{u.displayName}</MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+                <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                    <Button onClick={() => setLeadToReassign(null)}>Cancel</Button>
+                    <Button variant="contained" disabled={!newAssigneeId} onClick={async () => {
+                        await handleAssignLead(leadToReassign.lead_id, newAssigneeId);
+                        setLeadToReassign(null);
+                        setNewAssigneeId('');
+                    }}>Confirm Reassign</Button>
+                </Box>
+            </Card>
+        </Box>
+      )}
     </Box>
   );
 };
