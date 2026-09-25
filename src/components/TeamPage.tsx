@@ -73,6 +73,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
   const [selectedPeriod, setSelectedPeriod] = useState('This Month');
   const canInvite = currentUserRole === 'AGENCY_DIRECTOR' || currentUserRole === 'SALES_MANAGER';
   const isAgencyDirector = currentUserRole === 'AGENCY_DIRECTOR';
+  const canAssignReassign = ['AGENCY_DIRECTOR', 'SALES_MANAGER'].includes(currentUserRole);
 
   const periods = ['Today', 'This Week', 'This Month', 'Last Month', 'All Time'];
 
@@ -375,9 +376,17 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
                   <TableCell>{lead.marketingGaps || 'N/A'}</TableCell>
                   <TableCell>{lead.opportunityScore || 'N/A'}</TableCell>
                   <TableCell>${lead.estRetainer || '0'}</TableCell>
-                  <TableCell>{lead.assignedTo || 'Unassigned'}</TableCell>
                   <TableCell>
-                    {!lead.assignedTo && (
+                    {lead.assignedTo ? (
+                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                        {lead.assignedTo}
+                        {canAssignReassign && (
+                          <Button size="small" onClick={() => handleAssignLead(lead.lead_id, selectedMemberId || '0')}>
+                            Reassign
+                          </Button>
+                        )}
+                      </Box>
+                    ) : (
                       <Button
                         variant="contained"
                         size="small"
@@ -386,6 +395,11 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
                       >
                         Assign
                       </Button>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {!lead.assignedTo && (
+                        <Button size="small" color="error">No Connect</Button>
                     )}
                   </TableCell>
                 </TableRow>
