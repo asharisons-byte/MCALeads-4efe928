@@ -4,6 +4,7 @@ import * as schema from './schema.js';
 import { OREGON_CCB_LEADS } from '../data/ccbLeadsData.js';
 import { TeamMemberPerformance } from '../types.js';
 import { AppRole, ROLE_DISPLAY_TITLES } from '../constants.js';
+import { normalizeAppRole, formatOwnerDisplay } from '../utils/roleUtils.js';
 
 // ==========================================
 // IN-MEMORY RESILIENT STATE STORAGE
@@ -490,7 +491,7 @@ export async function createDbLead(leadData: any) {
     leadScore: validatedScore,
     estimatedRetainer: Number(leadData.estimated_retainer || leadData.estimatedRetainer || 2500),
     estimatedValue: (Number(leadData.estimated_retainer || leadData.estimatedRetainer || 2500)) * 12,
-    assignedTo: leadData.owner || leadData.assigned_to || leadData.assignedTo || 'Sophia (AI Sales Rep)',
+    assignedTo: leadData.owner || leadData.assigned_to || leadData.assignedTo || 'New Lead Pool',
     assignedUserId: null,
     ccbLicenseNumber: leadData.ccb_license_number || leadData.licenseNumber || (uniqueLeadId.startsWith('CCB-') ? uniqueLeadId.replace('CCB-', '') : null),
     isHotTarget: leadData.is_hot_target !== undefined ? Boolean(leadData.is_hot_target) : (validatedScore >= 80),
@@ -1697,6 +1698,36 @@ export async function batchImportDbLeads(
   const insertedLeads: any[] = [];
   const failedInserts: any[] = [];
 
+  // Get active sales reps for round-robin
+  const activeSalesReps = isDbConfigured
+    ? await db
+        .select({
+          id: schema.users.id,
+          firstName: schema.users.firstName,
+          displayName: schema.users.displayName,
+          role: schema.users.role,
+        })
+        .from(schema.users)
+        .where(
+          and(
+            eq(schema.users.status, 'active'),
+            inArray(schema.users.role, ['Sales', 'SDR', 'OUTREACH_SPECIALIST'])
+          )
+        )
+    : [];
+
+  const salesReps = activeSalesReps.map((u) => ({
+    ...u,
+    canonicalRole: normalizeAppRole(u.role as string) || u.role,
+  }));
+
+  // Get current lead count to determine starting index
+  const existingCount = isDbConfigured 
+    ? await db.select({ count: sql<number>`count(*)` }).from(schema.leads) 
+    : [{ count: 0 }];
+  
+  let repIndex = Number(existingCount[0]?.count || 0);
+
   for (const row of rows) {
     const bizName = row.business_name || row.Business_Name || row['Business Name'] || row.businessName;
     if (!bizName) continue;
@@ -1710,6 +1741,19 @@ export async function batchImportDbLeads(
       duplicatesCount++;
       continue;
     }
+
+    // Determine assignee
+    const rep = salesReps.length > 0 ? salesReps[repIndex % salesReps.length] : null;
+    
+    const leadData = {
+      ...row,
+      assigned_user: rep ? {
+        id: rep.id,
+        firstName: rep.firstName || rep.displayName,
+        role: rep.canonicalRole,
+      } : undefined,
+      assignedTo: rep ? formatOwnerDisplay(rep.firstName || rep.displayName || 'Rep', rep.canonicalRole as string) : 'New Lead Pool'
+    };
 
     // Use existing lead_id from frontend if supplied, otherwise generate unique ID
     const leadId =
@@ -1745,11 +1789,13 @@ export async function batchImportDbLeads(
       recommended_service: row.recommended_service || row.recommendedService || 'SEO & GMB Optimization',
       estimated_retainer: Number(row.estimated_retainer || row.estimatedRetainer || 2500),
       pipeline_stage: row.pipeline_stage || row.leadStatus || 'New Lead',
-      owner: row.owner || row.assigned_to || row.assignedTo || 'Sophia (AI Sales Rep)',
+      owner: leadData.assignedTo,
       notes: row.notes || [],
       original_data: row.original_data || row.rawPayload || row,
     });
-
+    
+    if (rep) repIndex++;
+    
     // Check if the insert was successful by examining _dbSource
     if (result._dbSource === 'neon') {
       // SUCCESS: Valid record created and confirmed in Neon PostgreSQL
