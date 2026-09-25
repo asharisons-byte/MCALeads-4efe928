@@ -18,6 +18,7 @@ import {
   MenuItem,
   IconButton,
   Checkbox,
+  TablePagination,
 } from '@mui/material';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -236,6 +237,11 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
   const [leadToReassign, setLeadToReassign] = useState<any>(null);
   const [newAssigneeId, setNewAssigneeId] = useState<string>('');
 
+  const [memberPage, setMemberPage] = useState(0);
+  const [memberRowsPerPage, setMemberRowsPerPage] = useState(5);
+  const [performancePage, setPerformancePage] = useState(0);
+  const [performanceRowsPerPage, setPerformanceRowsPerPage] = useState(5);
+
   async function getCurrentToken() {
     return auth.currentUser ? await auth.currentUser.getIdToken() : '';
   }
@@ -330,10 +336,32 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
               variant="contained"
               disabled={selectedLeads.length === 0 || !selectedMemberId}
               onClick={async () => {
-                for (const leadId of selectedLeads) {
-                  await handleAssignLead(leadId, selectedMemberId);
+                try {
+                  const token = await getCurrentToken();
+                  const response = await fetch('/api/leads/reassign-bulk', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ leadIds: selectedLeads, targetMemberId: selectedMemberId }),
+                  });
+                  if (response.ok) {
+                    // Refresh leads
+                    const leadsRes = await fetch('/api/leads?limit=1000', {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    const d = await leadsRes.json();
+                    setAssignLeads(d.leads || []);
+                    setSelectedLeads([]);
+                  } else {
+                    const data = await response.json();
+                    alert(data.error || 'Failed to assign leads');
+                  }
+                } catch (e) {
+                  console.error(e);
+                  alert('Error assigning leads');
                 }
-                setSelectedLeads([]);
               }}
             >
               Assign Selected
@@ -358,7 +386,6 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
                   </TableCell>
                   <TableCell>Business Name</TableCell>
                   <TableCell>GMB</TableCell>
-                  <TableCell>Website</TableCell>
                   <TableCell>Marketing Gaps</TableCell>
                   <TableCell>Opportunity Score</TableCell>
                   <TableCell>Est. Retainer</TableCell>
@@ -384,7 +411,6 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
                     </TableCell>
                     <TableCell>{lead.businessName}</TableCell>
                     <TableCell>{lead.gmbLink || 'N/A'}</TableCell>
-                    <TableCell>{lead.website || 'N/A'}</TableCell>
                     <TableCell>{lead.marketingGaps || 'N/A'}</TableCell>
                     <TableCell>{lead.opportunityScore || 'N/A'}</TableCell>
                     <TableCell>${lead.estRetainer || '0'}</TableCell>
@@ -438,7 +464,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {users.map((user) => (
+              {users.slice(memberPage * memberRowsPerPage, memberPage * memberRowsPerPage + memberRowsPerPage).map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -508,6 +534,18 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
               ))}
             </TableBody>
           </Table>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={users.length}
+            rowsPerPage={memberRowsPerPage}
+            page={memberPage}
+            onPageChange={(e, p) => setMemberPage(p)}
+            onRowsPerPageChange={(e) => {
+              setMemberRowsPerPage(parseInt(e.target.value, 10));
+              setMemberPage(0);
+            }}
+          />
         </Card>
       )}
 
@@ -577,7 +615,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {performance.members?.map((member: any, index) => (
+                {performance.members?.slice(performancePage * performanceRowsPerPage, performancePage * performanceRowsPerPage + performanceRowsPerPage).map((member: any, index) => (
                   <TableRow key={member.id || index}>
                     <TableCell>{member.firstName} {member.lastName}</TableCell>
                     <TableCell>{getRoleTitle(member.role)}</TableCell>
@@ -596,6 +634,18 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
                 ))}
               </TableBody>
             </Table>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={performance.members?.length || 0}
+              rowsPerPage={performanceRowsPerPage}
+              page={performancePage}
+              onPageChange={(e, p) => setPerformancePage(p)}
+              onRowsPerPageChange={(e) => {
+                setPerformanceRowsPerPage(parseInt(e.target.value, 10));
+                setPerformancePage(0);
+              }}
+            />
           </Card>
         </>
       )}
