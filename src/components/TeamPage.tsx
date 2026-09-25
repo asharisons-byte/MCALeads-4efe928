@@ -251,6 +251,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
   }, [activeTab]);
 
   const handleAssignLead = async (leadId: string, memberId: string) => {
+    console.log('[DEBUG] Assigning lead:', { leadId, memberId });
     try {
       const token = await getCurrentToken();
       const response = await fetch(`/api/leads/${leadId}`, {
@@ -261,6 +262,8 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
         },
         body: JSON.stringify({ assigned_user: { id: memberId } }),
       });
+      const data = await response.json();
+      console.log('[DEBUG] Assign lead response:', { ok: response.ok, data });
       if (response.ok) {
         // Refresh leads
         const leadsRes = await fetch('/api/leads?limit=1000', {
@@ -269,7 +272,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
         const d = await leadsRes.json();
         setAssignLeads(d.leads || []);
       } else {
-        alert('Failed to assign lead');
+        alert(data.error || 'Failed to assign lead');
       }
     } catch (e) {
       console.error(e);
@@ -336,86 +339,88 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
               Assign Selected
             </Button>
           </Box>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    indeterminate={selectedLeads.length > 0 && selectedLeads.length < assignLeads.filter(l => !l.assignedTo).length}
-                    checked={selectedLeads.length === assignLeads.filter(l => !l.assignedTo).length && selectedLeads.length > 0}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedLeads(assignLeads.filter(l => !l.assignedTo).map(l => l.lead_id));
-                      } else {
-                        setSelectedLeads([]);
-                      }
-                    }}
-                  />
-                </TableCell>
-                <TableCell>Business Name</TableCell>
-                <TableCell>GMB</TableCell>
-                <TableCell>Website</TableCell>
-                <TableCell>Marketing Gaps</TableCell>
-                <TableCell>Opportunity Score</TableCell>
-                <TableCell>Est. Retainer</TableCell>
-                <TableCell>Assigned To</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {assignLeads.map((lead: any, index) => (
-                <TableRow key={lead.lead_id || index}>
+          <Box sx={{ maxHeight: '600px', overflowY: 'auto' }}>
+            <Table stickyHeader>
+              <TableHead>
+                <TableRow>
                   <TableCell padding="checkbox">
                     <Checkbox
-                      disabled={!!lead.assignedTo}
-                      checked={selectedLeads.includes(lead.lead_id)}
+                      indeterminate={selectedLeads.length > 0 && selectedLeads.length < assignLeads.filter(l => !l.assignedTo).length}
+                      checked={selectedLeads.length === assignLeads.filter(l => !l.assignedTo).length && selectedLeads.length > 0}
                       onChange={(e) => {
                         if (e.target.checked) {
-                          setSelectedLeads([...selectedLeads, lead.lead_id]);
+                          setSelectedLeads(assignLeads.filter(l => !l.assignedTo).map(l => l.lead_id));
                         } else {
-                          setSelectedLeads(selectedLeads.filter(id => id !== lead.lead_id));
+                          setSelectedLeads([]);
                         }
                       }}
                     />
                   </TableCell>
-                  <TableCell>{lead.businessName}</TableCell>
-                  <TableCell>{lead.gmbLink || 'N/A'}</TableCell>
-                  <TableCell>{lead.website || 'N/A'}</TableCell>
-                  <TableCell>{lead.marketingGaps || 'N/A'}</TableCell>
-                  <TableCell>{lead.opportunityScore || 'N/A'}</TableCell>
-                  <TableCell>${lead.estRetainer || '0'}</TableCell>
-                  <TableCell>
-                    {lead.assignedTo ? (
-                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                        {lead.assignedTo}
-                        {canAssignReassign && (
-                          <Button size="small" onClick={() => setLeadToReassign(lead)}>
-                            Reassign
-                          </Button>
-                        )}
-                      </Box>
-                    ) : (
-                      <Button
-                        variant="contained"
-                        size="small"
-                        disabled={!selectedMemberId}
-                        onClick={() => handleAssignLead(lead.lead_id, selectedMemberId)}
-                      >
-                        Assign
-                      </Button>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {lead.assignedTo && (
-                        <Button size="small" color="error" onClick={() => handleMarkNoConnect(lead.lead_id)}>
-                          No Connect
-                        </Button>
-                    )}
-                  </TableCell>
+                  <TableCell>Business Name</TableCell>
+                  <TableCell>GMB</TableCell>
+                  <TableCell>Website</TableCell>
+                  <TableCell>Marketing Gaps</TableCell>
+                  <TableCell>Opportunity Score</TableCell>
+                  <TableCell>Est. Retainer</TableCell>
+                  <TableCell>Assigned To</TableCell>
+                  <TableCell>Actions</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHead>
+              <TableBody>
+                {assignLeads.map((lead: any, index) => (
+                  <TableRow key={lead.lead_id || index}>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        disabled={!!lead.assignedTo}
+                        checked={selectedLeads.includes(lead.lead_id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedLeads([...selectedLeads, lead.lead_id]);
+                          } else {
+                            setSelectedLeads(selectedLeads.filter(id => id !== lead.lead_id));
+                          }
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>{lead.businessName}</TableCell>
+                    <TableCell>{lead.gmbLink || 'N/A'}</TableCell>
+                    <TableCell>{lead.website || 'N/A'}</TableCell>
+                    <TableCell>{lead.marketingGaps || 'N/A'}</TableCell>
+                    <TableCell>{lead.opportunityScore || 'N/A'}</TableCell>
+                    <TableCell>${lead.estRetainer || '0'}</TableCell>
+                    <TableCell>
+                      {lead.assignedTo ? (
+                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                          {lead.assignedTo}
+                          {canAssignReassign && (
+                            <Button size="small" onClick={() => setLeadToReassign(lead)}>
+                              Reassign
+                            </Button>
+                          )}
+                        </Box>
+                      ) : (
+                        <Button
+                          variant="contained"
+                          size="small"
+                          disabled={!selectedMemberId}
+                          onClick={() => handleAssignLead(lead.lead_id, selectedMemberId)}
+                        >
+                          Assign
+                        </Button>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {lead.assignedTo && (
+                          <Button size="small" color="error" onClick={() => handleMarkNoConnect(lead.lead_id)}>
+                            No Connect
+                          </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Box>
         </Card>
       )}
 
