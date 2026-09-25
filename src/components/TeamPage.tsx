@@ -259,7 +259,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ assigned_user_id: memberId }),
+        body: JSON.stringify({ assigned_user: { id: memberId } }),
       });
       if (response.ok) {
         // Refresh leads
