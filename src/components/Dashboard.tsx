@@ -19,6 +19,7 @@ import {
   Star,
   Activity,
 } from 'lucide-react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { Lead, ActivityEvent } from '../types';
 import { DashboardActivityChart } from './DashboardActivityChart';
 
@@ -419,26 +420,29 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div className="p-5 rounded-xl bg-slate-900/80 border border-slate-800 space-y-4">
-            <div className="space-y-2.5">
-              {Object.entries(stageCounts).map(([stage, count]) => {
-                const pct = totalLeads > 0 ? Math.round((count / totalLeads) * 100) : 0;
-                return (
-                  <div key={stage} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-300 font-medium">{stage}</span>
-                      <span className="font-mono text-slate-400">
-                        {count} <span className="text-[10px] text-slate-400">({pct}%)</span>
-                      </span>
-                    </div>
-                    <div className="h-1.5 w-full rounded-full bg-slate-800 overflow-hidden">
-                      <div
-                        className="h-full bg-indigo-500 rounded-full"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={Object.entries(stageCounts).map(([name, value]) => ({ name, value }))}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {Object.entries(stageCounts).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={['#6366f1', '#8b5cf6', '#d946ef', '#f43f5e', '#f59e0b', '#10b981'][index % 6]} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', fontSize: '12px' }}
+                    itemStyle={{ color: '#e2e8f0' }}
+                  />
+                  <Legend verticalAlign="bottom" height={36} wrapperStyle={{ fontSize: '10px' }} />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
 
             <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">

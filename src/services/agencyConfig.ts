@@ -21,6 +21,7 @@ export const DEFAULT_AGENCY_CONFIG: AgencyConfig = {
     reputation: 10,
     revenue_potential: 5,
   },
+  round_robin_enabled: false,
 };
 
 export function getAgencyConfig(): AgencyConfig {

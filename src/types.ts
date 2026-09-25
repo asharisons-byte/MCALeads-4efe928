@@ -523,6 +523,7 @@ export interface AgencyConfig {
     reputation?: number;
     revenue_potential?: number;
   };
+  round_robin_enabled?: boolean;
 }
 
 export interface ImportHistoryItem {

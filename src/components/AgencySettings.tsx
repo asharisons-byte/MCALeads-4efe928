@@ -78,6 +78,21 @@ export const AgencySettings: React.FC = () => {
               />
             </div>
             <div>
+              <label className="block text-slate-300 font-semibold mb-1">Round-Robin Lead Assignment</label>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setConfig({ ...config, round_robin_enabled: !config.round_robin_enabled })}
+                  className={`w-12 h-6 rounded-full p-1 transition-colors ${config.round_robin_enabled ? 'bg-indigo-600' : 'bg-slate-700'}`}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-white transition-transform ${config.round_robin_enabled ? 'translate-x-6' : 'translate-x-0'}`} />
+                </button>
+                <span className="text-slate-300 text-sm">
+                  {config.round_robin_enabled ? 'Enabled' : 'Disabled (Manual)'}
+                </span>
+              </div>
+            </div>
+            <div>
               <label className="block text-slate-300 font-semibold mb-1">CRM Suite Title</label>
               <input
                 type="text"
