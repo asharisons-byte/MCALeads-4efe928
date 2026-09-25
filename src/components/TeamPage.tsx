@@ -17,6 +17,7 @@ import {
   Select,
   MenuItem,
   IconButton,
+  Checkbox,
 } from '@mui/material';
 import BlockIcon from '@mui/icons-material/Block';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -224,6 +225,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
 
   const [assignLeads, setAssignLeads] = useState<any[]>([]);
   const [selectedMemberId, setSelectedMemberId] = useState<string>('');
+  const [selectedLeads, setSelectedLeads] = useState<string[]>([]);
 
   async function getCurrentToken() {
     return auth.currentUser ? await auth.currentUser.getIdToken() : '';
@@ -294,27 +296,59 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
 
       {activeTab === 3 && (
         <Card sx={{ p: 2 }}>
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Select Team Member</InputLabel>
-            <Select
-              value={selectedMemberId}
-              label="Select Team Member"
-              onChange={(e) => setSelectedMemberId(e.target.value)}
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+            <FormControl fullWidth>
+              <InputLabel>Select Team Member</InputLabel>
+              <Select
+                value={selectedMemberId}
+                label="Select Team Member"
+                onChange={(e) => setSelectedMemberId(e.target.value as string)}
+              >
+                {users
+                  .filter(u => ['SDR', 'ACCOUNT_EXECUTIVE'].includes(u.role))
+                  .map(u => (
+                    <MenuItem key={u.id} value={String(u.id)}>
+                      {u.displayName} ({u.role})
+                    </MenuItem>
+                  ))
+                }
+              </Select>
+            </FormControl>
+            <Button
+              variant="contained"
+              disabled={selectedLeads.length === 0 || !selectedMemberId}
+              onClick={async () => {
+                for (const leadId of selectedLeads) {
+                  await handleAssignLead(leadId, selectedMemberId);
+                }
+                setSelectedLeads([]);
+              }}
             >
-              {users
-                .filter(u => ['SDR', 'ACCOUNT_EXECUTIVE'].includes(u.role))
-                .map(u => (
-                  <MenuItem key={u.id} value={String(u.id)}>
-                    {u.displayName} ({u.role})
-                  </MenuItem>
-                ))
-              }
-            </Select>
-          </FormControl>
+              Assign Selected
+            </Button>
+          </Box>
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    indeterminate={selectedLeads.length > 0 && selectedLeads.length < assignLeads.filter(l => !l.assignedTo).length}
+                    checked={selectedLeads.length === assignLeads.filter(l => !l.assignedTo).length && selectedLeads.length > 0}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedLeads(assignLeads.filter(l => !l.assignedTo).map(l => l.lead_id));
+                      } else {
+                        setSelectedLeads([]);
+                      }
+                    }}
+                  />
+                </TableCell>
                 <TableCell>Business Name</TableCell>
+                <TableCell>GMB</TableCell>
+                <TableCell>Website</TableCell>
+                <TableCell>Marketing Gaps</TableCell>
+                <TableCell>Opportunity Score</TableCell>
+                <TableCell>Est. Retainer</TableCell>
                 <TableCell>Assigned To</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
@@ -322,17 +356,37 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
             <TableBody>
               {assignLeads.map((lead: any, index) => (
                 <TableRow key={lead.lead_id || index}>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      disabled={!!lead.assignedTo}
+                      checked={selectedLeads.includes(lead.lead_id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedLeads([...selectedLeads, lead.lead_id]);
+                        } else {
+                          setSelectedLeads(selectedLeads.filter(id => id !== lead.lead_id));
+                        }
+                      }}
+                    />
+                  </TableCell>
                   <TableCell>{lead.businessName}</TableCell>
-                  <TableCell>{lead.assignedTo}</TableCell>
+                  <TableCell>{lead.gmbLink || 'N/A'}</TableCell>
+                  <TableCell>{lead.website || 'N/A'}</TableCell>
+                  <TableCell>{lead.marketingGaps || 'N/A'}</TableCell>
+                  <TableCell>{lead.opportunityScore || 'N/A'}</TableCell>
+                  <TableCell>${lead.estRetainer || '0'}</TableCell>
+                  <TableCell>{lead.assignedTo || 'Unassigned'}</TableCell>
                   <TableCell>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      disabled={!selectedMemberId}
-                      onClick={() => handleAssignLead(lead.lead_id, selectedMemberId)}
-                    >
-                      Assign
-                    </Button>
+                    {!lead.assignedTo && (
+                      <Button
+                        variant="contained"
+                        size="small"
+                        disabled={!selectedMemberId}
+                        onClick={() => handleAssignLead(lead.lead_id, selectedMemberId)}
+                      >
+                        Assign
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
