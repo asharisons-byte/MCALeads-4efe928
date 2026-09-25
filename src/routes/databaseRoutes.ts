@@ -450,10 +450,19 @@ router.put('/leads/:id', requireAuth, async (req: AuthRequest, res: Response) =>
             role: canonicalRole,
           };
         } else {
-          // Attempting to assign to another user - requires Agency Director or Sales Manager
-          if (canonicalRole !== 'AGENCY_DIRECTOR' && canonicalRole !== 'SALES_MANAGER') {
+          // Attempting to assign to another user - requires Agency Director, Sales Manager, or Director
+          console.log('[DEBUG] Reassignment Permission Check:', {
+            canonicalRole: canonicalRole,
+            isDirector: canonicalRole === 'Director',
+            isAgencyDirector: canonicalRole === 'AGENCY_DIRECTOR',
+            isSalesManager: canonicalRole === 'SALES_MANAGER',
+            isAuthorized: ['AGENCY_DIRECTOR', 'SALES_MANAGER', 'Director'].includes(canonicalRole)
+          });
+
+          if (!['AGENCY_DIRECTOR', 'SALES_MANAGER', 'Director'].includes(canonicalRole)) {
+            console.log('[DEBUG] Reassignment Denied: Unauthorized role attempt');
             return res.status(403).json({ 
-              error: 'You are not authorized to assign this lead to another team member. Only Agency Director or Sales Manager can reassign leads.' 
+              error: `You are not authorized to assign this lead to another team member. Your role (${canonicalRole}) does not have permission.` 
             });
           }
           
