@@ -552,7 +552,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       )}
 
       {/* CRM Table */}
-      <div className="rounded-xl border border-slate-800 bg-[#0d121f] overflow-hidden shadow-xl flex-1 min-h-0">
+      <div className="rounded-xl border border-slate-800 bg-[#0d121f] overflow-hidden shadow-xl flex-1 min-h-0 overflow-y-auto">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
