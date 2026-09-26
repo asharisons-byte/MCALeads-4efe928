@@ -168,12 +168,16 @@ export async function getLeads(): Promise<Lead[]> {
     const token = await getAuthToken();
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
+    console.log('Fetching leads from /api/leads...');
     const res = await fetch('/api/leads?limit=1000', { headers });
+    console.log('Fetch response status:', res.status);
     if (res.ok) {
       const data = await res.json();
       if (data && Array.isArray(data.leads)) {
         return data.leads.map((l: any) => mapDbLeadToModel(l));
       }
+    } else {
+      console.error('Fetch failed with status:', res.status, await res.text());
     }
   } catch (err) {
     console.error('Error fetching leads:', err);
