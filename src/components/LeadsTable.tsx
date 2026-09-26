@@ -85,7 +85,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   onPageChange,
 }) => {
   // State
-  const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
+  const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [currentView, setCurrentView] = useState<ViewFilterType>('All Leads');
   const [searchQuery, setSearchQuery] = useState('');
   const [stageFilter, setStageFilter] = useState<string>('All');
@@ -255,21 +255,27 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedLeadIds(paginatedLeads.map((l) => l.lead_id));
+      setSelectedLeadIds(new Set(paginatedLeads.map((l) => l.lead_id)));
     } else {
-      setSelectedLeadIds([]);
+      setSelectedLeadIds(new Set());
     }
   };
 
   const handleSelectRow = (leadId: string) => {
-    setSelectedLeadIds((prev) =>
-      prev.includes(leadId) ? prev.filter((id) => id !== leadId) : [...prev, leadId]
-    );
+    setSelectedLeadIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(leadId)) {
+        next.delete(leadId);
+      } else {
+        next.add(leadId);
+      }
+      return next;
+    });
   };
 
   // ── Bulk Reassign via API ────────────────────────────────────────────────
   const handleBulkReassign = async () => {
-    if (!selectedMemberId || selectedLeadIds.length === 0) return;
+    if (!selectedMemberId || selectedLeadIds.size === 0) return;
     setIsAssigning(true);
     setAssignError(null);
     try {
@@ -280,7 +286,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ leadIds: selectedLeadIds, targetMemberId: selectedMemberId }),
+        body: JSON.stringify({ leadIds: Array.from(selectedLeadIds), targetMemberId: selectedMemberId }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -289,7 +295,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       }
       setShowBulkReassignModal(false);
       setSelectedMemberId('');
-      setSelectedLeadIds([]);
+      setSelectedLeadIds(new Set());
     } catch (e: any) {
       setAssignError(e.message || 'Network error during reassignment');
     } finally {
@@ -512,9 +518,9 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         </div>
 
         {/* Bulk Actions Bar */}
-        {selectedLeadIds.length > 0 && (
+        {selectedLeadIds.size > 0 && (
           <div className="flex items-center gap-2 bg-indigo-950/60 border border-indigo-500/30 px-3 py-1.5 rounded-lg">
-            <span className="text-xs font-bold text-indigo-300 font-mono">{selectedLeadIds.length} selected</span>
+            <span className="text-xs font-bold text-indigo-300 font-mono">{selectedLeadIds.size} selected</span>
             <div className="h-4 w-px bg-indigo-500/30" />
             <button onClick={() => { setAssignError(null); setShowBulkReassignModal(true); }} className="text-xs text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1">
               <UserCheck className="w-3 h-3" /> Bulk Assign
@@ -522,7 +528,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             <button onClick={() => setShowBulkStageModal(true)} className="text-xs text-amber-400 hover:text-amber-300 font-semibold">
               Move Stage
             </button>
-            <button onClick={() => onTriggerAIEnrichment(selectedLeadIds)} className="text-xs text-purple-300 hover:text-purple-200 font-semibold flex items-center gap-1">
+            <button onClick={() => onTriggerAIEnrichment(Array.from(selectedLeadIds))} className="text-xs text-purple-300 hover:text-purple-200 font-semibold flex items-center gap-1">
               <Sparkles className="w-3 h-3" /> Enrich AI
             </button>
             <button onClick={() => setShowConfirmDelete(true)} className="text-xs text-rose-400 hover:text-rose-300 font-semibold">
@@ -594,7 +600,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 <th className="p-2.5 w-8 text-center">
                   <input
                     type="checkbox"
-                    checked={paginatedLeads.length > 0 && paginatedLeads.every((l) => selectedLeadIds.includes(l.lead_id))}
+                    checked={paginatedLeads.length > 0 && paginatedLeads.every((l) => selectedLeadIds.has(l.lead_id))}
                     onChange={(e) => handleSelectAll(e.target.checked)}
                     className="rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
                   />
@@ -635,7 +641,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 </tr>
               ) : (
                 paginatedLeads.map((lead) => {
-                  const isSelected = selectedLeadIds.includes(lead.lead_id);
+                  const isSelected = selectedLeadIds.has(lead.lead_id);
                   const isExpanded = expandedLeadId === lead.lead_id;
                   return (
                     <React.Fragment key={lead.lead_id}>
@@ -649,7 +655,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                           <input
                             type="checkbox"
                             checked={isSelected}
-                            onChange={() => handleSelectRow(lead.lead_id)}
+                            onChange={(e) => { e.stopPropagation(); handleSelectRow(lead.lead_id); }}
                             className="rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
                           />
                         </td>
@@ -747,7 +753,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div>
-                <h3 className="text-sm font-bold text-white">Bulk Assign {selectedLeadIds.length} Leads</h3>
+                <h3 className="text-sm font-bold text-white">Bulk Assign {selectedLeadIds.size} Leads</h3>
                 <p className="text-xs text-slate-400 mt-0.5">Reassign selected leads to a sales team member</p>
               </div>
               <button onClick={() => setShowBulkReassignModal(false)} className="text-slate-400 hover:text-white"><X className="w-4 h-4" /></button>
@@ -803,7 +809,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-sm font-bold text-white">Bulk Update Stage ({selectedLeadIds.length} Leads)</h3>
+              <h3 className="text-sm font-bold text-white">Bulk Update Stage ({selectedLeadIds.size} Leads)</h3>
               <button onClick={() => setShowBulkStageModal(false)} className="text-slate-400 hover:text-white"><X className="w-4 h-4" /></button>
             </div>
             <select value={bulkStageTarget} onChange={(e) => setBulkStageTarget(e.target.value as PipelineStage)} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200">
@@ -821,8 +827,8 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 disabled={isBulkUpdating}
                 onClick={async () => {
                   setIsBulkUpdating(true);
-                  await onBulkUpdateStage(selectedLeadIds, bulkStageTarget);
-                  setSelectedLeadIds([]);
+                  await onBulkUpdateStage(Array.from(selectedLeadIds), bulkStageTarget);
+                  setSelectedLeadIds(new Set());
                   setShowBulkStageModal(false);
                   setIsBulkUpdating(false);
                 }}
@@ -841,12 +847,12 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-3 text-rose-400">
               <AlertCircle className="w-6 h-6" />
-              <h3 className="text-sm font-bold text-white">Delete {selectedLeadIds.length} Leads?</h3>
+              <h3 className="text-sm font-bold text-white">Delete {selectedLeadIds.size} Leads?</h3>
             </div>
-            <p className="text-xs text-slate-300 leading-relaxed">This cannot be undone. {selectedLeadIds.length} lead records will be permanently removed.</p>
+            <p className="text-xs text-slate-300 leading-relaxed">This cannot be undone. {selectedLeadIds.size} lead records will be permanently removed.</p>
             <div className="flex justify-end gap-2 pt-2">
               <button onClick={() => setShowConfirmDelete(false)} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs font-semibold">Cancel</button>
-              <button onClick={() => { onBulkDelete(selectedLeadIds); setSelectedLeadIds([]); setShowConfirmDelete(false); }} className="px-4 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-semibold hover:bg-rose-500">
+              <button onClick={() => { onBulkDelete(Array.from(selectedLeadIds)); setSelectedLeadIds(new Set()); setShowConfirmDelete(false); }} className="px-4 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-semibold hover:bg-rose-500">
                 Confirm Delete
               </button>
             </div>
