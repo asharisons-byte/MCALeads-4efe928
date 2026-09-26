@@ -654,7 +654,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                           />
                         </td>
                         <td className="p-2.5 min-w-[160px]">
-                          <div onClick={() => onSelectLead(lead)} className="cursor-pointer group-hover:text-indigo-300 font-bold text-slate-100 flex items-center gap-1.5">
+                          <div onClick={(e) => { e.stopPropagation(); onSelectLead(lead); }} className="cursor-pointer group-hover:text-indigo-300 font-bold text-slate-100 flex items-center gap-1.5">
                             <span className="truncate max-w-[140px]">{lead.business_name}</span>
                             {lead.is_hot_target && <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400 flex-shrink-0" />}
                           </div>
@@ -697,7 +697,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                           </span>
                         </td>
                         <td className="p-2.5 text-center min-w-[60px]">
-                          <button onClick={() => onSelectLead(lead)} className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">View</button>
+                          <button onClick={(e) => { e.stopPropagation(); onSelectLead(lead); }} className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">View</button>
                         </td>
                       </tr>
                       {isExpanded && (
