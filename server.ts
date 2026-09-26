@@ -173,6 +173,12 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Inbound SMS Webhook
+app.post('/api/sms/webhook', async (req, res) => {
+  console.log('[SMS Webhook] Received payload:', JSON.stringify(req.body));
+  res.status(200).send('OK');
+});
+
 // Server-side AI Lead Analysis Endpoint
 app.post('/api/ai/analyze-lead', async (req, res) => {
   try {
