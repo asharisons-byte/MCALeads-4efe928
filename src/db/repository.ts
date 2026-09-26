@@ -4,7 +4,7 @@ import * as schema from './schema.js';
 import { OREGON_CCB_LEADS } from '../data/ccbLeadsData.js';
 import { TeamMemberPerformance } from '../types.js';
 import { AppRole, ROLE_DISPLAY_TITLES } from '../constants.js';
-import { normalizeAppRole, formatOwnerDisplay } from '../utils/roleUtils.js';
+import { normalizeAppRole, formatOwnerDisplay, getDefaultLeadOwner } from '../utils/roleUtils.js';
 
 // ==========================================
 // IN-MEMORY RESILIENT STATE STORAGE
@@ -492,8 +492,7 @@ export async function createDbLead(leadData: any) {
     leadScore: validatedScore,
     estimatedRetainer: Number(leadData.estimated_retainer || leadData.estimatedRetainer || 2500),
     estimatedValue: (Number(leadData.estimated_retainer || leadData.estimatedRetainer || 2500)) * 12,
-    assignedTo: leadData.owner || leadData.assigned_to || leadData.assignedTo || 'Sophia (AI Sales Rep)',
-    assignedUserId: null,
+    ...getDefaultLeadOwner(),
     ccbLicenseNumber: leadData.ccb_license_number || leadData.licenseNumber || (uniqueLeadId.startsWith('CCB-') ? uniqueLeadId.replace('CCB-', '') : null),
     isHotTarget: leadData.is_hot_target !== undefined ? Boolean(leadData.is_hot_target) : (validatedScore >= 80),
     doNotContact: false,
@@ -575,7 +574,9 @@ export async function createDbLead(leadData: any) {
           leadScore: inMemoryRecord.leadScore,
           estimatedRetainer: inMemoryRecord.estimatedRetainer,
           estimatedValue: inMemoryRecord.estimatedValue,
+          ownershipType: inMemoryRecord.ownershipType,
           assignedTo: inMemoryRecord.assignedTo,
+          assignedUserId: inMemoryRecord.assignedUserId,
           ccbLicenseNumber: inMemoryRecord.ccbLicenseNumber,
           isHotTarget: inMemoryRecord.isHotTarget,
           opportunityAngle: inMemoryRecord.opportunityAngle,
@@ -598,6 +599,9 @@ export async function createDbLead(leadData: any) {
             niche: inMemoryRecord.niche,
             leadScore: inMemoryRecord.leadScore,
             leadStatus: inMemoryRecord.leadStatus,
+            ownershipType: inMemoryRecord.ownershipType,
+            assignedTo: inMemoryRecord.assignedTo,
+            assignedUserId: inMemoryRecord.assignedUserId,
             updatedAt: new Date(),
           },
         })
@@ -1699,35 +1703,11 @@ export async function batchImportDbLeads(
   const insertedLeads: any[] = [];
   const failedInserts: any[] = [];
 
-  // Get active sales reps for round-robin
-  const activeSalesReps = isDbConfigured
-    ? await db
-        .select({
-          id: schema.users.id,
-          firstName: schema.users.firstName,
-          displayName: schema.users.displayName,
-          role: schema.users.role,
-        })
-        .from(schema.users)
-        .where(
-          and(
-            eq(schema.users.status, 'active'),
-            inArray(schema.users.role, ['Sales', 'SDR', 'OUTREACH_SPECIALIST'])
-          )
-        )
-    : [];
-
-  const salesReps = activeSalesReps.map((u) => ({
-    ...u,
-    canonicalRole: normalizeAppRole(u.role as string) || u.role,
-  }));
-
   // Get current lead count to determine starting index
   const existingCount = isDbConfigured 
     ? await db.select({ count: sql<number>`count(*)` }).from(schema.leads) 
     : [{ count: 0 }];
   
-  let repIndex = Number(existingCount[0]?.count || 0);
 
   for (const row of rows) {
     const bizName = row.business_name || row.Business_Name || row['Business Name'] || row.businessName;
@@ -1743,17 +1723,14 @@ export async function batchImportDbLeads(
       continue;
     }
 
-    // Determine assignee
-    const rep = salesReps.length > 0 ? salesReps[repIndex % salesReps.length] : null;
+    // Determine assignee (ALWAYS Sophia)
+    const ownerData = getDefaultLeadOwner();
     
     const leadData = {
       ...row,
-      assigned_user: rep ? {
-        id: rep.id,
-        firstName: rep.firstName || rep.displayName,
-        role: rep.canonicalRole,
-      } : undefined,
-      assignedTo: rep ? formatOwnerDisplay(rep.firstName || rep.displayName || 'Rep', rep.canonicalRole as string) : 'Sophia (AI Sales Rep)'
+      assigned_user: undefined, // Sophia doesn't have a user ID in this context
+      assignedTo: ownerData.assignedTo,
+      ownershipType: ownerData.ownershipType
     };
 
     // Use existing lead_id from frontend if supplied, otherwise generate unique ID
@@ -1795,9 +1772,6 @@ export async function batchImportDbLeads(
       original_data: row.original_data || row.rawPayload || row,
     });
     
-    if (rep) repIndex++;
-    
-    // Check if the insert was successful by examining _dbSource
     if (result._dbSource === 'neon') {
       // SUCCESS: Valid record created and confirmed in Neon PostgreSQL
       const dbRecord = ((result as any)._inMemoryRecord ? { ...(result as any)._inMemoryRecord, ...result } : result) as any;

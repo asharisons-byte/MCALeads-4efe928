@@ -110,6 +110,7 @@ export const leads = pgTable('leads', {
   leadScore: integer('lead_score').notNull().default(50),
   estimatedRetainer: integer('estimated_retainer').default(2500),
   estimatedValue: integer('estimated_value').default(30000),
+  ownershipType: text('ownership_type').notNull().default('SOPHIA'), // SOPHIA or HUMAN
   assignedTo: text('assigned_to').default('Sophia (AI Sales Rep)'),
   assignedUserId: integer('assigned_user_id').references(() => users.id),
   ccbLicenseNumber: text('ccb_license_number'),

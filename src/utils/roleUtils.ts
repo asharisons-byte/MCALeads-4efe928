@@ -97,4 +97,15 @@ export function formatOwnerDisplay(firstName: string, role: string): string {
   return `${firstName} (${roleTitle})`;
 }
 
+/**
+ * Returns the default ownership data for new leads (Sophia)
+ */
+export function getDefaultLeadOwner() {
+  return {
+    ownershipType: 'SOPHIA',
+    assignedTo: 'Sophia (AI Sales Rep)',
+    assignedUserId: null,
+  };
+}
+
 export { ROLE_DISPLAY_TITLES };
