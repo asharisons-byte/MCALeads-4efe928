@@ -199,34 +199,44 @@ export function App() {
   };
 
   const handleUpdateLead = async (leadId: string, updates: Partial<Lead>) => {
-    // Optimistic UI Update
+    // 1. Optimistic Update: Update React state immediately
     setLeads((prevLeads) =>
       prevLeads.map((l) => (l.lead_id === leadId ? { ...l, ...updates } : l))
     );
+    
+    // Also update selectedLead if it matches
     if (selectedLead && selectedLead.lead_id === leadId) {
-      setSelectedLead({ ...selectedLead, ...updates });
+      setSelectedLead((prev) => prev ? { ...prev, ...updates } : null);
     }
 
     try {
+      // 2. Perform backend mutation exactly once
       const updated = await updateLead(leadId, updates);
+      
       if (updated) {
-        // Fetch fresh data in background to ensure consistency
-        const freshLeads = await getLeads();
-        setLeads(freshLeads);
-        setActivities(getActivities());
+        // 3. On success, ensure state matches backend
+        setLeads((prevLeads) =>
+          prevLeads.map((l) => (l.lead_id === leadId ? updated : l))
+        );
         if (selectedLead && selectedLead.lead_id === leadId) {
           setSelectedLead(updated);
         }
+        setActivities(getActivities()); // Optional: Refresh activities if needed
       } else {
-        // Revert on failure
+        // 4. On failure, revert state
+        console.error('Lead update returned null, reverting');
         setLeads(await getLeads());
         if (selectedLead && selectedLead.lead_id === leadId) {
           setSelectedLead(leads.find((l) => l.lead_id === leadId) || null);
         }
       }
     } catch (error) {
+      // 4. On failure, revert state
       console.error('Update failed, reverting...', error);
       setLeads(await getLeads());
+      if (selectedLead && selectedLead.lead_id === leadId) {
+        setSelectedLead(leads.find((l) => l.lead_id === leadId) || null);
+      }
     }
   };
 

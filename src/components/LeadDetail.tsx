@@ -81,7 +81,7 @@ import { TelephonyService } from '../services/telephonyService';
 interface LeadDetailProps {
   lead: Lead;
   onBack: () => void;
-  onUpdateLead: (leadId: string, updates: Partial<Lead>) => void;
+  onUpdateLead: (leadId: string, updates: Partial<Lead>) => Promise<void>;
   onAddNote: (leadId: string, content: string, activityType: LeadNote['activity_type']) => void;
   onDeleteNote: (leadId: string, noteId: string) => void;
   leads: Lead[];
@@ -153,9 +153,16 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
   // Sophia's reasoned next best action
   const recommendation = getSophiaRecommendedAction(lead, activities, communications);
 
+  const [isUpdating, setIsUpdating] = useState(false);
+
   // Handle stage update
-  const handleStageChange = (newStage: PipelineStage) => {
-    onUpdateLead(lead.lead_id, { pipeline_stage: newStage });
+  const handleStageChange = async (newStage: PipelineStage) => {
+    setIsUpdating(true);
+    try {
+      await onUpdateLead(lead.lead_id, { pipeline_stage: newStage });
+    } finally {
+      setIsUpdating(false);
+    }
   };
 
   // Re-run AI analysis with Gemini
@@ -366,7 +373,8 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
               <select
                 value={lead.pipeline_stage}
                 onChange={(e) => handleStageChange(e.target.value as PipelineStage)}
-                className="mt-1 bg-slate-900 border border-slate-700 text-xs font-bold text-white rounded-lg px-3 py-1.5 focus:border-indigo-500"
+                disabled={isUpdating}
+                className="mt-1 bg-slate-900 border border-slate-700 text-xs font-bold text-white rounded-lg px-3 py-1.5 focus:border-indigo-500 disabled:opacity-50"
               >
                 <option value="New Lead">New Lead</option>
                 <option value="Contacted">Contacted</option>

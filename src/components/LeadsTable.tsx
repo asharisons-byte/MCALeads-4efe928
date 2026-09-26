@@ -49,7 +49,7 @@ interface LeadsTableProps {
   onSelectLead: (lead: Lead) => void;
   onOpenImport?: (mode?: 'upload' | 'sheets' | 'paste' | 'preset') => void;
   onOpenAddLead?: () => void;
-  onBulkUpdateStage: (leadIds: string[], stage: PipelineStage) => void;
+  onBulkUpdateStage: (leadIds: string[], stage: PipelineStage) => Promise<void>;
   onBulkDelete: (leadIds: string[]) => void;
   onTriggerAIEnrichment: (leadIds: string[]) => void;
   onClearAllLeads?: () => void;
@@ -110,6 +110,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [isAssigning, setIsAssigning] = useState(false);
   const [assignError, setAssignError] = useState<string | null>(null);
+  const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
   const [showColumnConverter, setShowColumnConverter] = useState(false);
@@ -136,6 +137,38 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       }
     })();
   }, [showBulkReassignModal]);
+
+  // Sync state with URL query parameters
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const page = params.get('page');
+    const stage = params.get('stage');
+    const niche = params.get('niche');
+    const country = params.get('country');
+    const owner = params.get('owner');
+    const sort = params.get('sort');
+    const order = params.get('order');
+
+    if (page) setLocalPage(Number(page));
+    if (stage) setStageFilter(stage);
+    if (niche) setNicheFilter(niche);
+    if (country) setCountryFilter(country);
+    if (owner) setOwnerFilter(owner);
+    if (sort) setSortField(sort as keyof Lead);
+    if (order) setSortOrder(order as 'asc' | 'desc');
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    params.set('page', localPage.toString());
+    params.set('stage', stageFilter);
+    params.set('niche', nicheFilter);
+    params.set('country', countryFilter);
+    params.set('owner', ownerFilter);
+    params.set('sort', sortField);
+    params.set('order', sortOrder);
+    window.history.replaceState(null, '', `?${params.toString()}`);
+  }, [localPage, stageFilter, nicheFilter, countryFilter, ownerFilter, sortField, sortOrder]);
 
   // Extract unique values for filters
   const { uniqueNiches, uniqueCountries, uniqueOwners } = useMemo(() => {
@@ -784,8 +817,18 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             </select>
             <div className="flex justify-end gap-2 pt-2">
               <button onClick={() => setShowBulkStageModal(false)} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs font-semibold">Cancel</button>
-              <button onClick={() => { onBulkUpdateStage(selectedLeadIds, bulkStageTarget); setSelectedLeadIds([]); setShowBulkStageModal(false); }} className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-500">
-                Update Leads
+              <button 
+                disabled={isBulkUpdating}
+                onClick={async () => {
+                  setIsBulkUpdating(true);
+                  await onBulkUpdateStage(selectedLeadIds, bulkStageTarget);
+                  setSelectedLeadIds([]);
+                  setShowBulkStageModal(false);
+                  setIsBulkUpdating(false);
+                }}
+                className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-500 disabled:opacity-50"
+              >
+                {isBulkUpdating ? 'Updating...' : 'Update Leads'}
               </button>
             </div>
           </div>
