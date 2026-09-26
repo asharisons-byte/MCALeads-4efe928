@@ -20,7 +20,8 @@ interface LeadsPageProps {
 
 export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
   return (
-    <div className="p-4 w-full">
+    // Full-width, full-height flex column — no max-width cap so the table uses all available space
+    <div className="flex flex-col w-full h-full px-4 py-4 gap-0">
       <LeadsTable {...props} />
     </div>
   );
