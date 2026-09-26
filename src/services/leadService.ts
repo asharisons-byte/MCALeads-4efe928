@@ -184,9 +184,13 @@ export async function getLeads(): Promise<Lead[]> {
 // Save leads to Neon database (bulk operation)
 export async function saveLeads(leads: Lead[]): Promise<void> {
   try {
+    const token = await getAuthToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
     const response = await fetch('/api/leads/bulk', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ leads }),
     });
     if (!response.ok) {
@@ -212,9 +216,13 @@ export function loadCCBLeads(): Lead[] {
 export async function clearAllLeads(): Promise<void> {
   // Clear Neon database - single source of truth
   try {
+    const token = await getAuthToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
     const response = await fetch('/api/leads?method=truncate', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
     });
     
     if (!response.ok) {
@@ -249,9 +257,13 @@ export async function addLead(lead: Lead): Promise<Lead> {
   };
 
   // Direct persistence to Neon PostgreSQL database - single source of truth
+  const token = await getAuthToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
   const res = await fetch('/api/leads', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({
       lead_id: preparedLead.lead_id,
       business_name: preparedLead.business_name,
@@ -323,9 +335,13 @@ export async function updateLead(leadId: string, updates: Partial<Lead>): Promis
   const timestamp = new Date().toISOString();
 
   // Update in Neon PostgreSQL database - single source of truth
+  const token = await getAuthToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
   const res = await fetch(`/api/leads/${encodeURIComponent(leadId)}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(updates),
   });
 

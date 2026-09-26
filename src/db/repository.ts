@@ -215,10 +215,12 @@ export async function getDbLeads(params: {
 
       const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-      const rows = await db
-        .select()
-        .from(schema.leads)
-        .where(whereClause)
+      let query = db.select().from(schema.leads);
+      if (whereClause) {
+        query = query.where(whereClause);
+      }
+      
+      const rows = await query
         .orderBy(desc(schema.leads.createdAt), desc(schema.leads.leadScore))
         .limit(params.limit || 500)
         .offset(params.offset || 0);

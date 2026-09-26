@@ -89,6 +89,7 @@ export function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [currentTab, setCurrentTab] = useState<NavigationItem>('dashboard');
+  const [currentPage, setCurrentPage] = useState(1);
 
   // Global search filtering
   const searchResults = useMemo(() => {
@@ -198,13 +199,34 @@ export function App() {
   };
 
   const handleUpdateLead = async (leadId: string, updates: Partial<Lead>) => {
-    const updated = updateLead(leadId, updates);
-    if (updated) {
-      setLeads(await getLeads());
-      setActivities(getActivities());
-      if (selectedLead && selectedLead.lead_id === leadId) {
-        setSelectedLead(updated);
+    // Optimistic UI Update
+    setLeads((prevLeads) =>
+      prevLeads.map((l) => (l.lead_id === leadId ? { ...l, ...updates } : l))
+    );
+    if (selectedLead && selectedLead.lead_id === leadId) {
+      setSelectedLead({ ...selectedLead, ...updates });
+    }
+
+    try {
+      const updated = await updateLead(leadId, updates);
+      if (updated) {
+        // Fetch fresh data in background to ensure consistency
+        const freshLeads = await getLeads();
+        setLeads(freshLeads);
+        setActivities(getActivities());
+        if (selectedLead && selectedLead.lead_id === leadId) {
+          setSelectedLead(updated);
+        }
+      } else {
+        // Revert on failure
+        setLeads(await getLeads());
+        if (selectedLead && selectedLead.lead_id === leadId) {
+          setSelectedLead(leads.find((l) => l.lead_id === leadId) || null);
+        }
       }
+    } catch (error) {
+      console.error('Update failed, reverting...', error);
+      setLeads(await getLeads());
     }
   };
 
@@ -619,6 +641,8 @@ export function App() {
                 setSophiaAICallLead(lead);
               }}
               onImportComplete={handleImportComplete}
+              currentPage={currentPage}
+              onPageChange={setCurrentPage}
             />
           ) : currentTab === 'pipeline' ? (
             <PipelineView
