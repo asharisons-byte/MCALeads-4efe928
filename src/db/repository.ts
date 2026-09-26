@@ -492,7 +492,7 @@ export async function createDbLead(leadData: any) {
     leadScore: validatedScore,
     estimatedRetainer: Number(leadData.estimated_retainer || leadData.estimatedRetainer || 2500),
     estimatedValue: (Number(leadData.estimated_retainer || leadData.estimatedRetainer || 2500)) * 12,
-    assignedTo: leadData.owner || leadData.assigned_to || leadData.assignedTo || 'New Lead Pool',
+    assignedTo: leadData.owner || leadData.assigned_to || leadData.assignedTo || 'Sophia (AI Sales Rep)',
     assignedUserId: null,
     ccbLicenseNumber: leadData.ccb_license_number || leadData.licenseNumber || (uniqueLeadId.startsWith('CCB-') ? uniqueLeadId.replace('CCB-', '') : null),
     isHotTarget: leadData.is_hot_target !== undefined ? Boolean(leadData.is_hot_target) : (validatedScore >= 80),
@@ -1753,7 +1753,7 @@ export async function batchImportDbLeads(
         firstName: rep.firstName || rep.displayName,
         role: rep.canonicalRole,
       } : undefined,
-      assignedTo: rep ? formatOwnerDisplay(rep.firstName || rep.displayName || 'Rep', rep.canonicalRole as string) : 'New Lead Pool'
+      assignedTo: rep ? formatOwnerDisplay(rep.firstName || rep.displayName || 'Rep', rep.canonicalRole as string) : 'Sophia (AI Sales Rep)'
     };
 
     // Use existing lead_id from frontend if supplied, otherwise generate unique ID
