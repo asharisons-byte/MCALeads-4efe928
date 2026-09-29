@@ -57,6 +57,7 @@ interface DialerModalProps {
   onClose: () => void;
   onLeadUpdated?: (leadId: string, updates: Partial<Lead>) => void;
   allLeads?: Lead[];
+  onOpenAICall?: (lead: Lead) => void;
 }
 
 export const DialerModal: React.FC<DialerModalProps> = ({
@@ -66,6 +67,7 @@ export const DialerModal: React.FC<DialerModalProps> = ({
   onClose,
   onLeadUpdated,
   allLeads = [],
+  onOpenAICall,
 }) => {
   // Current active lead
   const [activeLead, setActiveLead] = useState<Lead | null>(initialLead);
@@ -92,7 +94,12 @@ export const DialerModal: React.FC<DialerModalProps> = ({
 
   // Panels & Views
   const [leftTab, setLeftTab] = useState<'queue' | 'recent'>('queue');
-  const [rightTab, setRightTab] = useState<'sophia' | 'script' | 'intel'>('sophia');
+  const [rightTab, setRightTab] = useState<'sophia' | 'script' | 'intel' | 'log'>('sophia');
+
+  // Incoming call log & live transcription board
+  const [incomingLog, setIncomingLog] = useState<Array<{time: string; msg: string; type: 'event'|'neon'|'error'}>>([]);
+  const [transcriptBoard, setTranscriptBoard] = useState<Array<{speaker: 'Agent'|'Prospect'; text: string; time: string}>>([]);
+  const transcriptEndRef = useRef<HTMLDivElement | null>(null);
 
   // Call Queue state
   const [callQueue, setCallQueue] = useState<CallQueueItem[]>(() =>
@@ -330,6 +337,17 @@ export const DialerModal: React.FC<DialerModalProps> = ({
   const hasPhoneNumber = Boolean(phoneNumber && phoneNumber.trim() && phoneNumber !== 'Not Available');
 
   // Handle Call Start
+  const addLog = (msg: string, type: 'event'|'neon'|'error' = 'event') => {
+    const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    setIncomingLog(prev => [...prev.slice(-99), {time, msg, type}]);
+  };
+
+  const addTranscript = (speaker: 'Agent'|'Prospect', text: string) => {
+    const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    setTranscriptBoard(prev => [...prev.slice(-199), {speaker, text, time}]);
+    setTimeout(() => transcriptEndRef.current?.scrollIntoView({behavior:'smooth'}), 50);
+  };
+
   const handleStartCall = async () => {
     if (!hasPhoneNumber) return;
 
@@ -338,6 +356,9 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     setWebRTCStatus('Initializing WebRTC...');
     setSelectedOutcome(null);
     setDiagnosticInfo(null); // Clear previous diagnostics
+    setTranscriptBoard([]);
+    addLog(`📞 Outbound call initiated → ${phoneNumber}${activeLead ? ` (${activeLead.business_name})` : ''}`);
+    addLog(`🔧 Initializing WebRTC / PSTN…`);
 
     // 1. Try WebRTC
     try {
@@ -405,11 +426,13 @@ export const DialerModal: React.FC<DialerModalProps> = ({
 
   // Handle Call End
   const handleEndCall = async () => {
+    addLog(`🔴 Call ended — duration: ${Math.floor(callDuration/60)}m${callDuration%60}s`);
     // 1. If WebRTC call, disconnect it
     if (isWebRTCConnected) {
       await TelnyxWebRTCService.disconnect();
       setIsWebRTCConnected(false);
       setCallState('COMPLETED');
+      addLog('✅ WebRTC session terminated');
       return;
     }
 
@@ -1041,14 +1064,25 @@ ${callScript.closing}
             {/* Requirement 4: Professional Call Controls */}
             <div className="flex items-center justify-center gap-3">
               {callState === 'IDLE' || callState === 'FAILED' ? (
-                <button
-                  onClick={handleStartCall}
-                  disabled={!hasPhoneNumber}
-                  className="w-full py-3.5 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition-all active:scale-[0.98]"
-                >
-                  <Phone className="w-4 h-4" />
-                  <span>Start Outbound Call</span>
-                </button>
+                <div className="w-full flex flex-col gap-2">
+                  <button
+                    onClick={handleStartCall}
+                    disabled={!hasPhoneNumber}
+                    className="w-full py-3.5 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 transition-all active:scale-[0.98]"
+                  >
+                    <Phone className="w-4 h-4" />
+                    <span>Start Manual Call (WebRTC)</span>
+                  </button>
+                  {activeLead && onOpenAICall && (
+                    <button
+                      onClick={() => { onOpenAICall(activeLead); }}
+                      className="w-full py-3 px-6 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20 transition-all active:scale-[0.98] border border-purple-400/30"
+                    >
+                      <Bot className="w-4 h-4" />
+                      <span>Launch Sophia AI Call</span>
+                    </button>
+                  )}
+                </div>
               ) : callState === 'PREPARING' ||
                 callState === 'CALLING' ||
                 callState === 'RINGING' ||
@@ -1257,6 +1291,17 @@ ${callScript.closing}
               >
                 <Award className="w-3 h-3 text-amber-400" />
                 <span>Lead Intel</span>
+              </button>
+              <button
+                onClick={() => setRightTab('log')}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg flex items-center justify-center gap-1 transition-all ${
+                  rightTab === 'log'
+                    ? 'bg-slate-800 text-white shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <RefreshCw className="w-3 h-3 text-emerald-400" />
+                <span>Call Log</span>
               </button>
             </div>
 
@@ -1523,6 +1568,82 @@ ${callScript.closing}
                       No lead loaded. Intel will display when a CRM lead is linked to this dial session.
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* TAB 4: Incoming Call Log + Transcription Board */}
+              {rightTab === 'log' && (
+                <div className="space-y-4">
+                  {/* Incoming Call Log */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <span className={`w-2 h-2 rounded-full ${callState === 'CONNECTED' || callState === 'PSTN_ACTIVE' ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+                        Incoming Call Log
+                      </span>
+                      <button
+                        onClick={() => setIncomingLog([])}
+                        className="text-[10px] text-slate-500 hover:text-slate-300 underline"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                    <div className="h-[180px] overflow-y-auto rounded-xl bg-slate-950 border border-slate-800 p-3 space-y-0.5 font-mono text-[10px]">
+                      {incomingLog.length === 0 ? (
+                        <p className="text-slate-600 text-center pt-8">No log entries yet. Start a call to see events.</p>
+                      ) : (
+                        incomingLog.map((entry, idx) => (
+                          <div key={idx} className={`flex items-start gap-2 leading-snug ${
+                            entry.type === 'neon' ? 'text-emerald-300' :
+                            entry.type === 'error' ? 'text-rose-300' :
+                            'text-slate-300'
+                          }`}>
+                            <span className="text-slate-600 shrink-0">{entry.time}</span>
+                            <span>{entry.msg}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Live Transcription Board */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                        Live Transcription Board
+                      </span>
+                      <button
+                        onClick={() => setTranscriptBoard([])}
+                        className="text-[10px] text-slate-500 hover:text-slate-300 underline"
+                      >
+                        Clear
+                      </button>
+                    </div>
+                    <div className="h-[220px] overflow-y-auto rounded-xl bg-slate-950 border border-slate-800 p-3 space-y-2">
+                      {transcriptBoard.length === 0 ? (
+                        <p className="text-slate-600 text-[10px] text-center pt-10">Transcription will appear here during calls.</p>
+                      ) : (
+                        transcriptBoard.map((entry, idx) => (
+                          <div key={idx} className={`flex gap-2 text-xs ${entry.speaker === 'Agent' ? 'justify-start' : 'justify-end'}`}>
+                            <div className={`max-w-[85%] px-3 py-2 rounded-xl leading-snug ${
+                              entry.speaker === 'Agent'
+                                ? 'bg-purple-950/60 border border-purple-500/30 text-purple-100'
+                                : 'bg-slate-800 border border-slate-700 text-white'
+                            }`}>
+                              <div className="flex items-center gap-1.5 mb-0.5">
+                                <span className={`text-[9px] font-bold ${entry.speaker === 'Agent' ? 'text-purple-400' : 'text-sky-400'}`}>
+                                  {entry.speaker}
+                                </span>
+                                <span className="text-[9px] text-slate-500">{entry.time}</span>
+                              </div>
+                              <p>{entry.text}</p>
+                            </div>
+                          </div>
+                        ))
+                      )}
+                      <div ref={transcriptEndRef} />
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
