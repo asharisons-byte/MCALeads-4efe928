@@ -3407,5 +3407,155 @@ Provide a clear, client-friendly explanation:`;
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/call-callback — Receives completed AI call data from SophiaAICallModal
+// and Python backend webhook, writes to Neon calls + callTranscripts tables.
+// ─────────────────────────────────────────────────────────────────────────────
+app.post('/api/call-callback', async (req: express.Request, res: express.Response) => {
+  try {
+    // Optional shared secret guard
+    const secret = req.headers['x-mca-secret'];
+    if (process.env.WEBAPP_SECRET && secret !== process.env.WEBAPP_SECRET) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const {
+      leadId,
+      leadName,
+      leadPhone,
+      callControlId,
+      turns = [],
+      outcome = 'Connected - Conversation',
+      duration = 0,
+      endedAt,
+      agentName = 'Sophia',
+      callObjective = '',
+      primaryCTA = '',
+      leadScore = 0,
+      pipelineStage = 'New Lead',
+    } = req.body;
+
+    if (!leadId || !leadPhone) {
+      return res.status(400).json({ error: 'leadId and leadPhone are required' });
+    }
+
+    // Import db at runtime to avoid circular deps at module load time
+    const { db } = await import('./src/db/index.js');
+    const { schema } = await import('./src/db/index.js');
+
+    if (!db) {
+      console.warn('[call-callback] No DB configured — skipping Neon write');
+      return res.json({ status: 'skipped', reason: 'no-db' });
+    }
+
+    // Resolve numeric lead_id (CRM stores integer IDs; leadId may be a string UUID from the frontend)
+    // Try to find the lead in DB by external lead_id string first, then fall back to integer cast
+    let numericLeadId: number | null = null;
+    try {
+      const { eq, sql: sqlExpr } = await import('drizzle-orm');
+      // Attempt to find by string lead_id column if it exists
+      const leadRows: any[] = await db.execute(
+        sqlExpr`SELECT id FROM leads WHERE lead_id = ${leadId} OR id::text = ${String(leadId)} LIMIT 1`
+      );
+      if (leadRows.length > 0) numericLeadId = leadRows[0].id;
+    } catch (_) {
+      // If the query fails (e.g. no lead_id column), try integer cast
+      const parsed = parseInt(String(leadId), 10);
+      if (!isNaN(parsed)) numericLeadId = parsed;
+    }
+
+    if (!numericLeadId) {
+      console.warn(`[call-callback] Could not resolve numeric lead ID for leadId=${leadId}`);
+      return res.json({ status: 'skipped', reason: 'lead-not-found' });
+    }
+
+    // Build full transcript string for the transcript column
+    const fullTranscript = (turns as Array<{role: string; content: string}>)
+      .map(t => `${t.role === 'assistant' ? agentName : 'Prospect'}: ${t.content}`)
+      .join('\n');
+
+    // Build AI summary (first assistant turn = opener, last = close)
+    const assistantTurns = (turns as Array<{role: string; content: string}>).filter(t => t.role === 'assistant');
+    const aiSummary = assistantTurns.length > 0
+      ? `Objective: ${callObjective}. CTA: ${primaryCTA}. Outcome: ${outcome}. ${assistantTurns.length} Sophia turns recorded.`
+      : `AI Call with ${leadName || leadPhone} — ${outcome}`;
+
+    // ── 1. Insert into calls table ─────────────────────────────────────
+    const [callRow] = await db.insert(schema.calls).values({
+      leadId: numericLeadId,
+      phone: leadPhone,
+      contactPhone: leadPhone,
+      direction: 'Outbound',
+      provider: callControlId ? 'Telnyx-Sophia' : 'Sophia-Simulation',
+      externalCallId: callControlId || null,
+      status: 'Completed',
+      durationSeconds: Math.round(duration),
+      transcript: fullTranscript || null,
+      transcriptStatus: fullTranscript ? 'COMPLETED' : 'NONE',
+      aiSummary,
+      callOutcome: outcome,
+      startedAt: endedAt ? new Date(new Date(endedAt).getTime() - duration * 1000) : new Date(),
+      endedAt: endedAt ? new Date(endedAt) : new Date(),
+    }).returning();
+
+    console.log(`[call-callback] ✅ Call inserted: calls.id=${callRow.id} lead=${leadName} outcome=${outcome}`);
+
+    // ── 2. Insert each turn into callTranscripts ───────────────────────
+    if (callRow && turns.length > 0) {
+      const transcriptRows = (turns as Array<{role: string; content: string}>).map((t, i) => ({
+        callId: callRow.id,
+        speaker: t.role === 'assistant' ? `${agentName} (AI)` : 'Prospect',
+        text: t.content,
+        timestampSeconds: String(i * 15), // approximate 15s per turn
+        confidence: '0.95',
+      }));
+      await db.insert(schema.callTranscripts).values(transcriptRows);
+      console.log(`[call-callback] ✅ ${transcriptRows.length} transcript turns inserted for call ${callRow.id}`);
+    }
+
+    // ── 3. Update lead pipeline stage if advanced ──────────────────────
+    if (outcome.toLowerCase().includes('meeting') || outcome.toLowerCase().includes('booked') || outcome.toLowerCase().includes('appointment')) {
+      try {
+        const { sql: sqlExpr } = await import('drizzle-orm');
+        await db.execute(
+          sqlExpr`UPDATE leads SET pipeline_stage = 'Meeting Booked', updated_at = NOW() WHERE id = ${numericLeadId}`
+        );
+        console.log(`[call-callback] 🎯 Lead ${numericLeadId} advanced to Meeting Booked`);
+      } catch (e) { /* non-fatal */ }
+    }
+
+    return res.json({
+      status: 'saved',
+      callId: callRow?.id,
+      transcriptTurns: turns.length,
+      leadId: numericLeadId,
+    });
+
+  } catch (error: any) {
+    console.error('[call-callback] Error:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POST /api/call-callback/webhook — Python backend posts here when call ends
+// Same handler, different path — Python backend uses WEBAPP_CALLBACK_URL env var
+// ─────────────────────────────────────────────────────────────────────────────
+app.post('/api/call-callback/webhook', async (req: express.Request, res: express.Response) => {
+  // Normalize Python backend payload shape to match our main handler
+  const { call_control_id, lead_id, transcript_turns, call_outcome, duration_seconds } = req.body;
+  req.body.callControlId   = req.body.callControlId   || call_control_id;
+  req.body.leadId          = req.body.leadId          || lead_id;
+  req.body.turns           = req.body.turns           || transcript_turns;
+  req.body.outcome         = req.body.outcome         || call_outcome;
+  req.body.duration        = req.body.duration        || duration_seconds;
+  // Forward to main handler logic by re-posting internally
+  return (app as any)._router.handle(
+    { ...req, url: '/api/call-callback', path: '/api/call-callback' } as any,
+    res,
+    () => res.status(404).json({ error: 'not found' })
+  );
+});
+
 // Start Server (only for non-Vercel environments)
 
