@@ -113,8 +113,15 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
   const [isAnalyzingCall, setIsAnalyzingCall] = useState(false);
   const [completedRecord, setCompletedRecord] = useState<CallRecord | null>(null);
 
+  // Real backend call tracking
+  const [callControlId, setCallControlId] = useState<string | null>(null);
+  const [backendCallActive, setBackendCallActive] = useState(false);
+  const [incomingLog, setIncomingLog] = useState<string[]>([]);
+
   const durationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
+  const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const API_BASE = import.meta.env.VITE_AI_BACKEND_URL || 'http://localhost:8000';
 
   // Auto-scroll transcript
   useEffect(() => {
@@ -155,30 +162,36 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
 
   if (!isOpen) return null;
 
-  // Speak aloud helper using Web Speech API
-  const speakSophiaUtterance = (text: string) => {
-    if (!isAudioEnabled || typeof window === 'undefined' || !window.speechSynthesis) return;
-    try {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1.05;
-      utterance.pitch = 1.0;
-      // Try to find a natural English female voice
-      const voices = window.speechSynthesis.getVoices();
-      const femaleVoice = voices.find(
-        (v) =>
-          v.lang.startsWith('en') &&
-          (v.name.includes('Female') ||
-            v.name.includes('Samantha') ||
-            v.name.includes('Victoria') ||
-            v.name.includes('Karen') ||
-            v.name.includes('Zira'))
-      );
-      if (femaleVoice) utterance.voice = femaleVoice;
-      window.speechSynthesis.speak(utterance);
-    } catch (e) {
-      console.warn('Speech synthesis unavailable:', e);
-    }
+  // Speak helper — backend TTS first (Kokoro, low-latency), fallback to Web Speech API
+  const speakSophiaUtterance = async (text: string) => {
+    if (!isAudioEnabled) return;
+    // Fallback inline Web Speech API (used only when backend is not active)
+    const useBrowserTTS = () => {
+      if (typeof window === 'undefined' || !window.speechSynthesis) return;
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.05;
+        utterance.pitch = 1.0;
+        const voices = window.speechSynthesis.getVoices();
+        const femaleVoice = voices.find(
+          (v) =>
+            v.lang.startsWith('en') &&
+            (v.name.includes('Female') ||
+              v.name.includes('Samantha') ||
+              v.name.includes('Victoria') ||
+              v.name.includes('Karen') ||
+              v.name.includes('Zira'))
+        );
+        if (femaleVoice) utterance.voice = femaleVoice;
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {
+        console.warn('Speech synthesis unavailable:', e);
+      }
+    };
+    // If backend call is active, Kokoro TTS is handled server-side via Telnyx — skip browser audio
+    if (backendCallActive) return;
+    useBrowserTTS();
   };
 
   // Generate strategy with Gemini
@@ -195,6 +208,66 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
     }
   };
 
+  // Poll backend for live transcript updates
+  const startTranscriptPolling = (cid: string) => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = setInterval(async () => {
+      try {
+        const r = await fetch(`${API_BASE}/api/call/${cid}/status`);
+        if (!r.ok) return;
+        const data = await r.json();
+        if (data.status === 'ended') {
+          clearInterval(pollRef.current!);
+          setBackendCallActive(false);
+          setCallStatus('ENDED');
+          return;
+        }
+        const remoteTurns: Array<{role: string; content: string}> = data.turns || [];
+        if (remoteTurns.length > 0) {
+          const mapped: SophiaCallTurn[] = remoteTurns.map((t, i) => ({
+            id: `backend_turn_${i}`,
+            speaker: t.role === 'assistant' ? 'Sophia' : 'Prospect',
+            message: t.content,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+            intent: t.role === 'assistant' ? 'AI Response' : undefined,
+          }));
+          setTurns(mapped);
+        }
+      } catch (e) {
+        // ignore polling errors
+      }
+    }, 2000);
+  };
+
+  // Save completed call data to Neon via server callback endpoint
+  const saveCallToNeon = async (finalTurns: SophiaCallTurn[], outcome: string) => {
+    try {
+      const payload = {
+        leadId: lead.lead_id,
+        leadName: lead.business_name,
+        leadPhone: lead.phone,
+        callControlId,
+        turns: finalTurns.map(t => ({ role: t.speaker === 'Sophia' ? 'assistant' : 'user', content: t.message })),
+        outcome,
+        endedAt: new Date().toISOString(),
+        duration,
+        agentName: 'Sophia',
+        callObjective: strategy?.objective || '',
+        primaryCTA: strategy?.call_to_action || '',
+        leadScore: lead.lead_score || 0,
+        pipelineStage: lead.pipeline_stage || 'New Lead',
+      };
+      await fetch('/api/call-callback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      setIncomingLog(prev => [...prev, `✅ Call data saved to Neon (${finalTurns.length} turns, outcome: ${outcome})`]);
+    } catch (e) {
+      setIncomingLog(prev => [...prev, `⚠️ Neon save failed: ${String(e)}`]);
+    }
+  };
+
   // Start the AI Call (User must explicitly click this!)
   const handleStartAICall = async () => {
     if (!lead.phone) return;
@@ -202,6 +275,13 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
     setCallStatus('PREPARING');
     setDuration(0);
     setTurns([]);
+    setCallControlId(null);
+    setBackendCallActive(false);
+    setIncomingLog([
+      `[${new Date().toLocaleTimeString()}] AI Call session initializing…`,
+      `[${new Date().toLocaleTimeString()}] Target: ${lead.business_name} (${lead.phone})`,
+      `[${new Date().toLocaleTimeString()}] Agent: Sophia — Marketing Charm Agency`,
+    ]);
     setLiveEvents([
       'AI Call initialized through Telephony Infrastructure',
       `Target: ${lead.business_name} (${lead.phone})`,
@@ -209,6 +289,55 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
     ]);
     setIsHumanTakeover(false);
 
+    // ── Try Python backend (real Telnyx + Kokoro TTS) ──────────────────
+    try {
+      const painPoints = strategy?.pain_points || [];
+      const discoveryQ  = strategy?.discovery_questions || [];
+      const objections  = strategy?.objection_handlers || {};
+
+      const backendRes = await fetch(`${API_BASE}/api/outbound/call`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          leadId: lead.lead_id,
+          leadName: lead.business_name,
+          leadPhone: lead.phone,
+          agentName: 'Sophia',
+          businessType: lead.niche || '',
+          location: `${lead.city || ''}, ${lead.state || ''}`,
+          retainer: `$${lead.estimated_retainer || 2400}/mo`,
+          leadScore: lead.lead_score || 0,
+          pipelineStage: lead.pipeline_stage || 'New Lead',
+          callObjective: strategy?.objective || 'Qualify and book a discovery call',
+          primaryCTA: strategy?.call_to_action || 'Schedule 15-min discovery call',
+          opportunity: strategy?.primary_opportunity || '',
+          painPoints,
+          discoveryQuestions: discoveryQ,
+          objectionHandlers: objections,
+        }),
+      });
+
+      if (backendRes.ok) {
+        const backendData = await backendRes.json();
+        const cid = backendData.callControlId;
+        setCallControlId(cid);
+        setBackendCallActive(true);
+        setIncomingLog(prev => [
+          ...prev,
+          `[${new Date().toLocaleTimeString()}] ✅ Backend call placed — CID: ${cid?.slice(-8)}`,
+          `[${new Date().toLocaleTimeString()}] Kokoro TTS active — waiting for prospect to answer…`,
+        ]);
+        setLiveEvents(prev => [...prev, `Telnyx call placed — CID: ${cid?.slice(-8)}`, 'Ringing prospect…']);
+        setCallStatus('RINGING');
+        startTranscriptPolling(cid);
+        setTimeout(() => setCallStatus('CONNECTED'), 6000);
+        return; // ← real call is live; no simulation needed
+      }
+    } catch (backendErr) {
+      setIncomingLog(prev => [...prev, `[${new Date().toLocaleTimeString()}] ⚠️ Backend unavailable — simulation mode`]);
+    }
+
+    // ── Fallback: local TelephonyService simulation ───────────────────
     try {
       const res = await TelephonyService.startCall({
         lead,
@@ -350,6 +479,22 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
+    // Stop polling
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+
+    // Hangup backend call if active
+    if (backendCallActive && callControlId) {
+      try {
+        await fetch(`${API_BASE}/api/hangup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ callControlId }),
+        });
+        setIncomingLog(prev => [...prev, `[${new Date().toLocaleTimeString()}] ☎️ Hangup sent to backend`]);
+      } catch (e) { /* ignore */ }
+      setBackendCallActive(false);
+    }
+
     setCallStatus('ENDED');
     setView('completed');
     setIsAnalyzingCall(true);
@@ -415,6 +560,10 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
 
       saveCallRecord(newRecord);
       setCompletedRecord(newRecord);
+
+      // ── Save to Neon PostgreSQL via server callback ──────────────────
+      await saveCallToNeon(turns, newRecord.outcome || 'conversation');
+      setIncomingLog(prev => [...prev, `[${new Date().toLocaleTimeString()}] 📊 Post-call analysis complete — Neon updated`]);
 
       // 3. Write CRM Note
       await addNoteToLead(lead.lead_id, postAnalysis.crm_notes, 'Call Log', 'Sophia (AI Sales Rep)', true);
@@ -962,10 +1111,27 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
                   </div>
                 </div>
 
-                {/* Right (1 col): Live Event Feed & Human Controls */}
+                {/* Right (1 col): Incoming Log, Live Events & Human Controls */}
                 <div className="space-y-4">
-                  {/* Live Event Feed */}
-                  <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2 h-[220px] flex flex-col">
+                  {/* Incoming Call Log (backend events, Neon writes) */}
+                  <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/30 space-y-2 h-[140px] flex flex-col">
+                    <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-300 uppercase tracking-wider">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      Incoming Call Log
+                    </div>
+                    <div className="flex-1 overflow-y-auto space-y-0.5 text-[10px] font-mono text-emerald-200/80">
+                      {incomingLog.length === 0 ? (
+                        <span className="text-slate-500">Awaiting backend events…</span>
+                      ) : (
+                        incomingLog.map((entry, idx) => (
+                          <div key={idx} className="leading-snug">{entry}</div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Live Event Feed (Telephony layer events) */}
+                  <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2 h-[150px] flex flex-col">
                     <div className="text-xs font-bold text-slate-300 uppercase tracking-wider">
                       Live Event Feed
                     </div>
