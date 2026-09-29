@@ -794,6 +794,10 @@ export function App() {
           initialLead={dialerLead}
           initialPhoneNumber={dialerPhoneNumber}
           allLeads={leads}
+          onOpenAICall={(lead) => {
+            setDialerModalOpen(false);
+            setSophiaAICallLead(lead);
+          }}
           onClose={async () => {
             setDialerModalOpen(false);
             setDialerLead(null);
