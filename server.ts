@@ -3413,9 +3413,11 @@ Provide a clear, client-friendly explanation:`;
 // ─────────────────────────────────────────────────────────────────────────────
 app.post('/api/call-callback', async (req: express.Request, res: express.Response) => {
   try {
-    // Optional shared secret guard
+    // Only enforce secret on the external webhook path (called by main.py)
+    // Internal browser calls to /api/call-callback skip this check
+    const isWebhookPath = req.path === '/api/call-callback/webhook';
     const secret = req.headers['x-mca-secret'];
-    if (process.env.WEBAPP_SECRET && secret !== process.env.WEBAPP_SECRET) {
+    if (isWebhookPath && process.env.WEBAPP_SECRET && secret !== process.env.WEBAPP_SECRET) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
