@@ -3500,30 +3500,43 @@ app.post('/api/call-callback', async (req: express.Request, res: express.Respons
       endedAt: endedAt ? new Date(endedAt) : new Date(),
     }).returning();
 
-    console.log(`[call-callback] ✅ Call inserted: calls.id=${callRow.id} lead=${leadName} outcome=${outcome}`);
-
     // ── 2. Insert each turn into callTranscripts ───────────────────────
     if (callRow && turns.length > 0) {
       const transcriptRows = (turns as Array<{role: string; content: string}>).map((t, i) => ({
         callId: callRow.id,
-        speaker: t.role === 'assistant' ? `${agentName} (AI)` : 'Prospect',
+        speaker: t.role === 'assistant' ? `${agentName} (AI)` : 'Contractor',
         text: t.content,
-        timestampSeconds: String(i * 15), // approximate 15s per turn
+        timestampSeconds: String(i * 15),
         confidence: '0.95',
       }));
       await db.insert(schema.callTranscripts).values(transcriptRows);
       console.log(`[call-callback] ✅ ${transcriptRows.length} transcript turns inserted for call ${callRow.id}`);
     }
 
-    // ── 3. Update lead pipeline stage if advanced ──────────────────────
-    if (outcome.toLowerCase().includes('meeting') || outcome.toLowerCase().includes('booked') || outcome.toLowerCase().includes('appointment')) {
+    // ── 3. Insert call summary ─────────────────────────────────────────
+    if (callRow) {
+      const isBooked = ['meeting','booked','appointment','audit','agreed'].some(w => outcome.toLowerCase().includes(w));
       try {
-        const { sql: sqlExpr } = await import('drizzle-orm');
-        await db.execute(
-          sqlExpr`UPDATE leads SET pipeline_stage = 'Meeting Booked', updated_at = NOW() WHERE id = ${numericLeadId}`
-        );
-        console.log(`[call-callback] 🎯 Lead ${numericLeadId} advanced to Meeting Booked`);
-      } catch (e) { /* non-fatal */ }
+        await db.insert(schema.callSummaries).values({
+          callId: callRow.id,
+          agentId: 'sophia',
+          summary: aiSummary,
+          outcome,
+          sentiment: turns.length > 4 ? 'POSITIVE' : 'NEUTRAL',
+          nextSteps: primaryCTA || 'Follow up within 24 hours',
+        });
+      } catch (e) { console.warn('[call-callback] callSummaries insert skipped:', e); }
+
+      // ── 4. Advance lead pipeline stage if meeting/audit booked ────────
+      if (isBooked) {
+        try {
+          const { sql: sqlExpr } = await import('drizzle-orm');
+          await db.execute(
+            sqlExpr`UPDATE leads SET pipeline_stage = 'Meeting Booked' WHERE id = ${numericLeadId}`
+          );
+          console.log(`[call-callback] 🎯 Lead ${numericLeadId} → Meeting Booked`);
+        } catch (e) { /* non-fatal */ }
+      }
     }
 
     return res.json({
