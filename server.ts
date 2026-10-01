@@ -436,7 +436,7 @@ app.post('/api/ai/generate-loom', async (req, res) => {
     const ai = getGemini();
 
     const loomPrompt = `You are Sophia, Senior AI Sales Rep for ${senderAgency}.
-Generate a complete, personalised Loom video script for a 2-minute screen-share audit video for this specific business.
+Generate a complete, personalised Loom video script for a 30-second screen-share video for this specific business.
 
 BUSINESS DATA:
 - Business Name: ${businessName}
@@ -445,41 +445,37 @@ BUSINESS DATA:
 - Location: ${city}, ${lead.state || 'OR'}
 - GMB Status: ${lead.gmb_status || 'Unknown'} | Reviews: ${lead.gmb_review_count ?? 0} | Rating: ${lead.gmb_rating ?? 'N/A'}
 - Website: ${lead.website || 'None'} | Status: ${lead.website_status || 'Unknown'}
-- Google Ads: ${lead.google_ads_status || 'None'}
-- Meta Pixel: ${lead.meta_pixel_status || 'None'}
 - Identified Gaps: ${gaps.join(', ') || 'local search visibility'}
-- Recommended Service: ${lead.recommended_service || 'Local Search & Conversion Package'}
-- Estimated Value Lift: ${lead.estimated_revenue_lift || '$4,000–$8,000/mo'}
+- Recommended Service: ${lead.recommended_service || 'Local Search Optimization'}
 
 SCRIPT REQUIREMENTS:
-- Total length: ~2 minutes when spoken at normal pace (~280-320 words)
-- Include [SCREEN] directions showing what to display on screen at each point
-- Timestamps for each section
+- Total length: ~30 seconds when spoken at normal pace (~60-75 words)
+- Include [SCREEN] directions
 - Speaker (Sophia) lines written word-for-word
-- Personalised to THIS business — not a template
+- Personalised to THIS business
+- DO NOT invent numbers or statistics (traffic, revenue, rankings)
+- Use phrasing like "This may be limiting the number of enquiries you receive" rather than specific dollar/performance claims
 
 STRUCTURE:
-[0:00–0:12] OPENER — Greet by business name, say this video is specifically for them, set expectations ("2 minutes")
-[0:12–0:40] THE GAP — Show their actual GMB/website/search presence on screen, name the specific problem costing them leads
-[0:40–1:10] THE COST — Explain what this gap means in lost leads/revenue for a ${niche} in ${city} (do not invent numbers, speak generally)
-[1:10–1:35] THE FIX — Show a before/after example of a similar business (or describe it), name the specific MCA solution
-[1:35–1:55] SOCIAL PROOF — Brief mention of results for similar businesses (keep general, no fake stats)
-[1:55–2:00] CTA — One clear next step: book a 15-min call via link, or reply to the email to confirm interest
+[0:00–0:05] PERSONAL INTRODUCTION — Greet by business name, say this video is specifically for them.
+[0:05–0:15] IDENTIFIED GAP — Show actual website/GMB on screen, mention the specific gap.
+[0:15–0:25] WHAT COULD BE IMPROVED — Explain what MCA could improve to help enquiries.
+[0:25–0:30] CTA — Simple ask: "If you'd like, I can walk you through how we'd fix this. Just reply to the email and I'll take it from there."
 
 FOLLOW-UP EMAIL (include after the script):
-A short 80-word email to send WITH the Loom link. Subject line included.
+A short 50-word email to send WITH the Loom link.
 
 Return JSON:
 {
   "script": "Full timestamped Loom script with [SCREEN] directions",
-  "wordCount": 300,
-  "estimatedDuration": "2:00",
+  "wordCount": 75,
+  "estimatedDuration": "0:30",
   "followUpEmail": {
-    "subject": "Subject line for the email sending the Loom",
-    "body": "80-word email body"
+    "subject": "Quick video I made for ${businessName} 👀",
+    "body": "50-word email body"
   },
-  "keyGap": "The primary gap shown in the video",
-  "recommendedScreens": ["List of screens to show during recording"]
+  "keyGap": "The primary gap shown",
+  "recommendedScreens": ["List of screens to show"]
 }`;
 
     if (!ai) {
@@ -566,16 +562,16 @@ BUSINESS DATA:
 - Website: ${lead.website || 'None'} (${lead.website_status || 'Unknown'})
 - Gaps: ${gaps.join(', ') || 'local search visibility'}
 - Pipeline Stage: ${lead.pipeline_stage || 'New Lead'}
-- Script Type: ${scriptType === 'loom_offer' ? 'LOOM VIDEO OFFER — Primary goal is to get permission to send a personalised Loom video' : 'INITIAL OUTREACH — Qualify and book discovery call'}
+- Script Type: LOOM VIDEO OFFER
 
 SCRIPT MUST INCLUDE:
-1. OPENER — Natural greeting, confirm you're speaking with the right person
-2. HOOK — One specific observation about ${businessName} (from the gap data above)
-3. LOOM OFFER — "I made a short 2-minute video specifically for ${businessName} showing what I found. Would it be okay if I sent it over?" (if scriptType = loom_offer)
-4. OBJECTION HANDLERS — 3 specific handlers for: "Not interested", "We're busy", "Send it to our email" 
-5. EMAIL CAPTURE — Script for getting/confirming email address naturally
-6. VOICEMAIL SCRIPT — What to say if voicemail (15 seconds max, reference the video)
-7. CLOSE — Confirm email, set expectation on follow-up timing
+1. OPENER — Natural greeting, confirm you're speaking with the right person.
+2. HOOK — Use this exact style: "Hi [Name] — Sophia from Marketing Charm Agency here. I noticed an opportunity with [Business Name]'s online presence in [City] that could be worth a quick look."
+3. LOOM OFFER — "We have created a short 30 second Loom Video for your quick look. If you allow, I can share it?"
+4. OBJECTION HANDLERS — 3 specific handlers for: "Not interested", "We're busy", "Send it to our email".
+5. EMAIL CAPTURE — Script for getting/confirming email address naturally.
+6. VOICEMAIL SCRIPT — What to say if voicemail (15 seconds max, reference the video).
+7. CLOSE — Confirm email, set expectation on follow-up timing.
 
 FORMAT: Write as a readable script with [STAGE] labels, REP: lines, and (stage directions in parentheses).
 
@@ -585,7 +581,7 @@ Return JSON:
   "voicemailScript": "15-second voicemail text",
   "objectionsHandlers": { "not_interested": "...", "too_busy": "...", "send_email": "..." },
   "emailCaptureScript": "Natural way to ask for/confirm email",
-  "estimatedCallDuration": "2-3 minutes",
+  "estimatedCallDuration": "1-2 minutes",
   "primaryCTA": "Get permission to send Loom video"
 }`;
 
@@ -595,12 +591,9 @@ Type: Loom Video Offer | Agent: Sales Rep | Prepared by Sophia AI
 ━━━ OPENER ━━━
 REP: "Hi, is this ${contactName || 'the owner'}? Great — my name is [YOUR NAME] from Marketing Charm Agency. I'll keep this really quick."
 
-━━━ HOOK ━━━
-REP: "The reason I'm calling — I was looking at ${businessName}'s online presence in ${city} and I noticed ${gaps[0] || 'a few gaps in your local search visibility'}."
-REP: "I actually put together a short 2-minute video specifically for ${businessName} showing exactly what I found and what it might be costing you."
-
-━━━ LOOM OFFER ━━━
-REP: "Would it be okay if I sent it over? It's completely free — no pitch, just what I found."
+━━━ HOOK & LOOM OFFER ━━━
+REP: "Hi ${contactName || 'there'} — Sophia from Marketing Charm Agency here. I noticed an opportunity with ${businessName}'s online presence in ${city} that could be worth a quick look."
+REP: "We have created a short 30 second Loom Video for your quick look. If you allow, I can share it?"
 (If YES → go to Email Capture)
 (If NO/HESITANT → Objection Handler)
 
@@ -609,7 +602,7 @@ REP: "Would it be okay if I sent it over? It's completely free — no pitch, jus
 REP: "Totally fair — can I ask, are you already happy with how many new customers find you online, or is that something you think about?"
 
 "We're busy right now":
-REP: "No worries at all — the video takes 2 minutes to watch whenever you have time. What's the best email to send it to?"
+REP: "No worries at all — the video takes 30 seconds to watch whenever you have time. What's the best email to send it to?"
 
 "Just send it to info@":
 REP: "Of course — and is there a name I should put it to? I want to make sure it lands with the right person."
@@ -623,7 +616,7 @@ REP: "Great — I'll get that over to you today. You'll see it come from sophia@
 REP: "Appreciate your time — take a look whenever you get a chance and feel free to reply directly if anything stands out."
 
 ━━━ VOICEMAIL ━━━
-"Hi, this is [NAME] from Marketing Charm Agency — I made a short 2-minute video for ${businessName} showing some quick wins for your visibility in ${city}. I'll send it over — look out for an email from us. Have a great day."`;
+"Hi, this is [NAME] from Marketing Charm Agency — I noticed an opportunity with ${businessName}'s online presence in ${city} and created a short 30-second Loom video for you. Look out for an email from us. Have a great day."`;
 
     if (!ai) {
       return res.json({
@@ -2401,30 +2394,26 @@ async function generateSMSWithGemini(
     ? lead.notes.slice(0, 2).map((n: any) => n.content).join('; ')
     : 'None';
 
-  // ── LOOM VIDEO SMS — different prompt entirely ─────────────────────────────
+  // ── LOOM VIDEO SMS — updated conversational prompt ─────────────────────────
   if (smsType === 'Loom Video Offer' || smsType === 'loom_video') {
     const loomPrompt = `You are Sophia, AI Sales Rep for ${senderAgency}.
 Write ONE short SMS to ${contactName || 'the owner'} at ${businessName} (${niche}, ${city}).
 
-CONTEXT: We identified a specific online visibility gap for ${businessName}: ${gaps[0] || 'limited local search presence'}.
-We have created a short personalised Loom video showing exactly what we found and how to fix it.
+CONTEXT: We identified an opportunity regarding ${businessName}'s online presence: ${gaps[0] || 'local search visibility'}.
+We have created a short 30-second Loom video showing exactly what we found.
 
 THE SMS MUST:
-1. Mention we found something specific about ${businessName} (not generic)
-2. Say we made a short video showing it (2 min Loom)
-3. Ask permission to share — "mind if I send it over?"
-4. Be under 160 characters total
-5. Sound human, not salesy. No exclamation points.
-6. Sign off as Sophia, ${senderAgency}
-
-EXAMPLE TONE:
-"Hi [name], Sophia here from MCA — I noticed [specific gap] for [business]. Made a 2-min video on it. Mind if I send it over? — Sophia"
+1. Use this conversational structure:
+   "Hi [Name] — Sophia from Marketing Charm Agency here. I noticed an opportunity with [Business Name]'s online presence in [City] that could be worth a quick look. We have created a short 30 second Loom Video for your quick look if you allow i can share ?"
+2. Be under 160 characters total.
+3. Sound human, not salesy.
+4. Sign off as Sophia, ${senderAgency}.
 
 Return JSON: { "content": "SMS text here", "sms_type": "Loom Video Offer" }`;
 
     const response = await generateAiContent(ai, { prompt: loomPrompt, responseMimeType: 'application/json', temperature: 0.4, cacheTtlMs: 300000 });
     const parsed = safeJsonParse(response?.text, {});
-    const content = parsed.content || `Hi${contactName ? ' ' + contactName : ''}, Sophia from ${senderAgency} — I spotted a gap in ${businessName}'s local search presence and made a quick 2-min video on it. Mind if I send it over?`;
+    const content = parsed.content || `Hi ${contactName || 'there'} — Sophia from ${senderAgency} here. I noticed an opportunity with ${businessName}'s online presence in ${city} that could be worth a quick look. We created a short 30 second Loom Video for you, if you allow I can share? — Sophia`;
     const { characterCount, segmentsCount } = calculateSmsSegments(content);
     return { content, sms_type: 'Loom Video Offer', character_count: characterCount, segments_count: segmentsCount };
   }

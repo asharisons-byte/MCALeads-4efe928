@@ -113,7 +113,8 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
   const [isAnalyzingCall, setIsAnalyzingCall] = useState(false);
   const [loomScript, setLoomScript] = useState<string | null>(null);
   const [isGeneratingLoom, setIsGeneratingLoom] = useState(false);
-  const [loomSent, setLoomSent] = useState(false);
+  const [loomStatus, setLoomStatus] = useState<'NOT_CREATED' | 'SCRIPT_READY' | 'READY_TO_RECORD' | 'RECORDED' | 'READY_TO_SEND' | 'SENT' | 'FAILED'>('NOT_CREATED');
+  const [loomUrl, setLoomUrl] = useState('');
   const [loomError, setLoomError] = useState<string | null>(null);
   const [completedRecord, setCompletedRecord] = useState<CallRecord | null>(null);
 
@@ -282,73 +283,72 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
     return undefined;
   };
 
-  // ── Loom Script Generation + n8n Automation Trigger ───────────────────────
-  const generateAndSendLoom = async (callTurns: SophiaCallTurn[], capturedEmail?: string) => {
+  // ── 1. Generate Loom Script ──────────────────────────────────────────────
+  const handleGenerateLoomScript = async (callTurns: SophiaCallTurn[]) => {
     setIsGeneratingLoom(true);
     setLoomError(null);
     setLoomScript(null);
     try {
-      // 1. Generate personalised Loom script via Python backend
-      const scriptRes = await fetch(`${API_BASE}/api/loom/script`, {
+      const scriptRes = await fetch(`${API_BASE}/api/ai/generate-loom`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          leadName:     lead.business_name,
-          businessType: lead.niche || (lead as any).business_type || 'local business',
-          location:     `${lead.city || ''}, ${lead.state || ''}`.trim().replace(/^,\s*/, ''),
-          email:        capturedEmail || lead.email || '',
-          painPoints:   strategy?.pain_points || [],
-          opportunity:  strategy?.primary_opportunity || '',
-          leadScore:    lead.lead_score || 0,
-          callSummary:  callTurns.slice(-8).map(t => `${t.speaker}: ${t.message}`).join('\n'),
+          lead,
+          agencyConfig: { agency_name: 'Marketing Charm Agency' }
         }),
       });
-      let script = '';
       if (scriptRes.ok) {
         const scriptData = await scriptRes.json();
-        script = scriptData.script || '';
-        setLoomScript(script);
+        setLoomScript(scriptData.script || '');
+        setLoomStatus('SCRIPT_READY');
         setIncomingLog(prev => [...prev, `🎬 Loom script generated for ${lead.business_name}`]);
-      }
-
-      // 2. Trigger n8n to automate: record Loom → send email → update CRM
-      const n8nUrl = import.meta.env.VITE_N8N_LOOM_WEBHOOK || '';
-      if (n8nUrl) {
-        const n8nRes = await fetch(n8nUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            event:        'loom_video_requested',
-            leadId:       lead.lead_id,
-            leadName:     lead.business_name,
-            leadEmail:    capturedEmail || lead.email || '',
-            leadPhone:    lead.phone,
-            businessType: lead.niche || '',
-            location:     `${lead.city || ''}, ${lead.state || ''}`,
-            painPoints:   strategy?.pain_points || [],
-            opportunity:  strategy?.primary_opportunity || '',
-            loomScript:   script,
-            callTurns:    callTurns.slice(-10).map(t => ({ role: t.speaker, content: t.message })),
-            agentName:    'Sophia',
-            requestedAt:  new Date().toISOString(),
-          }),
-        });
-        if (n8nRes.ok) {
-          setLoomSent(true);
-          setIncomingLog(prev => [...prev, `✅ n8n triggered — Loom workflow started`]);
-        } else {
-          setIncomingLog(prev => [...prev, `⚠️ n8n webhook failed (${n8nRes.status}) — script ready manually`]);
-        }
       } else {
-        setIncomingLog(prev => [...prev, `📋 Loom script ready — set VITE_N8N_LOOM_WEBHOOK to automate`]);
+        throw new Error('Failed to generate script');
       }
     } catch (e) {
       const msg = String(e);
       setLoomError(msg);
+      setLoomStatus('FAILED');
       setIncomingLog(prev => [...prev, `❌ Loom generation failed: ${msg}`]);
     } finally {
       setIsGeneratingLoom(false);
     }
+  };
+
+  // ── 2. Attach Loom URL ───────────────────────────────────────────────────
+  const handleAttachLoom = (url: string) => {
+    if (!url.startsWith('https://www.loom.com/share/')) {
+      setLoomError('Invalid Loom URL. Must start with https://www.loom.com/share/');
+      return;
+    }
+    setLoomUrl(url);
+    setLoomStatus('RECORDED');
+    setIncomingLog(prev => [...prev, `✅ Loom attached: ${url}`]);
+    addNoteToLead(lead.lead_id, `Loom video attached: ${url}`, 'Loom Video', 'Sophia (AI Sales Rep)', true);
+    addActivity({
+      id: `act-loom-attached-${Date.now()}`,
+      activity_id: `act-loom-attached-${Date.now()}`,
+      lead_id: lead.lead_id,
+      lead_name: lead.business_name,
+      timestamp: new Date().toISOString(),
+      type: 'loom_video_attached',
+      activity_type: 'loom_video_attached',
+      channel: 'LOOM',
+      title: `Personalized Loom Video Attached`,
+      description: `Loom URL: ${url}`,
+      author: 'Sophia (AI Sales Rep)',
+      source: 'Sophia (AI)',
+      metadata: { loomUrl: url },
+    });
+  };
+
+  // ── 3. Send Loom via Existing Composer ───────────────────────────────────
+  const handleSendLoom = () => {
+    if (!loomUrl) return;
+    setLoomStatus('READY_TO_SEND');
+    onClose();
+    if (onOpenEmailComposer) onOpenEmailComposer(lead);
+    setIncomingLog(prev => [...prev, `🚀 Loom ready to be sent via Email Composer`]);
   };
 
   // Start the AI Call (User must explicitly click this!)
@@ -1386,20 +1386,63 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
                     {/* Action Execution Buttons */}
                     <div className="flex flex-wrap items-center gap-2">
 
-                      {/* PRIMARY: Loom Video — generate script + trigger n8n */}
-                      <button
-                        onClick={() => generateAndSendLoom(turns, extractEmailFromTurns(turns))}
-                        disabled={isGeneratingLoom}
-                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 disabled:opacity-50 text-purple-200 border border-purple-500/40 text-xs font-bold transition-all"
-                      >
-                        {isGeneratingLoom ? (
-                          <><div className="w-3 h-3 border border-purple-300 border-t-transparent rounded-full animate-spin" /><span>Generating…</span></>
-                        ) : loomSent ? (
-                          <><span>✅</span><span>Loom Sent via n8n</span></>
-                        ) : (
-                          <><span>🎬</span><span>Generate Loom + Send</span></>
-                        )}
-                      </button>
+                      {/* Workflow: Generate -> Record -> Attach -> Send */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      {loomStatus === 'NOT_CREATED' && (
+                        <button
+                          onClick={() => handleGenerateLoomScript(turns)}
+                          disabled={isGeneratingLoom}
+                          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 disabled:opacity-50 text-purple-200 border border-purple-500/40 text-xs font-bold transition-all"
+                        >
+                          {isGeneratingLoom ? (
+                            <><div className="w-3 h-3 border border-purple-300 border-t-transparent rounded-full animate-spin" /><span>Generating…</span></>
+                          ) : (
+                            <><span>🎬</span><span>Generate Script</span></>
+                          )}
+                        </button>
+                      )}
+
+                      {loomStatus === 'SCRIPT_READY' && (
+                        <>
+                          <button
+                            onClick={() => window.open('https://www.loom.com/record', '_blank')}
+                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/40 text-xs font-bold transition-all"
+                          >
+                            <span>📹</span><span>Record Loom</span>
+                          </button>
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="text"
+                              placeholder="Paste Loom URL here..."
+                              className="px-2 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white"
+                              onBlur={(e) => handleAttachLoom(e.target.value)}
+                            />
+                            <span className="text-[10px] text-slate-500">Press enter to attach</span>
+                          </div>
+                        </>
+                      )}
+
+                      {loomStatus === 'RECORDED' && (
+                        <>
+                          <button
+                            onClick={handleSendLoom}
+                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-200 border border-emerald-500/40 text-xs font-bold transition-all"
+                          >
+                            <span>🚀</span><span>Send Loom</span>
+                          </button>
+                          <button
+                            onClick={() => setLoomStatus('SCRIPT_READY')}
+                            className="text-[10px] text-slate-400 hover:text-white"
+                          >
+                            Re-record
+                          </button>
+                        </>
+                      )}
+                      
+                      {loomStatus === 'READY_TO_SEND' && (
+                        <span className="text-xs text-emerald-400 font-bold">🚀 Composer Opened</span>
+                      )}
+                    </div>
 
                       {onOpenEmailComposer && (
                         <button
