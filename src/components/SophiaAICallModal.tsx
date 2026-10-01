@@ -111,6 +111,10 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
   // Post-call Analysis State
   const [analysis, setAnalysis] = useState<SophiaCallAnalysis | null>(null);
   const [isAnalyzingCall, setIsAnalyzingCall] = useState(false);
+  const [loomScript, setLoomScript] = useState<string | null>(null);
+  const [isGeneratingLoom, setIsGeneratingLoom] = useState(false);
+  const [loomSent, setLoomSent] = useState(false);
+  const [loomError, setLoomError] = useState<string | null>(null);
   const [completedRecord, setCompletedRecord] = useState<CallRecord | null>(null);
 
   // Real backend call tracking
@@ -265,6 +269,85 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
       setIncomingLog(prev => [...prev, `✅ Call data saved to Neon (${finalTurns.length} turns, outcome: ${outcome})`]);
     } catch (e) {
       setIncomingLog(prev => [...prev, `⚠️ Neon save failed: ${String(e)}`]);
+    }
+  };
+
+  // ── Extract email captured during call turns ───────────────────────────────
+  const extractEmailFromTurns = (callTurns: SophiaCallTurn[]): string | undefined => {
+    const emailRx = /[\w.\-+]+@[\w.\-]+\.[a-z]{2,}/i;
+    for (const turn of [...callTurns].reverse()) {
+      const match = turn.message.match(emailRx);
+      if (match) return match[0].toLowerCase();
+    }
+    return undefined;
+  };
+
+  // ── Loom Script Generation + n8n Automation Trigger ───────────────────────
+  const generateAndSendLoom = async (callTurns: SophiaCallTurn[], capturedEmail?: string) => {
+    setIsGeneratingLoom(true);
+    setLoomError(null);
+    setLoomScript(null);
+    try {
+      // 1. Generate personalised Loom script via Python backend
+      const scriptRes = await fetch(`${API_BASE}/api/loom/script`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          leadName:     lead.business_name,
+          businessType: lead.niche || (lead as any).business_type || 'local business',
+          location:     `${lead.city || ''}, ${lead.state || ''}`.trim().replace(/^,\s*/, ''),
+          email:        capturedEmail || lead.email || '',
+          painPoints:   strategy?.pain_points || [],
+          opportunity:  strategy?.primary_opportunity || '',
+          leadScore:    lead.lead_score || 0,
+          callSummary:  callTurns.slice(-8).map(t => `${t.speaker}: ${t.message}`).join('\n'),
+        }),
+      });
+      let script = '';
+      if (scriptRes.ok) {
+        const scriptData = await scriptRes.json();
+        script = scriptData.script || '';
+        setLoomScript(script);
+        setIncomingLog(prev => [...prev, `🎬 Loom script generated for ${lead.business_name}`]);
+      }
+
+      // 2. Trigger n8n to automate: record Loom → send email → update CRM
+      const n8nUrl = import.meta.env.VITE_N8N_LOOM_WEBHOOK || '';
+      if (n8nUrl) {
+        const n8nRes = await fetch(n8nUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            event:        'loom_video_requested',
+            leadId:       lead.lead_id,
+            leadName:     lead.business_name,
+            leadEmail:    capturedEmail || lead.email || '',
+            leadPhone:    lead.phone,
+            businessType: lead.niche || '',
+            location:     `${lead.city || ''}, ${lead.state || ''}`,
+            painPoints:   strategy?.pain_points || [],
+            opportunity:  strategy?.primary_opportunity || '',
+            loomScript:   script,
+            callTurns:    callTurns.slice(-10).map(t => ({ role: t.speaker, content: t.message })),
+            agentName:    'Sophia',
+            requestedAt:  new Date().toISOString(),
+          }),
+        });
+        if (n8nRes.ok) {
+          setLoomSent(true);
+          setIncomingLog(prev => [...prev, `✅ n8n triggered — Loom workflow started`]);
+        } else {
+          setIncomingLog(prev => [...prev, `⚠️ n8n webhook failed (${n8nRes.status}) — script ready manually`]);
+        }
+      } else {
+        setIncomingLog(prev => [...prev, `📋 Loom script ready — set VITE_N8N_LOOM_WEBHOOK to automate`]);
+      }
+    } catch (e) {
+      const msg = String(e);
+      setLoomError(msg);
+      setIncomingLog(prev => [...prev, `❌ Loom generation failed: ${msg}`]);
+    } finally {
+      setIsGeneratingLoom(false);
     }
   };
 
@@ -1301,26 +1384,36 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
                     </div>
 
                     {/* Action Execution Buttons */}
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+
+                      {/* PRIMARY: Loom Video — generate script + trigger n8n */}
+                      <button
+                        onClick={() => generateAndSendLoom(turns, extractEmailFromTurns(turns))}
+                        disabled={isGeneratingLoom}
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-purple-600/30 hover:bg-purple-600/50 disabled:opacity-50 text-purple-200 border border-purple-500/40 text-xs font-bold transition-all"
+                      >
+                        {isGeneratingLoom ? (
+                          <><div className="w-3 h-3 border border-purple-300 border-t-transparent rounded-full animate-spin" /><span>Generating…</span></>
+                        ) : loomSent ? (
+                          <><span>✅</span><span>Loom Sent via n8n</span></>
+                        ) : (
+                          <><span>🎬</span><span>Generate Loom + Send</span></>
+                        )}
+                      </button>
+
                       {onOpenEmailComposer && (
                         <button
-                          onClick={() => {
-                            onClose();
-                            onOpenEmailComposer(lead);
-                          }}
+                          onClick={() => { onClose(); onOpenEmailComposer(lead); }}
                           className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-xs font-bold"
                         >
                           <Mail className="w-3.5 h-3.5" />
-                          <span>Send Website Audit Email</span>
+                          <span>Send Follow-Up Email</span>
                         </button>
                       )}
 
                       {onOpenSMSComposer && (
                         <button
-                          onClick={() => {
-                            onClose();
-                            onOpenSMSComposer(lead);
-                          }}
+                          onClick={() => { onClose(); onOpenSMSComposer(lead); }}
                           className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-sky-600/20 hover:bg-sky-600/30 text-sky-300 border border-sky-500/30 text-xs font-bold"
                         >
                           <MessageSquare className="w-3.5 h-3.5" />
@@ -1328,6 +1421,32 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
                         </button>
                       )}
                     </div>
+
+                    {/* Loom Script Panel — shows after generation */}
+                    {loomScript && (
+                      <div className="mt-3 p-3 rounded-xl bg-purple-950/30 border border-purple-500/30 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider">🎬 Loom Script — {lead.business_name}</span>
+                          <button
+                            onClick={() => { navigator.clipboard.writeText(loomScript); }}
+                            className="text-[10px] px-2 py-0.5 rounded bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/30"
+                          >
+                            Copy Script
+                          </button>
+                        </div>
+                        <pre className="text-[10px] text-slate-300 font-mono whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
+                          {loomScript}
+                        </pre>
+                        {!loomSent && (
+                          <p className="text-[10px] text-amber-300">
+                            ⚠️ Add <code className="bg-slate-800 px-1 rounded">VITE_N8N_LOOM_WEBHOOK</code> to Vercel env vars to automate sending.
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    {loomError && (
+                      <p className="text-[10px] text-rose-300 mt-1">❌ {loomError}</p>
+                    )}
                   </div>
 
                   {/* Automatic CRM Note Record */}
