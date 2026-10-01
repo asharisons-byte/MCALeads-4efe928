@@ -2321,12 +2321,16 @@ I put together a brief summary of what we found.
 ${suggestedCta}
 
 ${signOff}`;
-    } else if (tone === 'More Personalized' && lead.gmb_rating && lead.gmb_review_count) {
+    } else if (tone === 'More Personalized') {
+      const gmbContext = (!lead.gmb_status || lead.gmb_status === 'No GMB' || lead.gmb_status === 'Missing')
+        ? `NO GOOGLE BUSINESS PROFILE — This is the primary gap. Do NOT mention any rating or review count. The opportunity is to establish their GMB from scratch.`
+        : `Your ${lead.gmb_rating}-star rating across ${lead.gmb_review_count} Google reviews shows the strong quality of your work.`;
+
       body = `${greeting}
 
 I'm Sophia from ${senderAgency}. I came across ${businessName} while researching ${niche} providers in ${city}.
 
-Your ${lead.gmb_rating}-star rating across ${lead.gmb_review_count} Google reviews shows the strong quality of your work. However, there is a clear opportunity around ${primaryOpportunity} that could significantly expand your inbound reach.
+${gmbContext} However, there is a clear opportunity around ${primaryOpportunity} that could significantly expand your inbound reach.
 
 For businesses with your established track record, implementing ${service} is one of the fastest ways to turn that strong reputation into consistent high-margin leads.
 

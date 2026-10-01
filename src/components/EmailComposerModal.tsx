@@ -372,18 +372,22 @@ export const EmailComposerModal: React.FC<EmailComposerModalProps> = ({
                   <span className="text-slate-400">Google Maps:</span>
                   <span
                     className={`font-semibold ${
-                      lead.gmb_status === 'Active' || lead.gmb_status === 'Verified'
-                        ? 'text-emerald-400'
-                        : 'text-amber-400'
+                      (!lead.gmb_status || lead.gmb_status === 'No GMB' || lead.gmb_status === 'Missing')
+                        ? 'text-rose-400'
+                        : 'text-emerald-400'
                     }`}
                   >
-                    {lead.gmb_status || 'Unknown'}
+                    {(!lead.gmb_status || lead.gmb_status === 'No GMB' || lead.gmb_status === 'Missing')
+                      ? 'No GMB'
+                      : lead.gmb_status}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400">Reviews:</span>
                   <span className="text-slate-200">
-                    {lead.gmb_rating ? `★ ${lead.gmb_rating}` : 'None'} ({lead.gmb_review_count ?? 0})
+                    {lead.gmb_rating
+                      ? `★ ${lead.gmb_rating} (${lead.gmb_review_count ?? 0} reviews)`
+                      : 'No Google Presence'}
                   </span>
                 </div>
               </div>
