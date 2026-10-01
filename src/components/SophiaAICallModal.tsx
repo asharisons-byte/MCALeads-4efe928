@@ -116,7 +116,18 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
   const [loomStatus, setLoomStatus] = useState<'NOT_CREATED' | 'SCRIPT_READY' | 'READY_TO_RECORD' | 'RECORDED' | 'READY_TO_SEND' | 'SENT' | 'FAILED'>('NOT_CREATED');
   const [loomUrl, setLoomUrl] = useState('');
   const [loomError, setLoomError] = useState<string | null>(null);
+  const [templateTab, setTemplateTab] = useState<'script' | 'sms' | 'email' | 'call'>('script');
   const [completedRecord, setCompletedRecord] = useState<CallRecord | null>(null);
+
+  // Pre-configured templates
+  const templates = {
+    sms: `Hi ${lead.contact_name || 'there'} — Sophia from Marketing Charm Agency here. I noticed an opportunity with ${lead.business_name}'s online presence in ${lead.city || 'your area'} that could be worth a quick look. We have created a short 30 second Loom Video for your quick look if you allow i can share ? — Sophia`,
+    email: {
+      subject: `Quick video I made for ${lead.business_name} 👀`,
+      body: `Hi ${lead.contact_name || 'there'},\n\nAs promised — here's the 30-second video I put together for ${lead.business_name}:\n[LOOM LINK]\n\nIt covers exactly what I found and what we'd do to fix it. Happy to walk through it live — just reply and we'll find a time.\n\nBest,\nSophia\nMarketing Charm Agency`
+    },
+    call: `Hi ${lead.contact_name || 'there'} — Sophia from Marketing Charm Agency here. I noticed an opportunity with ${lead.business_name}'s online presence in ${lead.city || 'your area'} that could be worth a quick look. We have created a short 30 second Loom Video for your quick look. If you allow, I can share it?`
+  };
 
   // Real backend call tracking
   const [callControlId, setCallControlId] = useState<string | null>(null);
@@ -1465,26 +1476,38 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
                       )}
                     </div>
 
-                    {/* Loom Script Panel — shows after generation */}
+                    {/* Loom Template & Script Panel */}
                     {loomScript && (
-                      <div className="mt-3 p-3 rounded-xl bg-purple-950/30 border border-purple-500/30 space-y-2">
+                      <div className="mt-3 p-3 rounded-xl bg-purple-950/20 border border-purple-500/30 space-y-3">
+                        <div className="flex items-center gap-2 border-b border-purple-500/30 pb-2">
+                          {(['script', 'sms', 'email', 'call'] as const).map(t => (
+                            <button
+                              key={t}
+                              onClick={() => setTemplateTab(t)}
+                              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded ${templateTab === t ? 'bg-purple-600 text-white' : 'text-purple-300 hover:text-white'}`}
+                            >
+                              {t}
+                            </button>
+                          ))}
+                        </div>
+                        
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider">🎬 Loom Script — {lead.business_name}</span>
+                          <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider">
+                            {templateTab === 'script' ? '🎬 Loom Script' : templateTab === 'sms' ? '📱 SMS Template' : templateTab === 'email' ? '📧 Email Template' : '📞 Call Script'}
+                          </span>
                           <button
-                            onClick={() => { navigator.clipboard.writeText(loomScript); }}
+                            onClick={() => {
+                              const text = templateTab === 'script' ? loomScript : templateTab === 'sms' ? templates.sms : templateTab === 'email' ? `${templates.email.subject}\n\n${templates.email.body}` : templates.call;
+                              navigator.clipboard.writeText(text);
+                            }}
                             className="text-[10px] px-2 py-0.5 rounded bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/30"
                           >
-                            Copy Script
+                            Copy {templateTab}
                           </button>
                         </div>
-                        <pre className="text-[10px] text-slate-300 font-mono whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
-                          {loomScript}
+                        <pre className="text-[10px] text-slate-300 font-mono whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto bg-slate-950 p-2 rounded">
+                          {templateTab === 'script' ? loomScript : templateTab === 'sms' ? templates.sms : templateTab === 'email' ? `${templates.email.subject}\n\n${templates.email.body}` : templates.call}
                         </pre>
-                        {!loomSent && (
-                          <p className="text-[10px] text-amber-300">
-                            ⚠️ Add <code className="bg-slate-800 px-1 rounded">VITE_N8N_LOOM_WEBHOOK</code> to Vercel env vars to automate sending.
-                          </p>
-                        )}
                       </div>
                     )}
                     {loomError && (
