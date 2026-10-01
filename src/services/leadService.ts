@@ -1,3 +1,4 @@
+import { EventEmitter } from 'events';
 import {
   Lead,
   ActivityEvent,
@@ -9,6 +10,19 @@ import {
 } from '../types';
 import { calculateLeadScore } from './scoringService.js';
 import { calculateMultiDimensionalScores } from './leadIntelligenceService.js';
+
+// Centralized Event Emitter
+export const leadEvents = new EventEmitter();
+
+// Automatic stage update listener
+leadEvents.on('communication_sent', async (leadId: string) => {
+  const current = await getLeads();
+  const lead = current.find((l) => l.lead_id === leadId);
+  if (lead && lead.pipeline_stage === 'New Lead') {
+    console.log(`[LeadService] Event: Communication sent, updating lead ${leadId} to Contacted`);
+    await updateLead(leadId, { pipeline_stage: 'Contacted' });
+  }
+});
 
 // NEON POSTGRESQL IS THE SINGLE SOURCE OF TRUTH
 // No localStorage, no seed data, no fallbacks

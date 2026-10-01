@@ -899,9 +899,6 @@ export async function addDbLeadCall(leadId: string | number, callData: any) {
   if (lead) {
     if (!lead.calls) lead.calls = [];
     lead.calls.unshift(call);
-    if (lead.leadStatus === 'New Lead') {
-      lead.leadStatus = 'Contacted';
-    }
   }
 
   inMemoryActivities.unshift({
@@ -949,9 +946,6 @@ export async function addDbLeadEmail(leadId: string | number, emailData: any) {
   if (lead) {
     if (!lead.emails) lead.emails = [];
     lead.emails.unshift(emailMsg);
-    if (lead.leadStatus === 'New Lead') {
-      lead.leadStatus = 'Contacted';
-    }
   }
 
   inMemoryActivities.unshift({
