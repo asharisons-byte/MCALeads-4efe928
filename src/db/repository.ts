@@ -509,7 +509,7 @@ export async function createDbLead(leadData: any) {
       {
         id: numericId,
         leadId: numericId,
-        gmbStatus: leadData.gmb_status || 'Established',
+        gmbStatus: leadData.gmb_status || null,
         googleRating: leadData.gmb_rating ? String(leadData.gmb_rating) : null,
         reviewCount: leadData.gmb_review_count || null,
         websiteStatus: leadData.website_status || 'Active',
@@ -1748,7 +1748,7 @@ export async function batchImportDbLeads(
       state: row.state || row.State || row.stateRegion || null,
       postal_code: row.postal_code || row.postalCode || row.zip || row.Zip || '',
       niche: row.niche || row.Trade || row.Industry || 'General Contractor',
-      gmb_status: row.gmb_status || row.gmbStatus || 'Established',
+      gmb_status: row.gmb_status || row.gmbStatus || null,
       gmb_rating: row.gmb_rating !== undefined ? Number(row.gmb_rating) : 4.5,
       gmb_review_count: row.gmb_review_count !== undefined ? Number(row.gmb_review_count) : 10,
       google_maps_url: row.google_maps_url || row.googleMapsUrl || '',

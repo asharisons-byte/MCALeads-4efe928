@@ -5,7 +5,8 @@ export type PipelineStage =
   | 'Proposal Sent'
   | 'Won'
   | 'Retainer'
-  | 'Archived';
+  | 'Archived'
+  | 'Loom Video Offer';
 
 export type Role =
   | 'AGENCY_DIRECTOR'

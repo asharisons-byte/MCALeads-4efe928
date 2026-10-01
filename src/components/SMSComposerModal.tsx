@@ -248,6 +248,7 @@ export const SMSComposerModal: React.FC<SMSComposerModalProps> = ({
               >
                 <option value="Initial Outreach">Initial Outreach (First Contact)</option>
                 <option value="Follow-Up">Follow-Up (Previous Note)</option>
+                <option value="Loom Video Offer">Loom Video Offer (Video Outreach)</option>
                 <option value="Audit Follow-Up">Audit Follow-Up (Visibility Breakdown)</option>
                 <option value="Information Follow-Up">Information Follow-Up</option>
                 <option value="Proposal Follow-Up">Proposal Follow-Up</option>

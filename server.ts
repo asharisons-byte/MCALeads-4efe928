@@ -2521,7 +2521,9 @@ function generateDeterministicSMS(
     case 'Initial Outreach':
     default:
       if (personalizationLevel === 'High' && lead.gmb_rating && lead.gmb_review_count) {
-        content = `${nameGreeting} — Sophia from ${senderAgency}. Noticed your ${lead.gmb_rating}★ reputation in ${city}. We identified a simple way to convert that into more direct calls. Open to a quick look?`;
+        content = lead.gmb_rating
+          ? `${nameGreeting} — Sophia from ${senderAgency}. Noticed your ${lead.gmb_rating}★ reputation in ${city}. We identified a simple way to convert that into more direct calls. Open to a quick look?`
+          : `${nameGreeting} — Sophia from ${senderAgency}. I noticed ${lead.business_name} doesn't have a Google Business Profile yet in ${city}. We identified a simple way to establish your presence and generate direct calls. Open to a quick look?`;
       } else {
         content = `${nameGreeting} — Sophia from ${senderAgency} here. I noticed an opportunity with ${businessName}'s online presence in ${city} that could be worth a look. Open to a quick breakdown?`;
       }

@@ -97,7 +97,7 @@ export function mapDbLeadToModel(dbLead: any): Lead {
     country: dbLead.country || raw.country || 'USA',
     postal_code: dbLead.postalCode || dbLead.postal_code || raw.postal_code || null,
     niche: dbLead.niche || raw.niche || 'General Contractor',
-    gmb_status: dbLead.gmbStatus || dbLead.gmb_status || raw.gmb_status || 'Established',
+    gmb_status: dbLead.gmbStatus || dbLead.gmb_status || raw.gmb_status || null,
     gmb_rating: dbLead.googleRating ? Number(dbLead.googleRating) : (dbLead.gmb_rating || raw.gmb_rating || null),
     gmb_review_count: dbLead.reviewCount || dbLead.gmb_review_count || raw.gmb_review_count || null,
     google_maps_url: dbLead.googleMapsUrl || dbLead.google_maps_url || raw.google_maps_url || '',

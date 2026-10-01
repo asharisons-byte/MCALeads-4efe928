@@ -60,6 +60,7 @@ const TONE_OPTIONS: EmailTone[] = [
 const EMAIL_TYPE_OPTIONS: EmailType[] = [
   'Initial Outreach',
   'Follow-Up',
+  'Loom Video Offer',
   'Audit Follow-Up',
   'Proposal Follow-Up',
   'Re-Engagement',
