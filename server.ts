@@ -419,6 +419,242 @@ app.post('/api/ai/analyze-sms-reply', async (req, res) => {
   }
 });
 
+// ── Loom Video Script Generation Endpoint ────────────────────────────────────
+app.post('/api/ai/generate-loom', async (req, res) => {
+  try {
+    const { lead, agencyConfig } = req.body;
+    if (!lead) return res.status(400).json({ error: 'Lead data is required' });
+
+    const orig = lead.original_data || {};
+    const gaps = lead.gaps || [];
+    const senderAgency = agencyConfig?.agency_name || 'Marketing Charm Agency';
+    const businessName = lead.business_name || orig.businessName || 'Business';
+    const contactName = lead.contact_name || '';
+    const city = lead.city || 'your area';
+    const niche = lead.niche || 'contractor';
+
+    const ai = getGemini();
+
+    const loomPrompt = `You are Sophia, Senior AI Sales Rep for ${senderAgency}.
+Generate a complete, personalised Loom video script for a 2-minute screen-share audit video for this specific business.
+
+BUSINESS DATA:
+- Business Name: ${businessName}
+- Contact: ${contactName || 'Owner/Team'}
+- Industry / Niche: ${niche}
+- Location: ${city}, ${lead.state || 'OR'}
+- GMB Status: ${lead.gmb_status || 'Unknown'} | Reviews: ${lead.gmb_review_count ?? 0} | Rating: ${lead.gmb_rating ?? 'N/A'}
+- Website: ${lead.website || 'None'} | Status: ${lead.website_status || 'Unknown'}
+- Google Ads: ${lead.google_ads_status || 'None'}
+- Meta Pixel: ${lead.meta_pixel_status || 'None'}
+- Identified Gaps: ${gaps.join(', ') || 'local search visibility'}
+- Recommended Service: ${lead.recommended_service || 'Local Search & Conversion Package'}
+- Estimated Value Lift: ${lead.estimated_revenue_lift || '$4,000–$8,000/mo'}
+
+SCRIPT REQUIREMENTS:
+- Total length: ~2 minutes when spoken at normal pace (~280-320 words)
+- Include [SCREEN] directions showing what to display on screen at each point
+- Timestamps for each section
+- Speaker (Sophia) lines written word-for-word
+- Personalised to THIS business — not a template
+
+STRUCTURE:
+[0:00–0:12] OPENER — Greet by business name, say this video is specifically for them, set expectations ("2 minutes")
+[0:12–0:40] THE GAP — Show their actual GMB/website/search presence on screen, name the specific problem costing them leads
+[0:40–1:10] THE COST — Explain what this gap means in lost leads/revenue for a ${niche} in ${city} (do not invent numbers, speak generally)
+[1:10–1:35] THE FIX — Show a before/after example of a similar business (or describe it), name the specific MCA solution
+[1:35–1:55] SOCIAL PROOF — Brief mention of results for similar businesses (keep general, no fake stats)
+[1:55–2:00] CTA — One clear next step: book a 15-min call via link, or reply to the email to confirm interest
+
+FOLLOW-UP EMAIL (include after the script):
+A short 80-word email to send WITH the Loom link. Subject line included.
+
+Return JSON:
+{
+  "script": "Full timestamped Loom script with [SCREEN] directions",
+  "wordCount": 300,
+  "estimatedDuration": "2:00",
+  "followUpEmail": {
+    "subject": "Subject line for the email sending the Loom",
+    "body": "80-word email body"
+  },
+  "keyGap": "The primary gap shown in the video",
+  "recommendedScreens": ["List of screens to show during recording"]
+}`;
+
+    if (!ai) {
+      // Deterministic fallback
+      const script = `LOOM VIDEO SCRIPT — ${businessName}
+Prepared by Sophia | ${senderAgency}
+
+[0:00–0:12] OPENER
+"Hey ${contactName || 'there'}, Sophia here from ${senderAgency} — I made this video specifically for ${businessName}. It'll take less than 2 minutes and I want to show you something I found."
+
+[SCREEN: Show ${businessName} Google search results / GMB profile]
+
+[0:12–0:40] THE GAP
+"So I looked up ${businessName} in ${city} and here's what I found — ${gaps[0] || 'your online presence has some gaps that are costing you leads'}."
+"${lead.gmb_status === 'Missing' ? 'Your Google Business Profile is missing entirely — meaning you\'re invisible to customers searching right now.' : `Your GMB shows ${lead.gmb_review_count ?? 0} reviews at ${lead.gmb_rating ?? 'N/A'} stars — there's room to improve your position.`}"
+
+[SCREEN: Show competitor comparison in Google Maps]
+
+[0:40–1:10] THE COST
+"Every week that ${businessName} isn't showing up at the top in ${city}, customers searching for ${niche} services are calling your competitors instead. For a ${niche} business this size, that's real money walking out the door."
+
+[SCREEN: Show example of optimised GMB vs unoptimised]
+
+[1:10–1:35] THE FIX
+"Here's what we'd do for ${businessName}: ${lead.recommended_service || 'optimise your local search presence so you appear first when customers search for ' + niche + ' in ' + city}.
+We've done this for similar businesses and the results show up within 60 days."
+
+[1:35–1:55] SOCIAL PROOF
+"${senderAgency} specialises in exactly this — helping ${niche} businesses in competitive local markets get found first and convert better."
+
+[1:55–2:00] CTA
+"If any of that resonated — just reply to my email and I'll set up a free 15-minute call to walk through exactly what we'd do for ${businessName}. Talk soon."`;
+
+      return res.json({
+        source: 'deterministic_fallback',
+        script,
+        wordCount: script.split(' ').length,
+        estimatedDuration: '2:00',
+        followUpEmail: {
+          subject: `Quick video I made for ${businessName} 👀`,
+          body: `Hi ${contactName || 'there'},\n\nAs promised — here's the 2-minute video I put together for ${businessName}:\n[LOOM LINK]\n\nIt covers exactly what I found and what we'd do to fix it. Happy to walk through it live — just reply and we'll find a time.\n\nBest,\nSophia\n${senderAgency}`,
+        },
+        keyGap: gaps[0] || 'Local search visibility',
+        recommendedScreens: [`${businessName} Google search results`, 'GMB profile overview', 'Competitor comparison', 'Example before/after'],
+      });
+    }
+
+    try {
+      const response = await generateAiContent(ai, { prompt: loomPrompt, responseMimeType: 'application/json', temperature: 0.4, cacheTtlMs: 300000 });
+      const parsed = safeJsonParse(response?.text, null);
+      if (parsed && parsed.script) return res.json({ source: 'gemini', ...parsed });
+    } catch (e: any) {
+      console.warn('Gemini Loom generation failed:', e.message);
+    }
+
+    return res.json({ source: 'deterministic_fallback', script: `Loom script for ${businessName}`, keyGap: gaps[0] || 'Online visibility' });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+// ── Manual Call Script Endpoint ───────────────────────────────────────────────
+app.post('/api/ai/generate-call-script', async (req, res) => {
+  try {
+    const { lead, scriptType = 'loom_offer', agencyConfig } = req.body;
+    if (!lead) return res.status(400).json({ error: 'Lead data is required' });
+
+    const orig = lead.original_data || {};
+    const gaps = lead.gaps || [];
+    const senderAgency = agencyConfig?.agency_name || 'Marketing Charm Agency';
+    const businessName = lead.business_name || orig.businessName || 'Business';
+    const contactName = lead.contact_name?.split(' ')[0] || '';
+    const city = lead.city || 'your area';
+    const niche = lead.niche || 'contractor';
+
+    const ai = getGemini();
+
+    const callPrompt = `You are Sophia, Senior AI Sales Rep for ${senderAgency}.
+Generate a complete manual call script for a human sales rep calling ${businessName}.
+
+BUSINESS DATA:
+- Business: ${businessName} | Contact: ${contactName || 'Owner'} | Niche: ${niche} | City: ${city}
+- GMB: ${lead.gmb_status || 'Unknown'} | Reviews: ${lead.gmb_review_count ?? 0} | Rating: ${lead.gmb_rating ?? 'N/A'}
+- Website: ${lead.website || 'None'} (${lead.website_status || 'Unknown'})
+- Gaps: ${gaps.join(', ') || 'local search visibility'}
+- Pipeline Stage: ${lead.pipeline_stage || 'New Lead'}
+- Script Type: ${scriptType === 'loom_offer' ? 'LOOM VIDEO OFFER — Primary goal is to get permission to send a personalised Loom video' : 'INITIAL OUTREACH — Qualify and book discovery call'}
+
+SCRIPT MUST INCLUDE:
+1. OPENER — Natural greeting, confirm you're speaking with the right person
+2. HOOK — One specific observation about ${businessName} (from the gap data above)
+3. LOOM OFFER — "I made a short 2-minute video specifically for ${businessName} showing what I found. Would it be okay if I sent it over?" (if scriptType = loom_offer)
+4. OBJECTION HANDLERS — 3 specific handlers for: "Not interested", "We're busy", "Send it to our email" 
+5. EMAIL CAPTURE — Script for getting/confirming email address naturally
+6. VOICEMAIL SCRIPT — What to say if voicemail (15 seconds max, reference the video)
+7. CLOSE — Confirm email, set expectation on follow-up timing
+
+FORMAT: Write as a readable script with [STAGE] labels, REP: lines, and (stage directions in parentheses).
+
+Return JSON:
+{
+  "script": "Full formatted call script",
+  "voicemailScript": "15-second voicemail text",
+  "objectionsHandlers": { "not_interested": "...", "too_busy": "...", "send_email": "..." },
+  "emailCaptureScript": "Natural way to ask for/confirm email",
+  "estimatedCallDuration": "2-3 minutes",
+  "primaryCTA": "Get permission to send Loom video"
+}`;
+
+    const fallbackScript = `MANUAL CALL SCRIPT — ${businessName}
+Type: Loom Video Offer | Agent: Sales Rep | Prepared by Sophia AI
+
+━━━ OPENER ━━━
+REP: "Hi, is this ${contactName || 'the owner'}? Great — my name is [YOUR NAME] from Marketing Charm Agency. I'll keep this really quick."
+
+━━━ HOOK ━━━
+REP: "The reason I'm calling — I was looking at ${businessName}'s online presence in ${city} and I noticed ${gaps[0] || 'a few gaps in your local search visibility'}."
+REP: "I actually put together a short 2-minute video specifically for ${businessName} showing exactly what I found and what it might be costing you."
+
+━━━ LOOM OFFER ━━━
+REP: "Would it be okay if I sent it over? It's completely free — no pitch, just what I found."
+(If YES → go to Email Capture)
+(If NO/HESITANT → Objection Handler)
+
+━━━ OBJECTION HANDLERS ━━━
+"Not interested":
+REP: "Totally fair — can I ask, are you already happy with how many new customers find you online, or is that something you think about?"
+
+"We're busy right now":
+REP: "No worries at all — the video takes 2 minutes to watch whenever you have time. What's the best email to send it to?"
+
+"Just send it to info@":
+REP: "Of course — and is there a name I should put it to? I want to make sure it lands with the right person."
+
+━━━ EMAIL CAPTURE ━━━
+REP: "Perfect — what's the best email? I'll read it back to confirm."
+(Get email → read back letter by letter if unclear)
+REP: "Great — I'll get that over to you today. You'll see it come from sophia@marketingcharmagency.com."
+
+━━━ CLOSE ━━━
+REP: "Appreciate your time — take a look whenever you get a chance and feel free to reply directly if anything stands out."
+
+━━━ VOICEMAIL ━━━
+"Hi, this is [NAME] from Marketing Charm Agency — I made a short 2-minute video for ${businessName} showing some quick wins for your visibility in ${city}. I'll send it over — look out for an email from us. Have a great day."`;
+
+    if (!ai) {
+      return res.json({
+        source: 'deterministic_fallback',
+        script: fallbackScript,
+        voicemailScript: `Hi, this is [NAME] from ${senderAgency} — I made a short 2-minute video for ${businessName} showing some quick wins for your visibility in ${city}. I'll send it over — look out for an email from us. Have a great day.`,
+        objectionHandlers: {
+          not_interested: "Totally fair — can I ask, are you happy with how many new customers find you online right now?",
+          too_busy: "No worries — the video takes 2 minutes to watch. What's the best email to send it to?",
+          send_email: "Of course — and is there a name I should put it to?",
+        },
+        emailCaptureScript: "Perfect — what's the best email? I'll read it back to confirm.",
+        estimatedCallDuration: '2-3 minutes',
+        primaryCTA: 'Get permission to send Loom video',
+      });
+    }
+
+    try {
+      const response = await generateAiContent(ai, { prompt: callPrompt, responseMimeType: 'application/json', temperature: 0.35, cacheTtlMs: 300000 });
+      const parsed = safeJsonParse(response?.text, null);
+      if (parsed && parsed.script) return res.json({ source: 'gemini', ...parsed });
+    } catch (e: any) {
+      console.warn('Gemini call script generation failed:', e.message);
+    }
+
+    return res.json({ source: 'deterministic_fallback', script: fallbackScript });
+  } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+});
+
 // Server-side SMS Dispatch Endpoint (Phase 2C & Phase 5C)
 // Abstracts messaging provider (e.g. Telnyx) securely without exposing backend credentials to frontend
 app.post('/api/sms/send', async (req, res) => {
@@ -1801,6 +2037,49 @@ async function generateEmailWithGemini(
     ? lead.notes.slice(0, 3).map((n: any) => `${n.author || 'Rep'}: ${n.content}`).join('; ')
     : 'No previous CRM notes recorded.';
 
+  // ── LOOM VIDEO EMAIL — distinct prompt ───────────────────────────────────
+  if (emailType === 'Loom Video Offer' || emailType === 'loom_video') {
+    const loomEmailPrompt = `You are Sophia, Senior AI Sales Rep for ${senderAgency}.
+Write a personalised email to ${lead.contact_name || 'the team'} at ${lead.business_name} offering to share a FREE Loom video audit.
+
+VERIFIED DATA ABOUT THIS BUSINESS:
+- Business: ${lead.business_name}
+- Niche: ${lead.niche || 'local contractor'}
+- Location: ${lead.city}, ${lead.state || 'OR'}
+- GMB: ${lead.gmb_status || 'Unknown'} | Reviews: ${lead.gmb_review_count ?? 0} | Rating: ${lead.gmb_rating ?? 'N/A'}
+- Website: ${lead.website || 'None'} (${lead.website_status || 'Unknown'})
+- Specific gaps found: ${gaps.join(', ') || 'local search visibility'}
+
+EMAIL PURPOSE:
+We identified specific gaps for this business and recorded a personalised 2-minute Loom video showing:
+1. What we found (specific to their business — not generic)
+2. What it's costing them in lost leads
+3. What we'd do to fix it (specific quick wins)
+
+REQUIREMENTS:
+- Subject: 3 options — specific, curiosity-driven, under 50 chars, NOT spammy
+- Body: 120-160 words max
+- Open with the specific gap we found — no generic opener
+- Offer the Loom video as a free, no-obligation resource
+- Single CTA: "Reply yes and I'll send it over" OR similar low-friction ask
+- Sign as Sophia, ${senderAgency}
+- NO placeholders, NO fake numbers, NO invented data
+
+Return JSON:
+{
+  "subject": "Best subject line",
+  "subject_options": ["Option 1", "Option 2", "Option 3"],
+  "body": "Complete email body",
+  "email_type": "Loom Video Offer",
+  "key_opportunity": "The specific gap referenced",
+  "suggested_cta": "The closing CTA line"
+}`;
+
+    const loomResponse = await generateAiContent(ai, { prompt: loomEmailPrompt, responseMimeType: 'application/json', temperature: 0.35, cacheTtlMs: 300000 });
+    const parsed = safeJsonParse(loomResponse?.text, null);
+    if (parsed && parsed.body) return parsed;
+  }
+
   const prompt = `You are Sophia, the senior AI Sales Representative for ${senderAgency}.
 You must write a personalized, concise, highly professional B2B cold outreach email to this business prospect.
 
@@ -1822,7 +2101,7 @@ ACTUAL VERIFIED PROSPECT DATA:
 - CRM Notes: ${notesSummary}
 
 EMAIL PARAMETERS:
-- Email Type: ${emailType} (Options: Initial Outreach, Follow-Up, Audit Follow-Up, Proposal Follow-Up, Re-Engagement)
+- Email Type: ${emailType} (Options: Loom Video Offer, Initial Outreach, Follow-Up, Audit Follow-Up, Proposal Follow-Up, Re-Engagement)
 - Requested Style / Tone: ${tone} (Options: More Direct, More Friendly, More Professional, Shorter, More Personalized, Different Angle)
 - Personalization Level: ${personalizationLevel} (Low: Business & location only; Medium: Business + one verified opportunity; High: Business + verified audit/GMB/marketing findings)
 
@@ -2121,6 +2400,34 @@ async function generateSMSWithGemini(
   const notesSummary = Array.isArray(lead.notes) && lead.notes.length > 0
     ? lead.notes.slice(0, 2).map((n: any) => n.content).join('; ')
     : 'None';
+
+  // ── LOOM VIDEO SMS — different prompt entirely ─────────────────────────────
+  if (smsType === 'Loom Video Offer' || smsType === 'loom_video') {
+    const loomPrompt = `You are Sophia, AI Sales Rep for ${senderAgency}.
+Write ONE short SMS to ${contactName || 'the owner'} at ${businessName} (${niche}, ${city}).
+
+CONTEXT: We identified a specific online visibility gap for ${businessName}: ${gaps[0] || 'limited local search presence'}.
+We have created a short personalised Loom video showing exactly what we found and how to fix it.
+
+THE SMS MUST:
+1. Mention we found something specific about ${businessName} (not generic)
+2. Say we made a short video showing it (2 min Loom)
+3. Ask permission to share — "mind if I send it over?"
+4. Be under 160 characters total
+5. Sound human, not salesy. No exclamation points.
+6. Sign off as Sophia, ${senderAgency}
+
+EXAMPLE TONE:
+"Hi [name], Sophia here from MCA — I noticed [specific gap] for [business]. Made a 2-min video on it. Mind if I send it over? — Sophia"
+
+Return JSON: { "content": "SMS text here", "sms_type": "Loom Video Offer" }`;
+
+    const response = await generateAiContent(ai, { prompt: loomPrompt, responseMimeType: 'application/json', temperature: 0.4, cacheTtlMs: 300000 });
+    const parsed = safeJsonParse(response?.text, {});
+    const content = parsed.content || `Hi${contactName ? ' ' + contactName : ''}, Sophia from ${senderAgency} — I spotted a gap in ${businessName}'s local search presence and made a quick 2-min video on it. Mind if I send it over?`;
+    const { characterCount, segmentsCount } = calculateSmsSegments(content);
+    return { content, sms_type: 'Loom Video Offer', character_count: characterCount, segments_count: segmentsCount };
+  }
 
   const prompt = `You are Sophia, the AI Sales Representative for ${senderAgency}.
 You must write a concise, conversational, highly professional B2B cold outreach SMS to this contractor/business.
