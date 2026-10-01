@@ -348,11 +348,15 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-300">
                         {lead.niche}
                       </span>
-                      {lead.gmb_rating && (
+                      {lead.gmb_rating && lead.gmb_review_count ? (
                         <span className="inline-flex items-center gap-0.5 text-[11px] text-amber-400 font-semibold">
                           <Star className="w-3 h-3 fill-amber-400" />
                           <span>{lead.gmb_rating}</span>
                           <span className="text-slate-400">({lead.gmb_review_count || 0})</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 text-[10px] text-rose-400 font-semibold uppercase">
+                          No GMB
                         </span>
                       )}
                     </div>

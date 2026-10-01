@@ -594,7 +594,7 @@ export function convertRowsToLeads(
       postal_code: postalCode,
       niche,
       gmb_status: leadPartial.gmb_status || (gmbReviews && gmbReviews > 20 ? 'Established' : gmbReviews ? 'Thin GMB' : 'Needs Optimization'),
-      gmb_rating: gmbRating !== undefined ? gmbRating : 4.5,
+      gmb_rating: gmbRating !== undefined ? gmbRating : null,
       gmb_review_count: gmbReviews !== undefined ? gmbReviews : 0,
       gmb_url: leadPartial.gmb_url || mapsUrl,
       google_maps_url: mapsUrl,

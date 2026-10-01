@@ -710,7 +710,14 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                         <tr className="bg-slate-950/50">
                           <td colSpan={14} className="px-6 py-3">
                             <div className="text-xs text-slate-300 grid grid-cols-2 md:grid-cols-4 gap-3">
-                              <div><span className="text-slate-500 font-semibold">GMB:</span> {lead.gmb_status} ({lead.gmb_rating} ★, {lead.gmb_review_count} reviews)</div>
+                              <div>
+                                <span className="text-slate-500 font-semibold">GMB:</span>{' '}
+                                {lead.gmb_rating && lead.gmb_review_count ? (
+                                  `${lead.gmb_status} (${lead.gmb_rating} ★, ${lead.gmb_review_count} reviews)`
+                                ) : (
+                                  <span className="text-rose-400 font-bold">No Google Presence</span>
+                                )}
+                              </div>
                               <div><span className="text-slate-500 font-semibold">Website:</span> {lead.website || 'No Website'}</div>
                               <div><span className="text-slate-500 font-semibold">All Gaps:</span> {lead.gaps?.join(', ') || '—'}</div>
                               <div><span className="text-slate-500 font-semibold">Email:</span> {lead.email || '—'}</div>

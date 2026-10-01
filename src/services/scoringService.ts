@@ -121,12 +121,14 @@ export function calculateLeadScore(
   // 7. Reputation (Max 10)
   // Business with strong reviews converts better, or thin reviews need booster
   let reputation = 0;
-  if (lead?.gmb_rating && lead.gmb_rating >= 4.7 && (lead?.gmb_review_count || 0) >= 20) {
+  if (!lead.gmb_rating || !lead.gmb_review_count) {
+    reputation = 0;
+  } else if (lead.gmb_rating >= 4.7 && lead.gmb_review_count >= 20) {
     reputation = Math.round(safeWeights.reputation * 0.9);
-  } else if (lead?.gmb_rating && lead.gmb_rating >= 4.0) {
+  } else if (lead.gmb_rating >= 4.0) {
     reputation = Math.round(safeWeights.reputation * 0.8);
   } else {
-    reputation = Math.round(safeWeights.reputation * 0.6);
+    reputation = Math.round(safeWeights.reputation * 0.4);
   }
 
   // 8. Contactability (Max 10)
