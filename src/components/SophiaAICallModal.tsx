@@ -328,8 +328,8 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
 
   // ── 2. Attach Loom URL ───────────────────────────────────────────────────
   const handleAttachLoom = (url: string) => {
-    if (!url.startsWith('https://www.loom.com/share/')) {
-      setLoomError('Invalid Loom URL. Must start with https://www.loom.com/share/');
+    if (!url.includes('loom.com/share/')) {
+      setLoomError('Invalid Loom URL. Must be a loom share link.');
       return;
     }
     setLoomUrl(url);
@@ -1427,6 +1427,7 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
                               placeholder="Paste Loom URL here..."
                               className="px-2 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-xs text-white"
                               onBlur={(e) => handleAttachLoom(e.target.value)}
+                              onKeyDown={(e) => { if (e.key === 'Enter') handleAttachLoom((e.target as HTMLInputElement).value); }}
                             />
                             <span className="text-[10px] text-slate-500">Press enter to attach</span>
                           </div>
