@@ -721,10 +721,18 @@ app.post('/api/sms/send', async (req, res) => {
         if (telnyxRes.ok) {
           const telnyxData = await telnyxRes.json();
           providerMessageId = telnyxData.data?.id || providerMessageId;
-          deliveryStatus = telnyxData.data?.to?.[0]?.status || 'DELIVERED';
+          // Telnyx only confirms the message was queued here; real delivery arrives via webhook
+          deliveryStatus = 'SENT';
+        } else {
+          // Telnyx rejected the request — report it instead of pretending it was delivered
+          const errBody: any = await telnyxRes.json().catch(() => ({}));
+          const detail = errBody?.errors?.[0]?.detail || errBody?.errors?.[0]?.title || `Telnyx HTTP ${telnyxRes.status}`;
+          console.error('[SMS Send] Telnyx rejected message:', telnyxRes.status, JSON.stringify(errBody));
+          return res.status(502).json({ success: false, error: detail });
         }
       } catch (err: any) {
-        console.warn('Live Telnyx SMS dispatch warning, falling back:', err.message);
+        console.error('[SMS Send] Telnyx request failed:', err.message);
+        return res.status(502).json({ success: false, error: `Telnyx request failed: ${err.message}` });
       }
     }
 
