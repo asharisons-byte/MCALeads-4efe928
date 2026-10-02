@@ -410,15 +410,24 @@ export function App() {
   };
 
   const handleClearAllLeads = async () => {
-    await clearAllLeads();
-    setLeads([]);
-    setActivities([]);
-    setSelectedLead(null);
-    // Force re-fetch from Neon to ensure UI reflects database state
-    setTimeout(() => {
-      const freshLeads = getLeads();
-      setLeads(freshLeads);
-    }, 500);
+    if (!window.confirm('Are you absolutely sure you want to PERMANENTLY delete all leads from the database? This cannot be undone.')) {
+      return;
+    }
+    try {
+      await clearAllLeads();
+      setLeads([]);
+      setActivities([]);
+      setSelectedLead(null);
+      alert('All leads have been deleted.');
+      // Force re-fetch from Neon to ensure UI reflects database state
+      setTimeout(() => {
+        const freshLeads = getLeads();
+        setLeads(freshLeads);
+      }, 500);
+    } catch (e: any) {
+      console.error('Failed to clear leads:', e);
+      alert('Failed to delete all leads: ' + (e?.message || 'Unknown error'));
+    }
   };
 
   // Full-Screen Client Portal Override (Strict Multi-Tenant Isolation from Agency Suite)
