@@ -138,10 +138,11 @@ export const ImportModal: React.FC<ImportModalProps> = ({
 
       const detectedMappings: ColumnMapping[] = headers.map((col) => {
         const det = detectColumnMapping(col);
+        const mappedField = det.confidence > 0.5 ? det.field : 'ignore';
         return {
           rawColumn: col,
-          mappedField: det.field,
-          confidence: det.confidence,
+          mappedField,
+          confidence: mappedField === 'ignore' ? 0 : det.confidence,
         };
       });
       setMappings(detectedMappings);
@@ -176,10 +177,11 @@ export const ImportModal: React.FC<ImportModalProps> = ({
 
       const detectedMappings: ColumnMapping[] = headers.map((col) => {
         const det = detectColumnMapping(col);
+        const mappedField = det.confidence > 0.5 ? det.field : 'ignore';
         return {
           rawColumn: col,
-          mappedField: det.field,
-          confidence: det.confidence,
+          mappedField,
+          confidence: mappedField === 'ignore' ? 0 : det.confidence,
         };
       });
       setMappings(detectedMappings);
@@ -205,10 +207,11 @@ export const ImportModal: React.FC<ImportModalProps> = ({
       // Auto-detect mappings
       const detectedMappings: ColumnMapping[] = headers.map((col) => {
         const det = detectColumnMapping(col);
+        const mappedField = det.confidence > 0.5 ? det.field : 'ignore';
         return {
           rawColumn: col,
-          mappedField: det.field,
-          confidence: det.confidence,
+          mappedField,
+          confidence: mappedField === 'ignore' ? 0 : det.confidence,
         };
       });
       setMappings(detectedMappings);
@@ -786,7 +789,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                               onChange={(e) => handleMappingChange(m.rawColumn, e.target.value)}
                               className="bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white"
                             >
-                              <option value="ignore">Don't Import (Ignore)</option>
+                              <option value="ignore">Not Mapped / Do Not Import</option>
                               <option value="business_name">Business Name</option>
                               <option value="contact_name">Contact Name</option>
                               <option value="phone">Phone</option>

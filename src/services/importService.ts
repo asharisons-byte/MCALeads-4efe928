@@ -234,9 +234,21 @@ export function parseTextToRawData(text: string): { headers: string[]; rows: Rec
     return values;
   };
 
-  const rawHeaders = parseLine(firstLine)
-    .map((h) => h.replace(/^["']|["']$/g, '').trim())
-    .filter((h) => h.length > 0);
+  const headerCounts: Record<string, number> = {};
+  const rawHeaders = parseLine(firstLine).map((h, idx) => {
+    let header = h.replace(/^["']|["']$/g, '').trim();
+    if (header.length === 0) header = `Column ${idx + 1} (No Header)`;
+    
+    // Handle duplicates
+    let finalHeader = header;
+    if (headerCounts[header]) {
+      headerCounts[header]++;
+      finalHeader = `${header} (${headerCounts[header]})`;
+    } else {
+      headerCounts[header] = 1;
+    }
+    return finalHeader;
+  });
   const rows: Record<string, any>[] = [];
 
   for (let i = 1; i < lines.length; i++) {
@@ -322,14 +334,24 @@ export function parseFileToRawData(file: File): Promise<{ headers: string[]; row
         // the first data row), so columns that are empty in row 1 are still listed for mapping.
         const headerRow = worksheet.getRow(1);
         const lastCol = Math.max(worksheet.columnCount, headerRow.cellCount, headerRow.actualCellCount);
+        const headerCounts: Record<string, number> = {};
         const headerByCol: Record<number, string> = {};
         const headers: string[] = [];
         for (let c = 1; c <= lastCol; c++) {
-          const h = String(cellToValue(headerRow.getCell(c).value) ?? '').trim();
-          if (h.length > 0 && !h.startsWith('__EMPTY') && !headers.includes(h)) {
-            headerByCol[c] = h;
-            headers.push(h);
+          let h = String(cellToValue(headerRow.getCell(c).value) ?? '').trim();
+          if (h.length === 0) h = `Column ${c} (No Header)`;
+
+          // Handle duplicates
+          let finalHeader = h;
+          if (headerCounts[h]) {
+            headerCounts[h]++;
+            finalHeader = `${h} (${headerCounts[h]})`;
+          } else {
+            headerCounts[h] = 1;
           }
+          
+          headerByCol[c] = finalHeader;
+          headers.push(finalHeader);
         }
 
         const json: Record<string, any>[] = [];

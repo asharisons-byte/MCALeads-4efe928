@@ -569,7 +569,7 @@ router.put('/leads/:id', requireAuth, async (req: AuthRequest, res: Response) =>
 });
 
 // 8. Leads: Delete / Archive
-router.delete('/leads/:id', async (req: Request, res: Response) => {
+router.delete('/leads/:id', requireAuth, async (req: Request, res: Response) => {
   try {
     const soft = req.query.soft !== 'false';
     const deleted = await archiveOrDeleteDbLead(req.params.id, soft);
@@ -581,7 +581,7 @@ router.delete('/leads/:id', async (req: Request, res: Response) => {
 
 // 8b. Leads: DELETE ALL / TRUNCATE - Full database wipe endpoint
 // This is the ONLY way to completely clear all leads from Neon
-router.delete('/leads', async (req: Request, res: Response) => {
+router.delete('/leads', requireAuth, async (req: Request, res: Response) => {
   try {
     const useTruncate = req.query.method === 'truncate';
     let result;
