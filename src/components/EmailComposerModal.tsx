@@ -58,9 +58,9 @@ const TONE_OPTIONS: EmailTone[] = [
 ];
 
 const EMAIL_TYPE_OPTIONS: EmailType[] = [
+  'Loom Video Offer',
   'Initial Outreach',
   'Follow-Up',
-  'Loom Video Offer',
   'Audit Follow-Up',
   'Proposal Follow-Up',
   'Re-Engagement',
@@ -78,7 +78,7 @@ export const EmailComposerModal: React.FC<EmailComposerModalProps> = ({
   const [subject, setSubject] = useState<string>('');
   const [subjectOptions, setSubjectOptions] = useState<string[]>([]);
   const [body, setBody] = useState<string>('');
-  const [emailType, setEmailType] = useState<EmailType>('Initial Outreach');
+  const [emailType, setEmailType] = useState<EmailType>('Loom Video Offer');
   const [personalizationLevel, setPersonalizationLevel] = useState<PersonalizationLevel>('High');
   const [selectedTone, setSelectedTone] = useState<EmailTone>('More Professional');
   const [keyOpportunity, setKeyOpportunity] = useState<string>('');
