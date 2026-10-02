@@ -143,6 +143,13 @@ const PORT = 3000;
 
 app.use(express.json({ limit: '10mb' }));
 
+app.use((req, res, next) => {
+  if (req.path.includes('/sms/webhook')) {
+    console.log('[DEBUG] Incoming request to SMS webhook path:', req.path, req.method);
+  }
+  next();
+});
+
 // Mount Cloud SQL Database & Persistent State REST Endpoints
 app.use('/api', databaseRoutes);
 
