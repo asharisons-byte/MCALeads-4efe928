@@ -46,6 +46,8 @@ export const SMSOutreachView: React.FC<SMSOutreachViewProps> = ({
       setMessages(msgs);
     }
     fetchMessages();
+    const timer = setInterval(fetchMessages, 15000); // pick up inbound replies from the webhook
+    return () => clearInterval(timer);
   }, []);
   const [optOuts, setOptOuts] = useState(() => getOptOutRegistry());
   const [searchQuery, setSearchQuery] = useState('');

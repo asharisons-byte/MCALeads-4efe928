@@ -44,6 +44,8 @@ export const SMSConversationView: React.FC<SMSConversationViewProps> = ({
       setMessages(await getSMSMessages(lead.lead_id));
     }
     fetchMessages();
+    const timer = setInterval(fetchMessages, 15000); // pick up inbound replies from the webhook
+    return () => clearInterval(timer);
   }, [lead.lead_id]);
   const [replyInput, setReplyInput] = useState('');
   const [isSending, setIsSending] = useState(false);
