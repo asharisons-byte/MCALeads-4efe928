@@ -62,6 +62,11 @@ export function detectEmailType(lead: Lead, activities?: ActivityEvent[]): Email
     return 'Follow-Up';
   }
 
+  // New leads with no GMB → Loom Video Offer is best first contact
+  const noGmb = !lead.gmb_status || lead.gmb_status === 'No GMB' || lead.gmb_status === 'Missing';
+  const isNewReg = String((lead.original_data as any)?.status || '').includes('New Registration');
+  if (noGmb || isNewReg) return 'Loom Video Offer';
+
   return 'Initial Outreach';
 }
 
