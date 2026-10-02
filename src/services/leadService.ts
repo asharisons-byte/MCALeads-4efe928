@@ -16,13 +16,53 @@ export const leadEvents = new EventEmitter();
 
 // Automatic stage update listener
 leadEvents.on('communication_sent', async (leadId: string) => {
-  const current = await getLeads();
-  const lead = current.find((l) => l.lead_id === leadId);
-  if (lead && lead.pipeline_stage === 'New Lead') {
-    console.log(`[LeadService] Event: Communication sent, updating lead ${leadId} to Contacted`);
-    await updateLead(leadId, { pipeline_stage: 'Contacted' });
-  }
+  await markLeadContacted(leadId, 'Communication');
 });
+
+/**
+ * Called whenever an SMS / email / call goes out (manual or AI).
+ * Asks the server to move the lead New Lead -> Contacted in the main database
+ * (it never touches leads that are already further along), then tells the UI to refresh.
+ */
+export async function markLeadContacted(leadId: string, channel: string = 'Outreach'): Promise<boolean> {
+  if (!leadId) return false;
+  try {
+    const token = await getAuthToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`/api/leads/${encodeURIComponent(leadId)}/contacted`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ channel }),
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (data?.changed) {
+      addActivity({
+        id: `act-contacted-${Date.now()}`,
+        activity_id: `act-contacted-${Date.now()}`,
+        lead_id: leadId,
+        lead_name: '',
+        timestamp: new Date().toISOString(),
+        type: 'pipeline_stage_changed',
+        activity_type: 'pipeline_stage_changed',
+        channel: 'PIPELINE',
+        title: 'Stage Changed to Contacted',
+        description: `Automatically advanced from New Lead to Contacted after ${channel} outreach.`,
+        author: 'CRM Automation',
+        source: 'CRM Automation',
+        metadata: { previous_stage: 'New Lead', new_stage: 'Contacted', reason: `${channel} outreach` },
+      } as ActivityEvent);
+    }
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('lead-stage-changed', { detail: { leadId, changed: Boolean(data?.changed) } }));
+    }
+    return Boolean(data?.changed);
+  } catch (e) {
+    console.warn('markLeadContacted failed', e);
+    return false;
+  }
+}
 
 // NEON POSTGRESQL IS THE SINGLE SOURCE OF TRUTH
 // No localStorage, no seed data, no fallbacks

@@ -10,7 +10,7 @@ import {
   ActivityEvent,
 } from '../types';
 import { getAgencyConfig } from './agencyConfig.js';
-import { addActivity, updateLead, getLeads } from './leadService.js';
+import { addActivity, updateLead, getLeads, markLeadContacted } from './leadService.js';
 import { saveCommunication } from './communicationService.js';
 
 const SMS_STORAGE_KEY = 'mca_sms_messages_v1';
@@ -626,6 +626,11 @@ export async function sendOutboundSMS(options: SendSMSOptions): Promise<{
   };
 
   saveSMSMessage(message);
+
+  // New Lead -> Contacted in the main DB as soon as an SMS actually goes out
+  if (status !== 'FAILED') {
+    markLeadContacted(lead.lead_id, 'SMS');
+  }
 
   // 1. Record Lead Activity Timeline
   const activity: ActivityEvent = {

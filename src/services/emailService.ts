@@ -8,7 +8,7 @@ import {
   ActivityEvent,
 } from '../types';
 import { getAgencyConfig } from './agencyConfig.js';
-import { addActivity } from './leadService.js';
+import { addActivity, markLeadContacted } from './leadService.js';
 import { saveCommunication } from './communicationService.js';
 
 const DRAFTS_KEY = 'mca_email_drafts_v1';
@@ -317,6 +317,9 @@ export function markEmailPrepared(
     status: 'PREPARED',
     updated_at: timestamp,
   });
+
+  // New Lead -> Contacted in the main DB as soon as the email is dispatched to Gmail
+  markLeadContacted(lead.lead_id, 'Email');
 
   // 1. Record Activity Timeline Event
   const activity: ActivityEvent = {
