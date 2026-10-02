@@ -582,7 +582,11 @@ export async function sendOutboundSMS(options: SendSMSOptions): Promise<{
     if (res.ok) {
       const data = await res.json();
       providerMessageId = data.provider_message_id || providerMessageId;
-      status = 'DELIVERED';
+      status = 'SENT'; // accepted by Telnyx; final delivery is only known from the carrier report
+    } else {
+      const errData = await res.json().catch(() => ({}));
+      console.error('SMS provider rejected the message:', errData?.error || res.status);
+      status = 'FAILED';
     }
   } catch (e) {
     console.warn('Backend SMS send request error, falling back to local dispatch simulation', e);
