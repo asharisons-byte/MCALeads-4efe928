@@ -302,29 +302,53 @@ export function parseFileToRawData(file: File): Promise<{ headers: string[]; row
         const workbook = new ExcelJS.Workbook();
         await workbook.xlsx.load(data);
         const worksheet = workbook.worksheets[0];
-        const json: Record<string, any>[] = [];
-        
-        worksheet.eachRow((row, rowNumber) => {
-          if (rowNumber === 1) return; // Skip header row
-          const rowData: Record<string, any> = {};
-          row.eachCell((cell, colNumber) => {
-            const header = worksheet.getRow(1).getCell(colNumber).value as string;
-            if (header && header.trim().length > 0) {
-              rowData[header] = cell.value || '';
-            }
-          });
-          if (Object.keys(rowData).length > 0) {
-            json.push(rowData);
-          }
-        });
+        if (!worksheet) return resolve({ headers: [], rows: [] });
 
-        if (!json || json.length === 0) {
-          return resolve({ headers: [], rows: [] });
+        // Flatten ExcelJS cell values (rich text, hyperlinks, formulas, dates) into plain values
+        const cellToValue = (v: any): any => {
+          if (v === null || v === undefined) return '';
+          if (v instanceof Date) return v;
+          if (typeof v === 'object') {
+            if (Array.isArray(v.richText)) return v.richText.map((t: any) => t.text).join('');
+            if (v.text !== undefined) return typeof v.text === 'object' ? cellToValue(v.text) : v.text; // hyperlink
+            if (v.result !== undefined) return cellToValue(v.result); // formula
+            if (v.error) return '';
+            return String(v);
+          }
+          return v;
+        };
+
+        // Headers come from the header row itself (not from whichever cells happen to be filled in
+        // the first data row), so columns that are empty in row 1 are still listed for mapping.
+        const headerRow = worksheet.getRow(1);
+        const lastCol = Math.max(worksheet.columnCount, headerRow.cellCount, headerRow.actualCellCount);
+        const headerByCol: Record<number, string> = {};
+        const headers: string[] = [];
+        for (let c = 1; c <= lastCol; c++) {
+          const h = String(cellToValue(headerRow.getCell(c).value) ?? '').trim();
+          if (h.length > 0 && !h.startsWith('__EMPTY') && !headers.includes(h)) {
+            headerByCol[c] = h;
+            headers.push(h);
+          }
         }
 
-        const headers = Object.keys(json[0] || {}).filter(
-          (h) => h.trim().length > 0 && !h.startsWith('__EMPTY')
-        );
+        const json: Record<string, any>[] = [];
+        worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+          if (rowNumber === 1) return; // Skip header row
+          const rowData: Record<string, any> = {};
+          let hasValue = false;
+          Object.keys(headerByCol).forEach((colKey) => {
+            const colNumber = Number(colKey);
+            const val = cellToValue(row.getCell(colNumber).value);
+            rowData[headerByCol[colNumber]] = val === null || val === undefined ? '' : val;
+            if (String(val).trim() !== '') hasValue = true;
+          });
+          if (hasValue) json.push(rowData);
+        });
+
+        if (headers.length === 0 || json.length === 0) {
+          return resolve({ headers: [], rows: [] });
+        }
         resolve({ headers, rows: json });
       } catch (err) {
         reject(err);
