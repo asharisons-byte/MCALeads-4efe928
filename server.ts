@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 import { telephonyManager } from './telephony-server.js';
 import { databaseRoutes } from './src/routes/databaseRoutes.js';
 import { integrationRoutes } from './src/routes/integrationRoutes.js';
-import { initDatabaseDefaults, saveDbAiContent, addDbLeadSms } from './src/db/repository.js';
+import { initDatabaseDefaults, saveDbAiContent, addDbLeadSms, recordDbInboundSms, getDbInboundSms } from './src/db/repository.js';
 
 dotenv.config();
 
@@ -211,9 +211,13 @@ app.post('/api/sms/webhook', async (req, res) => {
     }
 
     const message = payload.data.payload;
-    const senderPhone = message.from.phone_number;
-    const destinationPhone = message.to[0].phone_number;
-    const text = message.text;
+    const senderPhone = message.from?.phone_number;
+    const destinationPhone = message.to?.[0]?.phone_number;
+    if (!senderPhone) {
+      console.warn('[SMS Webhook] Inbound event without sender, ignoring');
+      return res.status(200).send('Ignored: no sender');
+    }
+    const text = message.text || '';
     const messageId = message.id;
 
     console.log(`[SMS Webhook] sender: ${senderPhone}, destination: ${destinationPhone}, msgId: ${messageId}`);
@@ -234,6 +238,18 @@ app.post('/api/sms/webhook', async (req, res) => {
   } catch (error: any) {
     console.error('[SMS Webhook] Error processing:', error);
     res.status(500).send('Internal Server Error');
+  }
+});
+
+// Inbound SMS feed — the UI polls this so replies received by the webhook show up
+app.get('/api/sms/inbound', async (req, res) => {
+  try {
+    const since = req.query.since ? String(req.query.since) : undefined;
+    const messages = await getDbInboundSms(since);
+    return res.json({ messages });
+  } catch (error: any) {
+    console.error('[SMS Inbound Feed] Error:', error);
+    return res.status(500).json({ error: error.message });
   }
 });
 
