@@ -618,6 +618,24 @@ export function convertRowsToLeads(
       retainer = 2400;
     }
 
+    // Resolve GMB status. Priority: explicit GMB-status column -> pipeline "Status" text
+    // (e.g. "New Registration - No GMB", "GMB Found - No Website") -> presence of GMB data.
+    // NOTE: the bare "Status" column auto-maps to pipeline_stage, so read it from the raw row.
+    const statusText = String(
+      leadPartial.gmb_status ?? row['gmbStatus'] ?? row['Status'] ?? row['status'] ?? ''
+    ).toLowerCase();
+    const hasGmbData = Boolean(row['gmbName'] || row['gmbMapsUrl'] || leadPartial.gmb_url);
+    let gmbStatus: string;
+    if (statusText.includes('no gmb') || statusText.includes('missing')) {
+      gmbStatus = 'No GMB';
+    } else if (statusText.includes('gmb found') || hasGmbData) {
+      gmbStatus = (gmbReviews ?? 0) > 20 ? 'Established' : (gmbReviews ?? 0) > 0 ? 'Thin GMB' : 'Needs Optimization';
+    } else if (leadPartial.gmb_status) {
+      gmbStatus = String(leadPartial.gmb_status);
+    } else {
+      gmbStatus = gmbReviews && gmbReviews > 20 ? 'Established' : gmbReviews ? 'Thin GMB' : 'Needs Optimization';
+    }
+
     const mapsUrl = leadPartial.google_maps_url || row['gmbMapsUrl'] || row['google_maps_url'] || (businessName ? `https://maps.google.com/?q=${encodeURIComponent(businessName + ' ' + city)}` : undefined);
 
     const tags: string[] = [];
@@ -639,7 +657,7 @@ export function convertRowsToLeads(
       country: leadPartial.country || 'USA',
       postal_code: postalCode,
       niche,
-      gmb_status: leadPartial.gmb_status || (gmbReviews && gmbReviews > 20 ? 'Established' : gmbReviews ? 'Thin GMB' : 'Needs Optimization'),
+      gmb_status: gmbStatus,
       gmb_rating: gmbRating !== undefined ? gmbRating : null,
       gmb_review_count: gmbReviews !== undefined ? gmbReviews : 0,
       gmb_url: leadPartial.gmb_url || mapsUrl,
@@ -660,7 +678,9 @@ export function convertRowsToLeads(
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       notes: [],
-      original_data: row,
+      // Persist the resolved GMB fields in original_data: the DB layer stores this as rawPayload,
+      // and lead_audits is never written, so this is what survives a reload.
+      original_data: { ...row, gmb_status: gmbStatus, gmb_rating: gmbRating ?? null, gmb_review_count: gmbReviews ?? 0 },
       tags: tags.length > 0 ? tags : undefined,
     };
 

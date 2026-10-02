@@ -137,10 +137,20 @@ export function mapDbLeadToModel(dbLead: any): Lead {
     country: dbLead.country || raw.country || 'USA',
     postal_code: dbLead.postalCode || dbLead.postal_code || raw.postal_code || null,
     niche: dbLead.niche || raw.niche || 'General Contractor',
-    gmb_status: 
-      (dbLead.gmbStatus || dbLead.gmb_status || raw.gmb_status || '').toLowerCase().includes('gmb found')
-      ? 'Established' 
-      : (dbLead.gmbStatus || dbLead.gmb_status || raw.gmb_status || 'No GMB'),
+    gmb_status: (() => {
+      const v = String(dbLead.gmbStatus || dbLead.gmb_status || raw.gmb_status || '');
+      const lower = v.toLowerCase();
+      if (lower.includes('gmb found')) return 'Established';
+      if (v) return v;
+      // Legacy rows with no stored gmb_status: infer from the original CCB/GMB export columns
+      const st = String(raw.Status || raw.status || '').toLowerCase();
+      if (st.includes('no gmb')) return 'No GMB';
+      if (st.includes('gmb found') || raw.gmbName || raw.gmbMapsUrl) {
+        const rc = Number(raw.gmbReviews ?? 0);
+        return rc > 20 ? 'Established' : rc > 0 ? 'Thin GMB' : 'Needs Optimization';
+      }
+      return 'No GMB';
+    })(),
     gmb_rating: dbLead.googleRating ? Number(dbLead.googleRating) : (dbLead.gmb_rating || raw.gmb_rating || null),
     gmb_review_count: dbLead.reviewCount || dbLead.gmb_review_count || raw.gmb_review_count || null,
     google_maps_url: dbLead.googleMapsUrl || dbLead.google_maps_url || raw.google_maps_url || '',
