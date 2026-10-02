@@ -2078,6 +2078,7 @@ export async function findLeadByPhone(phone: string) {
   if (!phone) return null;
   const cleanPhone = phone.replace(/[^\d+]/g, '');
   const last7 = cleanPhone.slice(-7);
+  const last10 = cleanPhone.replace(/\D/g, '').slice(-10);
 
   const found = inMemoryLeads.find((l) => !l.deletedAt && l.phone && l.phone.replace(/[^\d+]/g, '').includes(last7));
   if (found) return found;
@@ -2087,7 +2088,13 @@ export async function findLeadByPhone(phone: string) {
       const candidates = await db
         .select()
         .from(schema.leads)
-        .where(sql`${schema.leads.phone} ILIKE ${'%' + last7 + '%'}`)
+        .where(
+          or(
+            eq(schema.leads.phoneE164, cleanPhone.startsWith('+') ? cleanPhone : '+' + cleanPhone),
+            // stored phones are often formatted "(503) 555-0199" — compare digits only
+            sql`regexp_replace(coalesce(${schema.leads.phone}, ''), '[^0-9]', '', 'g') LIKE ${'%' + last10 + ''}`
+          )
+        )
         .limit(1);
       return candidates[0] || null;
     } catch (error: any) {
@@ -2162,7 +2169,21 @@ export async function recordDbInboundSms(params: {
   });
 
   if (isDbConfigured) {
+    if (!leadId) {
+      // sms_messages.lead_id is NOT NULL — texts from numbers that are not leads cannot be stored
+      console.warn(`[Inbound SMS] No lead matches ${params.phone}; message not persisted to DB`);
+      return smsMsg;
+    }
     try {
+      // Idempotency: Telnyx retries webhooks, don't store the same message twice
+      if (params.externalMessageId) {
+        const existing = await db
+          .select()
+          .from(schema.smsMessages)
+          .where(eq(schema.smsMessages.externalMessageId, params.externalMessageId))
+          .limit(1);
+        if (existing[0]) return existing[0];
+      }
       const [dbSms] = await db
         .insert(schema.smsMessages)
         .values({
@@ -2177,11 +2198,52 @@ export async function recordDbInboundSms(params: {
         .returning();
       return dbSms;
     } catch (error: any) {
-      // safe fallback
+      console.error('[Inbound SMS] DB insert failed:', error?.message);
     }
   }
 
   return smsMsg;
+}
+
+export async function getDbInboundSms(since?: string) {
+  const sinceDate = since ? new Date(since) : null;
+  const validSince = sinceDate && !isNaN(sinceDate.getTime()) ? sinceDate : null;
+
+  if (isDbConfigured) {
+    try {
+      const rows = await db
+        .select({
+          id: schema.smsMessages.id,
+          leadId: schema.leads.leadId,
+          phone: schema.smsMessages.phone,
+          message: schema.smsMessages.message,
+          externalMessageId: schema.smsMessages.externalMessageId,
+          createdAt: schema.smsMessages.createdAt,
+        })
+        .from(schema.smsMessages)
+        .innerJoin(schema.leads, eq(schema.smsMessages.leadId, schema.leads.id))
+        .where(
+          validSince
+            ? and(eq(schema.smsMessages.direction, 'Inbound'), sql`${schema.smsMessages.createdAt} > ${validSince}`)
+            : eq(schema.smsMessages.direction, 'Inbound')
+        )
+        .orderBy(desc(schema.smsMessages.createdAt))
+        .limit(200);
+      return rows;
+    } catch (error: any) {
+      console.error('[Inbound SMS] feed query failed:', error?.message);
+    }
+  }
+
+  const out: any[] = [];
+  for (const l of inMemoryLeads) {
+    for (const m of l.sms || []) {
+      if (m.direction !== 'Inbound') continue;
+      if (validSince && new Date(m.createdAt) <= validSince) continue;
+      out.push({ id: m.id, leadId: l.leadId, phone: m.phone, message: m.message, externalMessageId: m.externalMessageId, createdAt: m.createdAt });
+    }
+  }
+  return out;
 }
 
 export async function getDbIntegrations() {
