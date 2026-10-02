@@ -885,9 +885,13 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/60 space-y-2">
                 <div className="text-[10px] text-slate-400 uppercase font-semibold">GMB Status</div>
-                <div className="text-sm font-bold text-white">{lead.gmb_status || 'Established'}</div>
+                <div className={`text-sm font-bold ${(!lead.gmb_status || lead.gmb_status === 'No GMB' || lead.gmb_status === 'Missing') ? 'text-rose-400' : 'text-emerald-400'}`}>
+                  {lead.gmb_status || 'No GMB'}
+                </div>
                 <p className="text-xs text-slate-400">
-                  {lead.gmb_rating} Stars across {lead.gmb_review_count || 0} reviews.
+                  {lead.gmb_rating
+                    ? `${lead.gmb_rating} Stars across ${lead.gmb_review_count || 0} reviews.`
+                    : 'No Google Business Profile — primary gap.'}
                 </p>
               </div>
 
