@@ -5,8 +5,7 @@ export type PipelineStage =
   | 'Proposal Sent'
   | 'Won'
   | 'Retainer'
-  | 'Archived'
-  | 'Loom Video Offer';
+  | 'Archived';
 
 export type Role =
   | 'AGENCY_DIRECTOR'
@@ -181,6 +180,7 @@ export type EmailStatus =
   | 'FAILED';
 
 export type EmailType =
+  | 'Loom Video Offer'
   | 'Initial Outreach'
   | 'Follow-Up'
   | 'Audit Follow-Up'
@@ -241,6 +241,7 @@ export type SMSStatus =
   | 'OPTED_OUT';
 
 export type SMSType =
+  | 'Loom Video Offer'
   | 'Initial Outreach'
   | 'Follow-Up'
   | 'Audit Follow-Up'
@@ -1555,8 +1556,3 @@ export interface ProposalAnalyticsMetrics {
 export * from './types/aiWorkforce';
 export * from './types/clientPortal';
 export * from './types/commandCenter';
-
-
-
-
-
