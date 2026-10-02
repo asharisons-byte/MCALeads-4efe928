@@ -16,6 +16,7 @@ import {
   addDbLeadCall,
   addDbLeadEmail,
   addDbLeadSms,
+  markDbLeadContacted,
   addDbLeadTask,
   convertDbLeadToClient,
   getDbClients,
@@ -638,6 +639,19 @@ router.post('/leads/:id/emails', async (req: Request, res: Response) => {
   try {
     const email = await addDbLeadEmail(req.params.id, req.body);
     return res.status(201).json({ email });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// 12b. Lead: auto-advance New Lead -> Contacted after any outreach (never moves later stages)
+router.post('/leads/:id/contacted', async (req: Request, res: Response) => {
+  try {
+    const result = await markDbLeadContacted(req.params.id, {
+      channel: req.body?.channel,
+      reason: req.body?.reason,
+    });
+    return res.json(result);
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
