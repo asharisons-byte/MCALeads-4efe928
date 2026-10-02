@@ -875,6 +875,85 @@ export async function deleteDbLeadNote(noteId: number) {
   return { success: true };
 }
 
+/**
+ * Move a lead from "New Lead" to "Contacted" once any outreach (SMS / email / call) is logged.
+ * Only ever advances leads that are still "New Lead" — later pipeline stages are never touched.
+ * Updates the main database (and the in-memory mirror) and records the stage change in history.
+ */
+export async function markDbLeadContacted(
+  leadIdentifier: string | number,
+  opts: { channel?: string; reason?: string } = {}
+): Promise<{ changed: boolean; status?: string }> {
+  const isNewLeadStatus = (s?: string | null) =>
+    !s || String(s).trim().toLowerCase().replace(/[_\s]+/g, ' ') === 'new lead';
+  const reason = opts.reason || `Automatic: ${opts.channel || 'outreach'} activity logged`;
+  const idNum = Number(leadIdentifier);
+  let changed = false;
+  let currentStatus: string | undefined;
+
+  if (isDbConfigured) {
+    try {
+      const whereClause = isNaN(idNum)
+        ? eq(schema.leads.leadId, String(leadIdentifier))
+        : or(eq(schema.leads.id, idNum), eq(schema.leads.leadId, String(leadIdentifier)));
+      const rows = await db
+        .select({ id: schema.leads.id, leadStatus: schema.leads.leadStatus })
+        .from(schema.leads)
+        .where(whereClause)
+        .limit(1);
+      const row = rows[0];
+      if (row) {
+        currentStatus = row.leadStatus;
+        if (isNewLeadStatus(row.leadStatus)) {
+          await db
+            .update(schema.leads)
+            .set({ leadStatus: 'Contacted', updatedAt: new Date() })
+            .where(eq(schema.leads.id, row.id));
+          changed = true;
+          currentStatus = 'Contacted';
+          try {
+            await db.insert(schema.leadStatusHistory).values({
+              leadId: row.id,
+              previousStatus: row.leadStatus || 'New Lead',
+              newStatus: 'Contacted',
+              changedBy: 'CRM Automation',
+              changeSource: 'Automation',
+              reason,
+            });
+          } catch (histErr: any) {
+            console.warn('markDbLeadContacted history skipped:', histErr?.message);
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('markDbLeadContacted DB update failed:', error?.message);
+    }
+  }
+
+  const mem = inMemoryLeads.find(
+    (l) => (!isNaN(idNum) && l.id === idNum) || String(l.leadId) === String(leadIdentifier)
+  );
+  if (mem && isNewLeadStatus(mem.leadStatus)) {
+    const prev = mem.leadStatus;
+    mem.leadStatus = 'Contacted';
+    mem.updatedAt = new Date();
+    mem.statusHistory = mem.statusHistory || [];
+    mem.statusHistory.unshift({
+      id: Date.now(),
+      leadId: mem.id,
+      previousStatus: prev,
+      newStatus: 'Contacted',
+      changedBy: 'CRM Automation',
+      reason,
+      createdAt: new Date(),
+    });
+    changed = true;
+    currentStatus = 'Contacted';
+  }
+
+  return { changed, status: currentStatus };
+}
+
 export async function addDbLeadCall(leadId: string | number, callData: any) {
   // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
@@ -910,6 +989,10 @@ export async function addDbLeadCall(leadId: string | number, callData: any) {
     metadata: { callId: call.id, outcome: call.callOutcome },
     createdAt: new Date(),
   });
+
+  if ((call.direction || 'Outbound').toLowerCase() === 'outbound') {
+    await markDbLeadContacted(leadId, { channel: 'Call' }).catch(() => {});
+  }
 
   if (isDbConfigured) {
     try {
@@ -958,6 +1041,10 @@ export async function addDbLeadEmail(leadId: string | number, emailData: any) {
     createdAt: new Date(),
   });
 
+  if ((emailMsg.direction || 'Outbound').toLowerCase() === 'outbound') {
+    await markDbLeadContacted(leadId, { channel: 'Email' }).catch(() => {});
+  }
+
   if (isDbConfigured) {
     try {
       const [dbMsg] = await db
@@ -1004,6 +1091,13 @@ export async function addDbLeadSms(leadId: string | number, smsData: any) {
     metadata: { smsId: smsMsg.id },
     createdAt: new Date(),
   });
+
+  if (
+    String(smsMsg.direction).toLowerCase() === 'outbound' &&
+    String(smsMsg.status).toUpperCase() !== 'FAILED'
+  ) {
+    await markDbLeadContacted(leadId, { channel: 'SMS' }).catch(() => {});
+  }
 
   if (isDbConfigured) {
     try {
@@ -2167,6 +2261,10 @@ export async function recordDbInboundSms(params: {
     metadata: { smsId: smsMsg.id, intent: params.aiClassification?.intent, phone: params.phone },
     createdAt: new Date(),
   });
+
+  if (leadId) {
+    await markDbLeadContacted(leadId, { channel: 'SMS reply', reason: 'Automatic: lead replied by SMS' }).catch(() => {});
+  }
 
   if (isDbConfigured) {
     if (!leadId) {
