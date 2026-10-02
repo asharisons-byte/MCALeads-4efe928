@@ -37,6 +37,7 @@ import {
 import { Lead, PipelineStage, ViewFilterType } from '../types';
 import * as XLSX from 'xlsx';
 import { ExcelColumnConverterModal } from './ExcelColumnConverterModal';
+import { logGmbStatus } from '../utils/gmbDiagnostic';
 
 interface TeamMember {
   id: number;
@@ -85,18 +86,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   onPageChange,
 }) => {
   useEffect(() => {
-    const crookedRiverLead = leads.find(l => l.business_name.toLowerCase().includes('crooked river'));
-    if (crookedRiverLead) {
-      console.log('[DIAGNOSTIC] Crooked River GMB Data (Table):', {
-        business_name: crookedRiverLead.business_name,
-        gmb_status: crookedRiverLead.gmb_status,
-        gmb_rating: crookedRiverLead.gmb_rating,
-        gmb_review_count: crookedRiverLead.gmb_review_count,
-        gmb_url: crookedRiverLead.gmb_url,
-        google_maps_url: crookedRiverLead.google_maps_url,
-        original_data: crookedRiverLead.original_data
-      });
-    }
+    leads.forEach(logGmbStatus);
   }, [leads]);
 
   // State
