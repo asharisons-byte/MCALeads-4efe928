@@ -536,6 +536,13 @@ export const ImportLeadsPage: React.FC<ImportLeadsPageProps> = ({
                           <option value="pagespeed_score">PageSpeed Score</option>
                           <option value="google_ads_status">Google Ads Status</option>
                           <option value="meta_pixel_status">Meta Pixel Status</option>
+                          <option value="lead_id">Lead ID / License #</option>
+                          <option value="country">Country</option>
+                          <option value="tags">Tags (e.g. County)</option>
+                          <option value="opening_hours">Opening Hours / Extra</option>
+                          <option value="gmb_url">GMB URL</option>
+                          <option value="created_at">Date (Registered / Processed)</option>
+                          <option value="pipeline_stage">Status (source file)</option>
                         </select>
                       </td>
                       <td className="p-3.5 text-center font-mono">
