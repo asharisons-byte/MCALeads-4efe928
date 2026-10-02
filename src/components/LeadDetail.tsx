@@ -96,6 +96,20 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
   onDeleteNote,
   leads,
 }) => {
+  useEffect(() => {
+    if (lead.business_name.toLowerCase().includes('crooked river')) {
+      console.log('[DIAGNOSTIC] Crooked River GMB Data (Detail):', {
+        business_name: lead.business_name,
+        gmb_status: lead.gmb_status,
+        gmb_rating: lead.gmb_rating,
+        gmb_review_count: lead.gmb_review_count,
+        gmb_url: lead.gmb_url,
+        google_maps_url: lead.google_maps_url,
+        original_data: lead.original_data
+      });
+    }
+  }, [lead]);
+
   const [activeTab, setActiveTab] = useState<
     | 'lead_intelligence'
     | 'activity'
