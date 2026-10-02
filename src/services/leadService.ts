@@ -138,9 +138,9 @@ export function mapDbLeadToModel(dbLead: any): Lead {
     postal_code: dbLead.postalCode || dbLead.postal_code || raw.postal_code || null,
     niche: dbLead.niche || raw.niche || 'General Contractor',
     gmb_status: 
-      (dbLead.gmbStatus === 'GMB Found - Website Available' || dbLead.gmb_status === 'GMB Found - Website Available' || raw.gmb_status === 'GMB Found - Website Available') 
+      (dbLead.gmbStatus || dbLead.gmb_status || raw.gmb_status || '').toLowerCase().includes('gmb found')
       ? 'Established' 
-      : (dbLead.gmbStatus || dbLead.gmb_status || raw.gmb_status || null),
+      : (dbLead.gmbStatus || dbLead.gmb_status || raw.gmb_status || 'No GMB'),
     gmb_rating: dbLead.googleRating ? Number(dbLead.googleRating) : (dbLead.gmb_rating || raw.gmb_rating || null),
     gmb_review_count: dbLead.reviewCount || dbLead.gmb_review_count || raw.gmb_review_count || null,
     google_maps_url: dbLead.googleMapsUrl || dbLead.google_maps_url || raw.google_maps_url || '',
