@@ -101,7 +101,7 @@ export function mapDbLeadToModel(dbLead: any): Lead {
     gmb_rating: dbLead.googleRating ? Number(dbLead.googleRating) : (dbLead.gmb_rating || raw.gmb_rating || null),
     gmb_review_count: dbLead.reviewCount || dbLead.gmb_review_count || raw.gmb_review_count || null,
     google_maps_url: dbLead.googleMapsUrl || dbLead.google_maps_url || raw.google_maps_url || '',
-    website_status: dbLead.websiteStatus || dbLead.website_status || raw.website_status || 'Active',
+    website_status: dbLead.websiteStatus || dbLead.website_status || raw.website_status || null,
     google_ads_status: dbLead.googleAdsDetected ? 'Active' : (raw.google_ads_status || 'No Ads'),
     meta_pixel_status: dbLead.metaPixelDetected ? 'Installed' : (raw.meta_pixel_status || 'No Pixel'),
     seo_status: (dbLead.seo_status as any) || raw.seo_status || 'Needs Technical SEO',
