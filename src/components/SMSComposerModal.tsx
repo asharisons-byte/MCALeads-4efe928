@@ -246,9 +246,9 @@ export const SMSComposerModal: React.FC<SMSComposerModalProps> = ({
                 disabled={!eligibility.canSend || isGenerating}
                 className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500 transition-colors"
               >
+                <option value="Loom Video Offer">🎬 Loom Video Offer (Recommended — 1st Contact)</option>
                 <option value="Initial Outreach">Initial Outreach (First Contact)</option>
                 <option value="Follow-Up">Follow-Up (Previous Note)</option>
-                <option value="Loom Video Offer">Loom Video Offer (Video Outreach)</option>
                 <option value="Audit Follow-Up">Audit Follow-Up (Visibility Breakdown)</option>
                 <option value="Information Follow-Up">Information Follow-Up</option>
                 <option value="Proposal Follow-Up">Proposal Follow-Up</option>
