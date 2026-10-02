@@ -315,8 +315,62 @@ export function detectSMSPersonalizationLevel(lead: Lead): PersonalizationLevel 
 /**
  * Storage for SMS Messages
  */
+let lastInboundSync = 0;
+
+/**
+ * Pull inbound SMS stored by the Telnyx webhook (server/DB) into the local message store.
+ * Throttled so the many getSMSMessages() callers don't hammer the API.
+ */
+async function syncInboundSMSFromServer(force = false): Promise<void> {
+  const now = Date.now();
+  if (!force && now - lastInboundSync < 8000) return;
+  lastInboundSync = now;
+  try {
+    const res = await fetch('/api/sms/inbound');
+    if (!res.ok) return;
+    const data = await res.json();
+    const incoming: any[] = Array.isArray(data?.messages) ? data.messages : [];
+    if (incoming.length === 0) return;
+
+    const raw = localStorage.getItem(SMS_STORAGE_KEY);
+    const existing: SMSMessage[] = raw ? JSON.parse(raw) : [];
+    const known = new Set(existing.map((m) => m.provider_message_id).filter(Boolean));
+    const fresh: SMSMessage[] = [];
+
+    for (const r of incoming) {
+      const pid = r.externalMessageId || `srv_in_${r.id}`;
+      if (known.has(pid)) continue;
+      const ts = r.createdAt ? new Date(r.createdAt).toISOString() : new Date().toISOString();
+      const phone = String(r.phone || '');
+      const text = String(r.message || '');
+      const stop = /^\s*(stop|stopall|unsubscribe|cancel|end|quit)\s*$/i.test(text);
+      fresh.push({
+        sms_id: `sms-in-${pid}`,
+        lead_id: String(r.leadId),
+        phone_number: phone,
+        phone_e164: phone,
+        direction: 'INBOUND',
+        content: text,
+        status: stop ? 'OPTED_OUT' : 'RECEIVED',
+        provider_message_id: pid,
+        received_at: ts,
+        created_at: ts,
+        updated_at: ts,
+        metadata: { provider: 'Telnyx Inbound Webhook' },
+      } as SMSMessage);
+    }
+
+    if (fresh.length > 0) {
+      saveAllSMSMessages([...fresh, ...existing]);
+    }
+  } catch (e) {
+    console.warn('Inbound SMS sync skipped', e);
+  }
+}
+
 export async function getSMSMessages(leadId?: string): Promise<SMSMessage[]> {
   try {
+    await syncInboundSMSFromServer();
     const raw = localStorage.getItem(SMS_STORAGE_KEY);
     let messages: SMSMessage[] = raw ? JSON.parse(raw) : [];
 
