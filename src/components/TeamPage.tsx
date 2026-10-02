@@ -160,8 +160,8 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
         const data = await response.json();
         setPerformance(data.performance || null);
       }
-    } catch (error) {
-      console.error('Failed to fetch performance:', error);
+    } catch (error: any) {
+      console.error('Failed to fetch performance:', error?.message || error);
     } finally {
       setLoading(false);
     }
