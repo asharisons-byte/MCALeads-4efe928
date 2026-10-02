@@ -668,8 +668,14 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                         <td className="p-2.5 text-slate-300 whitespace-nowrap">{lead.city || '—'}</td>
                         <td className="p-2.5 whitespace-nowrap text-slate-300">{lead.phone || '—'}</td>
                         <td className="p-2.5 whitespace-nowrap">
-                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${lead.gmb_status === 'No GMB' ? 'bg-rose-900/40 text-rose-300' : lead.gmb_status === 'Thin GMB' ? 'bg-amber-900/40 text-amber-300' : 'text-slate-400'}`}>
-                            {lead.gmb_status || 'Established'}
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                            (!lead.gmb_status || lead.gmb_status === 'No GMB' || lead.gmb_status === 'Missing')
+                              ? 'bg-rose-900/40 text-rose-300'
+                              : lead.gmb_status === 'Thin GMB'
+                              ? 'bg-amber-900/40 text-amber-300'
+                              : 'bg-emerald-900/40 text-emerald-300'
+                          }`}>
+                            {lead.gmb_status || 'No GMB'}
                           </span>
                         </td>
                         <td className="p-2.5 whitespace-nowrap">
