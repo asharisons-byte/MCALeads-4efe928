@@ -48,6 +48,7 @@ import {
   scheduleFollowUp,
   completeFollowUp,
   addActivity,
+  markLeadContacted,
 } from '../services/leadService';
 import {
   getCommunications,
@@ -279,6 +280,11 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
       source,
       metadata: commData.metadata,
     });
+
+    // Any outbound SMS / email / call logged from here moves New Lead -> Contacted in the main DB
+    if (commData.direction === 'OUTBOUND' && commData.status !== 'FAILED') {
+      markLeadContacted(lead.lead_id, String(commData.channel));
+    }
 
     setCommunications(getCommunications(lead.lead_id));
     setActivities(getLeadActivities(lead.lead_id, lead));
