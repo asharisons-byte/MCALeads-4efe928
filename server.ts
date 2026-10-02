@@ -183,7 +183,22 @@ app.get('/api/health', (req, res) => {
 // Inbound SMS Webhook
 app.post('/api/sms/webhook', async (req, res) => {
   try {
-    const payload = req.body;
+    // 1. Strict JSON check
+    if (!req.is('application/json')) {
+      console.warn('[SMS Webhook] Rejected non-JSON request');
+      return res.status(400).json({ error: 'Expected application/json' });
+    }
+
+    let payload = req.body;
+    
+    // Fallback parsing if needed
+    if (typeof payload === 'string') {
+      try { payload = JSON.parse(payload); } catch (e) {
+        console.error('[SMS Webhook] Failed to parse string payload');
+        return res.status(400).send('Invalid JSON');
+      }
+    }
+    
     console.log('[SMS Webhook] Received payload:', JSON.stringify(payload));
 
     // 1. Verify Signature
