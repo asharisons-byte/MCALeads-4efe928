@@ -132,6 +132,23 @@ export function App() {
     return () => unsubscribe();
   }, []);
 
+  // Outreach (SMS / email / call) can auto-advance a lead New Lead -> Contacted in the DB;
+  // re-pull leads so the lead list, detail panel and dashboards show the new stage right away.
+  useEffect(() => {
+    const onStageChanged = async (e: Event) => {
+      const leadId = (e as CustomEvent).detail?.leadId as string | undefined;
+      const fresh = await getLeads();
+      if (fresh.length > 0) {
+        setLeads(fresh);
+        if (leadId) {
+          setSelectedLead((prev) => (prev && prev.lead_id === leadId ? fresh.find((l) => l.lead_id === leadId) || prev : prev));
+        }
+      }
+    };
+    window.addEventListener('lead-stage-changed', onStageChanged);
+    return () => window.removeEventListener('lead-stage-changed', onStageChanged);
+  }, []);
+
   // Data Loading Effect
   useEffect(() => {
     if (!firebaseUser) return;
