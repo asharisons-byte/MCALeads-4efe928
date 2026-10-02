@@ -184,6 +184,7 @@ app.post('/api/sms/webhook', async (req, res) => {
     
     // 2. Parse payload
     if (!payload || payload.data?.payload?.direction !== 'inbound') {
+      console.warn('[SMS Webhook] Ignored non-inbound event, payload:', JSON.stringify(payload));
       return res.status(200).send('Ignored non-inbound event');
     }
 

@@ -1748,7 +1748,9 @@ export async function batchImportDbLeads(
       state: row.state || row.State || row.stateRegion || null,
       postal_code: row.postal_code || row.postalCode || row.zip || row.Zip || '',
       niche: row.niche || row.Trade || row.Industry || 'General Contractor',
-      gmb_status: row.gmb_status || row.gmbStatus || null,
+      gmb_status: 
+        row.gmb_status === 'GMB Found - Website Available' ? 'Established' : 
+        (row.gmb_status || row.gmbStatus || null),
       gmb_rating: (row.gmb_rating !== undefined && row.gmb_rating !== null && row.gmb_rating !== '') ? Number(row.gmb_rating) : null,
       gmb_review_count: (row.gmb_review_count !== undefined && row.gmb_review_count !== null && row.gmb_review_count !== '') ? Number(row.gmb_review_count) : null,
       google_maps_url: row.google_maps_url || row.googleMapsUrl || '',
