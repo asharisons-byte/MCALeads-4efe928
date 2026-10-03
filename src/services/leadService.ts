@@ -580,64 +580,29 @@ export async function deleteLead(leadId: string): Promise<boolean> {
 
 export async function bulkUpdateStage(leadIds: string[], stage: PipelineStage): Promise<void> {
   const current = await getLeads();
-  const timestamp = new Date().toISOString();
-
-  // Filter only allowed transitions
-  const validLeadIds = leadIds.filter(id => {
-    const lead = current.find(l => l.lead_id === id);
-    return lead && canTransition(lead.pipeline_stage, stage);
-  });
-
-  const updated = current.map((l) => {
-    if (validLeadIds.includes(l.lead_id)) {
-      const historyEntry: PipelineStageHistoryEntry = {
-        id: `sh-${Date.now()}-${l.lead_id}`,
-        previous_stage: l.pipeline_stage,
-        new_stage: stage,
-        timestamp,
-        changed_by: 'Agency User',
-        reason: 'Bulk stage update',
-      };
-      return {
-        ...l,
-        pipeline_stage: stage,
-        stage_history: [historyEntry, ...(l.stage_history || [])],
-        updated_at: timestamp,
-      };
+  
+  for (const id of leadIds) {
+    try {
+      const lead = current.find(l => l.lead_id === id);
+      if (lead && canTransition(lead.pipeline_stage, stage)) {
+        await updateLead(id, { pipeline_stage: stage }, lead);
+      }
+    } catch (err) {
+      console.error(`Failed to update stage for lead ${id}:`, err);
+      // Continue to next lead even if one fails
     }
-    return l;
-  });
-  saveLeads(updated);
-
-  validLeadIds.forEach((id) => {
-    const lead = current.find((l) => l.lead_id === id);
-    if (lead) {
-      addActivity({
-        id: `act-${Date.now()}-${id}`,
-        activity_id: `act-${Date.now()}-${id}`,
-        lead_id: id,
-        lead_name: lead.business_name,
-        timestamp,
-        type: 'pipeline_stage_changed',
-        activity_type: 'pipeline_stage_changed',
-        channel: 'PIPELINE',
-        title: `Pipeline Stage Changed`,
-        description: `Pipeline stage moved from "${lead.pipeline_stage}" to "${stage}".`,
-        author: 'Agency User',
-        source: 'Agency User',
-        metadata: {
-          previous_stage: lead.pipeline_stage,
-          new_stage: stage,
-        },
-      });
-    }
-  });
+  }
 }
 
 export async function bulkDelete(leadIds: string[]): Promise<void> {
-  const current = await getLeads();
-  const filtered = current.filter((l) => !leadIds.includes(l.lead_id));
-  saveLeads(filtered);
+  for (const id of leadIds) {
+    try {
+      await deleteLead(id);
+    } catch (err) {
+      console.error(`Failed to delete lead ${id}:`, err);
+      // Continue to next lead even if one fails
+    }
+  }
 }
 
 export async function addNoteToLead(

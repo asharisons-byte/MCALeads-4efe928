@@ -45,6 +45,8 @@ interface LeadsPageProps {
   onImportComplete: () => void;
   currentPage: number;
   onPageChange: (page: number) => void;
+  activeBulkProgress: BulkProgress | null;
+  setActiveBulkProgress: (progress: BulkProgress | null) => void;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -71,9 +73,8 @@ function nextStage(current?: string): string {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
-  const { leads, selectedLeadIds } = props;
+  const { leads, selectedLeadIds, activeBulkProgress, setActiveBulkProgress } = props;
 
-  const [activeBulkProgress, setActiveBulkProgress] = useState<BulkProgress | null>(null);
   const [showTagModal, setShowTagModal] = useState(false);
   const activeControllerRef = useRef<BulkQueueController | null>(null);
   const leadsRef = useRef(leads);
@@ -82,7 +83,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
   // ── Progress callback ─────────────────────────────────────────────────────
   const onProgress = useCallback((p: BulkProgress) => {
     setActiveBulkProgress({ ...p });
-  }, []);
+  }, [setActiveBulkProgress]);
 
   const handleCancel = useCallback(() => {
     activeControllerRef.current?.cancel();
@@ -92,7 +93,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
   const handleClose = useCallback(() => {
     activeControllerRef.current = null;
     setActiveBulkProgress(null);
-  }, []);
+  }, [setActiveBulkProgress]);
 
   // ── BULK AI CALL ──────────────────────────────────────────────────────────
   const handleBulkAICall = useCallback(async () => {
@@ -117,10 +118,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
             callType: 'AI Call',
           });
           
-          // Open modal to monitor
-          props.onOpenAICall(lead);
-
-          // Poll for completion
+          // Poll for completion (silent background)
           let isDone = false;
           while (!isDone) {
             await new Promise(r => setTimeout(r, 2000));

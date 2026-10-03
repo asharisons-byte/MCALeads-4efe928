@@ -81,6 +81,7 @@ export function App() {
   const [dialerLead, setDialerLead] = useState<Lead | null>(null);
   const [dialerPhoneNumber, setDialerPhoneNumber] = useState<string>('');
   const [sophiaAICallLead, setSophiaAICallLead] = useState<Lead | null>(null);
+  const [activeBulkProgress, setActiveBulkProgress] = useState<BulkProgress | null>(null);
   const [selectedCallRecord, setSelectedCallRecord] = useState<CallRecord | null>(null);
   const [clientPortalScreen, setClientPortalScreen] = useState<'none' | 'login' | 'portal'>('none');
   const [clientPortalActiveUser, setClientPortalActiveUser] = useState<ClientPortalUser | null>(null);
@@ -680,6 +681,8 @@ export function App() {
                 }
                 setSophiaAICallLead(lead);
               }}
+              activeBulkProgress={activeBulkProgress}
+              setActiveBulkProgress={setActiveBulkProgress}
               onImportComplete={handleImportComplete}
               currentPage={currentPage}
               onPageChange={setCurrentPage}
