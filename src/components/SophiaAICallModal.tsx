@@ -60,6 +60,21 @@ interface SophiaAICallModalProps {
 
 type CallCenterView = 'strategy' | 'calling' | 'completed';
 
+interface EndCallOpts {
+  remote?: boolean;        // true when the backend/Telnyx already ended the call
+  remoteOutcome?: string;  // outcome hint from backend (e.g. 'voicemail', 'no_answer_or_short')
+  remoteReason?: string;
+}
+
+// Backend call statuses that mean "this call is over"
+const ENDED_STATUSES = new Set(['ended', 'completed', 'hangup', 'failed', 'no_answer', 'voicemail', 'busy']);
+// Backend call statuses that mean "someone picked up"
+const ANSWERED_STATUSES = new Set(['answered', 'connected', 'in_progress', 'in-progress']); // NOT 'active': old backend used it for ringing too
+// Carrier / mailbox greetings. Deliberately specific so a gatekeeper saying
+// "he's not available" is NOT classified as voicemail.
+const VOICEMAIL_RX =
+  /you('| a)re trying to reach|you have reached|at the tone|after the (tone|beep)|record your message|leave (a|your) message|voice ?mail|mailbox|can'?t take your call|cannot take your call|unable to take your call|not been set up|hasn'?t been set up/i;
+
 export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
   isOpen,
   lead,
@@ -138,6 +153,24 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
   const API_BASE = import.meta.env.VITE_AI_BACKEND_URL || 'http://localhost:8000';
+
+  // Refs so async callbacks (poll interval, timers) always see the latest values
+  const turnsRef = useRef<SophiaCallTurn[]>([]);
+  const durationRef = useRef(0);
+  const finalizedRef = useRef(false); // makes call closure idempotent (poll + button can both fire)
+  const connectTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const notFoundCountRef = useRef(0);
+  const endCallRef = useRef<(opts?: EndCallOpts) => Promise<void>>(async () => {});
+  turnsRef.current = turns;
+  durationRef.current = duration;
+
+  // Never leave a poller or timer running after the modal unmounts
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      if (connectTimerRef.current) clearTimeout(connectTimerRef.current);
+    };
+  }, []);
 
   // Auto-scroll transcript
   useEffect(() => {
@@ -224,33 +257,65 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
     }
   };
 
-  // Poll backend for live transcript updates
+  // Map backend {role, content} turns into UI turns
+  const mapRemoteTurns = (remoteTurns: Array<{ role: string; content: string }>): SophiaCallTurn[] =>
+    remoteTurns.map((t, i) => ({
+      id: `backend_turn_${i}`,
+      speaker: t.role === 'assistant' ? 'Sophia' : 'Prospect',
+      message: t.content,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      intent: t.role === 'assistant' ? 'AI Response' : undefined,
+    }));
+
+  const stopPolling = () => {
+    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+  };
+
+  // Poll backend for live transcript + call state. When the backend says the call is
+  // over (hangup, voicemail, no answer, carrier drop) the call is closed out automatically.
   const startTranscriptPolling = (cid: string) => {
-    if (pollRef.current) clearInterval(pollRef.current);
+    stopPolling();
+    notFoundCountRef.current = 0;
     pollRef.current = setInterval(async () => {
       try {
         const r = await fetch(`${API_BASE}/api/call/${cid}/status`);
-        if (!r.ok) return;
-        const data = await r.json();
-        if (data.status === 'ended') {
-          clearInterval(pollRef.current!);
-          setBackendCallActive(false);
-          setCallStatus('ENDED');
+        if (r.status === 404) {
+          // Backend forgot the call (already cleaned up) -> treat as ended after 3 misses
+          notFoundCountRef.current += 1;
+          if (notFoundCountRef.current >= 3) {
+            stopPolling();
+            endCallRef.current({ remote: true, remoteReason: 'call_not_found' });
+          }
           return;
         }
-        const remoteTurns: Array<{role: string; content: string}> = data.turns || [];
+        if (!r.ok) return;
+        notFoundCountRef.current = 0;
+        const data = await r.json();
+        const status = String(data.status || '').toLowerCase();
+
+        // Always take the freshest transcript BEFORE closing, so nothing is lost
+        const remoteTurns: Array<{ role: string; content: string }> = data.turns || [];
         if (remoteTurns.length > 0) {
-          const mapped: SophiaCallTurn[] = remoteTurns.map((t, i) => ({
-            id: `backend_turn_${i}`,
-            speaker: t.role === 'assistant' ? 'Sophia' : 'Prospect',
-            message: t.content,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-            intent: t.role === 'assistant' ? 'AI Response' : undefined,
-          }));
+          const mapped = mapRemoteTurns(remoteTurns);
+          turnsRef.current = mapped;
           setTurns(mapped);
         }
+
+        if (ENDED_STATUSES.has(status) || data.ended === true) {
+          stopPolling();
+          endCallRef.current({
+            remote: true,
+            remoteOutcome: String(data.outcome || status),
+            remoteReason: data.reason ? String(data.reason) : undefined,
+          });
+          return;
+        }
+
+        if (ANSWERED_STATUSES.has(status) || data.answered === true) {
+          setCallStatus(prev => (prev === 'RINGING' || prev === 'CALLING' ? 'CONNECTED' : prev));
+        }
       } catch (e) {
-        // ignore polling errors
+        // ignore transient polling errors
       }
     }, 2000);
   };
@@ -365,6 +430,7 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
   // Start the AI Call (User must explicitly click this!)
   const handleStartAICall = async () => {
     if (!lead.phone) return;
+    finalizedRef.current = false;
     setView('calling');
     setCallStatus('PREPARING');
     setDuration(0);
@@ -424,7 +490,12 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
         setLiveEvents(prev => [...prev, `Telnyx call placed — CID: ${cid?.slice(-8)}`, 'Ringing prospect…']);
         setCallStatus('RINGING');
         startTranscriptPolling(cid);
-        setTimeout(() => setCallStatus('CONNECTED'), 6000);
+        // Fallback only: if the backend never reports 'answered', flip to CONNECTED after 6s,
+        // but never overwrite ENDED (this used to resurrect already-finished calls)
+        if (connectTimerRef.current) clearTimeout(connectTimerRef.current);
+        connectTimerRef.current = setTimeout(() => {
+          setCallStatus(prev => (prev === 'RINGING' ? 'CONNECTED' : prev));
+        }, 6000);
         return; // ← real call is live; no simulation needed
       }
     } catch (backendErr) {
@@ -568,16 +639,21 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
     }
   };
 
-  // End Call and Transition to Post-Call Analysis
-  const handleEndCall = async () => {
+  // End Call and Transition to Post-Call Analysis.
+  // Called by the End button AND automatically by the status poller when the backend
+  // reports the call is over. Idempotent: only the first caller does the work.
+  const handleEndCall = async (opts: EndCallOpts = {}) => {
+    if (finalizedRef.current) return;
+    finalizedRef.current = true;
+
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
-    // Stop polling
-    if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+    stopPolling();
+    if (connectTimerRef.current) { clearTimeout(connectTimerRef.current); connectTimerRef.current = null; }
 
-    // Hangup backend call if active
-    if (backendCallActive && callControlId) {
+    // Hang up only if the far end hasn't already ended it (avoids Telnyx 422 "already ended")
+    if (!opts.remote && backendCallActive && callControlId) {
       try {
         await fetch(`${API_BASE}/api/hangup`, {
           method: 'POST',
@@ -586,23 +662,63 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
         });
         setIncomingLog(prev => [...prev, `[${new Date().toLocaleTimeString()}] ☎️ Hangup sent to backend`]);
       } catch (e) { /* ignore */ }
-      setBackendCallActive(false);
     }
+    // Grab the final transcript once more so the last turn isn't lost
+    if (backendCallActive && callControlId) {
+      try {
+        const r = await fetch(`${API_BASE}/api/call/${callControlId}/status`);
+        if (r.ok) {
+          const d = await r.json();
+          if (Array.isArray(d.turns) && d.turns.length > 0) turnsRef.current = mapRemoteTurns(d.turns);
+        }
+      } catch (e) { /* ignore */ }
+    }
+    setBackendCallActive(false);
 
     setCallStatus('ENDED');
     setView('completed');
     setIsAnalyzingCall(true);
 
-    const callDuration = duration || 45;
+    // ── Classify what actually happened on the line ──
+    const finalTurns = turnsRef.current;
+    const callDuration = durationRef.current;
+    const remoteHint = `${opts.remoteOutcome || ''} ${opts.remoteReason || ''}`.toLowerCase();
+    const prospectTurns = finalTurns.filter(t => t.speaker === 'Prospect');
+    const heardVoicemail =
+      /voice ?mail|machine|answering/.test(remoteHint) ||
+      prospectTurns.some(t => VOICEMAIL_RX.test(t.message));
+    const humanTurns = prospectTurns.filter(t => !VOICEMAIL_RX.test(t.message));
+    const hadConversation = humanTurns.length > 0 && !/voice ?mail|machine/.test(remoteHint);
+    const callState = hadConversation ? 'COMPLETED' : heardVoicemail ? 'VOICEMAIL' : 'NO_ANSWER';
 
     try {
-      // 1. Run Gemini post-call analysis
-      const postAnalysis = await AIService.analyzeCompletedCall({
-        lead,
-        duration: callDuration,
-        turns,
-        strategy,
-      });
+      // 1. Post-call analysis — skipped (no Gemini cost/delay) when nobody actually spoke
+      const postAnalysis: SophiaCallAnalysis = hadConversation
+        ? await AIService.analyzeCompletedCall({
+            lead,
+            duration: callDuration || 45,
+            turns: finalTurns,
+            strategy,
+          })
+        : {
+            summary: heardVoicemail
+              ? 'Call reached voicemail. No live conversation took place.'
+              : 'No live conversation: no answer, or the call ended before the prospect spoke.',
+            sentiment: 'Neutral',
+            interest_level: 'Cold',
+            key_insights: [heardVoicemail ? 'Voicemail / automated greeting detected' : 'Prospect did not engage'],
+            recommended_next_action: {
+              action: heardVoicemail
+                ? 'Retry at a different time of day, or follow up by email'
+                : 'Retry at a different time of day',
+              priority: 'Low',
+              suggested_channel: heardVoicemail ? 'Email' : 'Phone',
+              suggested_timing: 'Next business day, different time window',
+            },
+            crm_notes: `AI call to ${lead.business_name}: ${
+              heardVoicemail ? 'reached voicemail' : 'no answer / no conversation'
+            } (${callDuration}s). No analysis run.`,
+          };
       setAnalysis(postAnalysis);
 
       // 2. Build full CallRecord
@@ -615,10 +731,11 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
         phone_number: lead.phone || '',
         direction: 'OUTBOUND',
         call_type: 'AI Call',
-        status: 'COMPLETED',
+        status: callState,
         duration: callDuration,
-        outcome:
-          postAnalysis.interest_level === 'Hot'
+        outcome: !hadConversation
+          ? (heardVoicemail ? 'Voicemail' : 'No Answer')
+          : postAnalysis.interest_level === 'Hot'
             ? 'Interested'
             : postAnalysis.primary_objection?.includes('Do Not Contact')
             ? 'Do Not Contact'
@@ -630,7 +747,7 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
         ended_at: now,
         created_at: now,
         recording_status: 'Available',
-        transcript: turns.map((t) => `[${t.speaker}]: ${t.message}`).join('\n'),
+        transcript: finalTurns.map((t) => `[${t.speaker}]: ${t.message}`).join('\n'),
         transcript_status: 'Available',
         lead_score: lead.lead_score,
         pipeline_stage: lead.pipeline_stage,
@@ -649,14 +766,14 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
         recommended_next_action: postAnalysis.recommended_next_action.action,
         promised_follow_up: postAnalysis.promised_follow_up,
         call_strategy: strategy,
-        transcript_turns: turns,
+        transcript_turns: finalTurns,
       };
 
       saveCallRecord(newRecord);
       setCompletedRecord(newRecord);
 
       // ── Save to Neon PostgreSQL via server callback ──────────────────
-      await saveCallToNeon(turns, newRecord.outcome || 'conversation');
+      await saveCallToNeon(finalTurns, newRecord.outcome || 'conversation');
       setIncomingLog(prev => [...prev, `[${new Date().toLocaleTimeString()}] 📊 Post-call analysis complete — Neon updated`]);
 
       // 3. Write CRM Note
@@ -690,7 +807,7 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
         const updates: Partial<Lead> = {};
 
         // New Lead -> Contacted only if connected
-        if (lead.pipeline_stage === 'New Lead' || !lead.pipeline_stage) {
+        if (hadConversation && (lead.pipeline_stage === 'New Lead' || !lead.pipeline_stage)) {
           updates.pipeline_stage = 'Contacted';
         }
 
@@ -716,6 +833,8 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
       setIsAnalyzingCall(false);
     }
   };
+
+  endCallRef.current = handleEndCall; // poller always calls the latest closure
 
   return (
     <div
@@ -761,7 +880,7 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
             )}
             <button
               onClick={() => {
-                if (callStatus === 'CONNECTED' || callStatus === 'CALLING') {
+                if (backendCallActive || ['CONNECTED', 'CALLING', 'RINGING', 'AGENT_SPEAKING', 'PAUSED'].includes(callStatus)) {
                   handleEndCall();
                 } else {
                   onClose();
@@ -1270,7 +1389,7 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
 
                     {/* End Call Button */}
                     <button
-                      onClick={handleEndCall}
+                      onClick={() => handleEndCall()}
                       className="w-full py-2.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-colors"
                     >
                       <PhoneOff className="w-4 h-4" />
