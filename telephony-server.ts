@@ -107,9 +107,14 @@ export class TelnyxVoiceProvider implements VoiceProvider {
           providerCallId: callControlId,
           status: 'CALLING',
         };
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        const telnyxErr = errData?.errors?.[0]?.detail || JSON.stringify(errData);
+        if (response.status === 422) {
+          throw new Error(`Telnyx Configuration Error (422): ${telnyxErr}. Please check your TELNYX_CONNECTION_ID in your environment variables.`);
+        }
+        throw new Error(`Telnyx API Error: ${response.status} - ${telnyxErr}`);
       }
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(`Telnyx API Error: ${response.status} - ${JSON.stringify(errData)}`);
     }
     
     throw new Error('TELNYX_API_KEY is not configured on the server.');

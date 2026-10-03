@@ -97,7 +97,7 @@ export function App() {
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
-    return leads.filter(
+    return (leads || []).filter(
       (l) =>
         l.business_name.toLowerCase().includes(q) ||
         l.phone?.toLowerCase().includes(q) ||

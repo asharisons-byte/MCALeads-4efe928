@@ -41,19 +41,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onNavigateToPipeline,
 }) => {
   // Calculate dynamic KPIs from actual CRM database
-  const totalLeads = leads.length;
-  const hotTargets = leads.filter((l) => l.is_hot_target).length;
-  const avgScore = totalLeads > 0 ? Math.round(leads.reduce((acc, l) => acc + l.lead_score, 0) / totalLeads) : 0;
-  const potentialMRR = leads.reduce((acc, l) => acc + (l.estimated_retainer || 0), 0);
+  const totalLeads = (leads || []).length;
+  const hotTargets = (leads || []).filter((l) => l.is_hot_target).length;
+  const avgScore = totalLeads > 0 ? Math.round((leads || []).reduce((acc, l) => acc + (l.lead_score || 0), 0) / totalLeads) : 0;
+  const potentialMRR = (leads || []).reduce((acc, l) => acc + (l.estimated_retainer || 0), 0);
 
   // Pipeline MRR: retainers in active pipeline stages
   const activePipelineStages = ['Contacted', 'Audit Sent', 'Proposal Sent', 'Won', 'Retainer'];
-  const pipelineMRR = leads
+  const pipelineMRR = (leads || [])
     .filter((l) => activePipelineStages.includes(l.pipeline_stage))
     .reduce((acc, l) => acc + (l.estimated_retainer || 0), 0);
 
   // GMB / Web Gaps: leads with missing website or slow server or thin GMB
-  const gmbWebGaps = leads.filter(
+  const gmbWebGaps = (leads || []).filter(
     (l) =>
       l.website_status === 'No Website' ||
       l.website_status === 'Slow / Unreachable Server' ||

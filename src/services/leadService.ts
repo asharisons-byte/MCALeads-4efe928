@@ -616,6 +616,9 @@ export async function executeBulkAICall(
   let failed = 0;
   let skipped = 0;
   
+  // Base URL matching SophiaAICallModal
+  const API_BASE = import.meta.env.VITE_AI_BACKEND_URL || 'http://localhost:8000';
+  
   for (let i = 0; i < leadIds.length; i++) {
     const leadId = leadIds[i];
     const lead = currentLeads.find((l) => l.lead_id === leadId);
@@ -640,17 +643,35 @@ export async function executeBulkAICall(
     }
 
     try {
-      // Silent background call
-      await TelephonyService.startCall({
-        lead,
-        phoneNumber: lead.phone,
-        callType: 'AI Call',
+      // Replicate the manual AI call initiation logic
+      const response = await fetch(`${API_BASE}/api/outbound/call`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          leadId: lead.lead_id,
+          leadName: lead.business_name,
+          leadPhone: lead.phone,
+          agentName: 'Sophia',
+          businessType: lead.niche || '',
+          location: `${lead.city || ''}, ${lead.state || ''}`,
+          retainer: `$${lead.estimated_retainer || 2400}/mo`,
+          leadScore: lead.lead_score || 0,
+          pipelineStage: lead.pipeline_stage || 'New Lead',
+          // Assuming basic objective/CTA if not specifically generated in bulk
+          callObjective: 'Qualify and book a discovery call',
+          primaryCTA: 'Schedule 15-min discovery call',
+        }),
       });
+
+      if (!response.ok) {
+        throw new Error(`Bulk AI call API returned ${response.status}: ${response.statusText}`);
+      }
+
       successful++;
-      console.log(`Successfully initiated AI call for ${lead.business_name}`);
+      console.log(`Successfully initiated bulk AI call for ${lead.business_name}`);
     } catch (err) {
       failed++;
-      console.error(`Failed to initiate AI call for ${leadId}:`, err);
+      console.error(`Failed to initiate bulk AI call for ${leadId}:`, err);
     }
   }
 
