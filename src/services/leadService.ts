@@ -14,6 +14,19 @@ import { calculateMultiDimensionalScores } from './leadIntelligenceService.js';
 // Centralized Event Emitter
 export const leadEvents = new EventEmitter();
 
+const STAGE_ORDER: Record<string, number> = {
+  'New Lead': 0,
+  'Contacted': 1,
+  'Audit Sent': 2,
+  'Proposal Sent': 3,
+  'Won': 4,
+  'Archived': 5,
+};
+
+function canTransition(from: string, to: string): boolean {
+  return (STAGE_ORDER[to] || 0) >= (STAGE_ORDER[from] || 0);
+}
+
 // Automatic stage update listener
 leadEvents.on('communication_sent', async (leadId: string) => {
   await markLeadContacted(leadId, 'Communication');
@@ -26,6 +39,12 @@ leadEvents.on('communication_sent', async (leadId: string) => {
  */
 export async function markLeadContacted(leadId: string, channel: string = 'Outreach'): Promise<boolean> {
   if (!leadId) return false;
+  
+  // Guard: Only advance if the lead is in the 'New Lead' stage.
+  const currentLeads = await getLeads();
+  const lead = currentLeads.find(l => l.lead_id === leadId);
+  if (!lead || lead.pipeline_stage !== 'New Lead') return false;
+
   try {
     const token = await getAuthToken();
     const headers: Record<string, string> = { 'Content-Type': 'application/json' };
@@ -404,8 +423,17 @@ export async function addLead(lead: Lead): Promise<Lead> {
 
 export async function updateLead(leadId: string, updates: Partial<Lead>): Promise<Lead | null> {
   const timestamp = new Date().toISOString();
+  
+  // Fetch current lead to validate progression
+  const currentLeads = await getLeads();
+  const currentLead = currentLeads.find(l => l.lead_id === leadId);
 
-  // Update in Neon PostgreSQL database - single source of truth
+  if (updates.pipeline_stage && currentLead && !canTransition(currentLead.pipeline_stage, updates.pipeline_stage)) {
+    console.warn(`Attempted invalid stage transition: ${currentLead.pipeline_stage} -> ${updates.pipeline_stage}`);
+    // Strip the invalid update if it would move backward
+    delete updates.pipeline_stage;
+    if (Object.keys(updates).length === 0) return currentLead;
+  }
   const token = await getAuthToken();
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -547,8 +575,14 @@ export async function bulkUpdateStage(leadIds: string[], stage: PipelineStage): 
   const current = await getLeads();
   const timestamp = new Date().toISOString();
 
+  // Filter only allowed transitions
+  const validLeadIds = leadIds.filter(id => {
+    const lead = current.find(l => l.lead_id === id);
+    return lead && canTransition(lead.pipeline_stage, stage);
+  });
+
   const updated = current.map((l) => {
-    if (leadIds.includes(l.lead_id)) {
+    if (validLeadIds.includes(l.lead_id)) {
       const historyEntry: PipelineStageHistoryEntry = {
         id: `sh-${Date.now()}-${l.lead_id}`,
         previous_stage: l.pipeline_stage,
@@ -568,7 +602,7 @@ export async function bulkUpdateStage(leadIds: string[], stage: PipelineStage): 
   });
   saveLeads(updated);
 
-  leadIds.forEach((id) => {
+  validLeadIds.forEach((id) => {
     const lead = current.find((l) => l.lead_id === id);
     if (lead) {
       addActivity({

@@ -88,6 +88,7 @@ export function App() {
   const [smsCount, setSmsCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [currentTab, setCurrentTab] = useState<NavigationItem>('dashboard');
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -652,6 +653,8 @@ export function App() {
             currentTab === 'opportunities' ? (
             <LeadsPage
               leads={leads}
+              selectedLeadIds={selectedLeadIds}
+              onSelectionChange={setSelectedLeadIds}
               onSelectLead={(lead) => setSelectedLead(lead)}
               onOpenImport={(mode) => {
                 setImportInitialMode(mode || 'upload');
@@ -754,6 +757,8 @@ export function App() {
           ) : (
             <LeadsTable
               leads={leads}
+              selectedLeadIds={selectedLeadIds}
+              onSelectionChange={setSelectedLeadIds}
               onSelectLead={(lead) => setSelectedLead(lead)}
               onOpenImport={() => setImportModalOpen(true)}
               onOpenAddLead={() => setAddLeadModalOpen(true)}

@@ -33,6 +33,8 @@ import {
   FolderOpen,
   Table,
   UserCheck,
+  Send,
+  Mail,
 } from 'lucide-react';
 import { Lead, PipelineStage, ViewFilterType } from '../types';
 import * as XLSX from 'xlsx';
@@ -47,6 +49,8 @@ interface TeamMember {
 
 interface LeadsTableProps {
   leads: Lead[];
+  selectedLeadIds: Set<string>;
+  onSelectionChange: (ids: Set<string>) => void;
   onSelectLead: (lead: Lead) => void;
   onOpenImport?: (mode?: 'upload' | 'sheets' | 'paste' | 'preset') => void;
   onOpenAddLead?: () => void;
@@ -84,13 +88,14 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   onImportComplete,
   currentPage: propCurrentPage,
   onPageChange,
+  selectedLeadIds,
+  onSelectionChange,
 }) => {
   useEffect(() => {
     leads.forEach(logGmbStatus);
   }, [leads]);
 
   // State
-  const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [currentView, setCurrentView] = useState<ViewFilterType>('All Leads');
   const [searchQuery, setSearchQuery] = useState('');
   const [stageFilter, setStageFilter] = useState<string>('All');
@@ -260,22 +265,20 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedLeadIds(new Set(paginatedLeads.map((l) => l.lead_id)));
+      onSelectionChange(new Set(paginatedLeads.map((l) => l.lead_id)));
     } else {
-      setSelectedLeadIds(new Set());
+      onSelectionChange(new Set());
     }
   };
 
   const handleSelectRow = (leadId: string) => {
-    setSelectedLeadIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(leadId)) {
-        next.delete(leadId);
-      } else {
-        next.add(leadId);
-      }
-      return next;
-    });
+    const next = new Set(selectedLeadIds);
+    if (next.has(leadId)) {
+      next.delete(leadId);
+    } else {
+      next.add(leadId);
+    }
+    onSelectionChange(next);
   };
 
   // ── Bulk Reassign via API ────────────────────────────────────────────────
@@ -521,26 +524,6 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             <span className="hidden sm:inline">Filters</span>
           </button>
         </div>
-
-        {/* Bulk Actions Bar */}
-        {selectedLeadIds.size > 0 && (
-          <div className="flex items-center gap-2 bg-indigo-950/60 border border-indigo-500/30 px-3 py-1.5 rounded-lg">
-            <span className="text-xs font-bold text-indigo-300 font-mono">{selectedLeadIds.size} selected</span>
-            <div className="h-4 w-px bg-indigo-500/30" />
-            <button onClick={() => { setAssignError(null); setShowBulkReassignModal(true); }} className="text-xs text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1">
-              <UserCheck className="w-3 h-3" /> Bulk Assign
-            </button>
-            <button onClick={() => setShowBulkStageModal(true)} className="text-xs text-amber-400 hover:text-amber-300 font-semibold">
-              Move Stage
-            </button>
-            <button onClick={() => onTriggerAIEnrichment(Array.from(selectedLeadIds))} className="text-xs text-purple-300 hover:text-purple-200 font-semibold flex items-center gap-1">
-              <Sparkles className="w-3 h-3" /> Enrich AI
-            </button>
-            <button onClick={() => setShowConfirmDelete(true)} className="text-xs text-rose-400 hover:text-rose-300 font-semibold">
-              Delete
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Advanced Filters */}
