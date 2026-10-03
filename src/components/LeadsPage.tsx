@@ -332,6 +332,8 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
         onBulkSMS={handleBulkSMS}
         onBulkEmail={handleBulkEmail}
         onBulkTag={() => setShowTagModal(true)}
+        onBulkAssign={handleBulkAssign}
+        onBulkMoveStage={handleBulkMoveStage}
       />
 
       {activeBulkProgress && (

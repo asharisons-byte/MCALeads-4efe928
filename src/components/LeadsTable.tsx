@@ -92,7 +92,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   onSelectionChange,
 }) => {
   useEffect(() => {
-    leads.forEach(logGmbStatus);
+    (leads || []).forEach(logGmbStatus);
   }, [leads]);
 
   // State
