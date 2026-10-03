@@ -95,11 +95,8 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
   }, []);
 
   // ── BULK AI CALL ──────────────────────────────────────────────────────────
-  // Uses TelephonyService.startCall() directly (background session + activity log).
-  // Treats any response as success — backend may not be live but the call record
-  // and activity ARE always saved locally regardless of backendSession presence.
   const handleBulkAICall = useCallback(async () => {
-    const selected = getSelectedLeads(leads, selectedLeadIds);
+    const selected = getSelectedLeads(leadsRef.current, selectedLeadIds);
     if (!selected.length) return;
 
     activeControllerRef.current?.cancel();
@@ -111,21 +108,28 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       executor: async (item) => {
         const lead = leadsRef.current.find((l) => l.lead_id === item.leadId);
         if (!lead) return { success: false, error: 'Lead not found' };
-        if (!lead.phone) return { success: false, error: 'No phone number on this lead' };
+        if (!lead.phone) return { success: false, error: 'No phone number' };
 
         try {
-          // startCall always saves the call record + logs the activity even when
-          // the backend is unreachable — so we treat any non-thrown response as success.
-          await TelephonyService.startCall({
+          const { callRecord } = await TelephonyService.startCall({
             lead,
             phoneNumber: lead.phone,
             callType: 'AI Call',
           });
-          // After initiating, also open the Sophia AI modal for the agent to monitor
+          
+          // Open modal to monitor
           props.onOpenAICall(lead);
+
+          // Poll for completion
+          let isDone = false;
+          while (!isDone) {
+            await new Promise(r => setTimeout(r, 2000));
+            const status = await TelephonyService.getCallStatus(callRecord.call_id);
+            if (status.status === 'COMPLETED' || status.status === 'FAILED') isDone = true;
+          }
           return { success: true };
         } catch (err: any) {
-          return { success: false, error: err?.message ?? 'Call initiation failed' };
+          return { success: false, error: err?.message ?? 'Call failed' };
         }
       },
     });
@@ -135,13 +139,11 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       selected.map((l) => ({ leadId: l.lead_id, leadName: l.business_name || l.lead_id }))
     );
     controller.start();
-  }, [leads, selectedLeadIds, onProgress, props.onOpenAICall]);
+  }, [onProgress, props.onOpenAICall]);
 
   // ── BULK MANUAL CALL ──────────────────────────────────────────────────────
-  // Opens the dialer for each lead one at a time.
-  // User clicks "Call Ended — Next Lead" in the overlay to advance.
   const handleBulkManualCall = useCallback(async () => {
-    const selected = getSelectedLeads(leads, selectedLeadIds);
+    const selected = getSelectedLeads(leadsRef.current, selectedLeadIds);
     if (!selected.length) return;
 
     activeControllerRef.current?.cancel();
@@ -153,8 +155,8 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       executor: async (item) => {
         const lead = leadsRef.current.find((l) => l.lead_id === item.leadId);
         if (!lead) return { success: false, error: 'Lead not found' };
-        if (!lead.phone) return { success: false, error: 'No phone number' };
         props.onOpenDialer(lead);
+        // Manual call waits for advanceManualCall signal from overlay
         return { success: true };
       },
     });
@@ -164,7 +166,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       selected.map((l) => ({ leadId: l.lead_id, leadName: l.business_name || l.lead_id }))
     );
     controller.start();
-  }, [leads, selectedLeadIds, onProgress, props.onOpenDialer]);
+  }, [onProgress, props.onOpenDialer]);
 
   const handleAdvanceManualCall = useCallback(async () => {
     await activeControllerRef.current?.advanceManualCall();
@@ -297,9 +299,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
     <div className="flex flex-col w-full h-full px-4 py-4 gap-0">
       <BulkActionsToolbar
         selectedCount={selectedLeadIds.size}
-        onBulkAssign={handleBulkAssign}
-        onBulkMoveStage={handleBulkMoveStage}
-        onBulkEnrich={() => props.onTriggerAIEnrichment(Array.from(selectedLeadIds))}
+        onBulkEnrich={handleBulkEnrich}
         onBulkDelete={() => props.onBulkDelete(Array.from(selectedLeadIds))}
         onBulkAICall={handleBulkAICall}
         onBulkManualCall={handleBulkManualCall}
