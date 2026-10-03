@@ -421,18 +421,25 @@ export async function addLead(lead: Lead): Promise<Lead> {
   }
 }
 
-export async function updateLead(leadId: string, updates: Partial<Lead>): Promise<Lead | null> {
+export async function updateLead(
+  leadId: string, 
+  updates: Partial<Lead>, 
+  currentLead?: Lead
+): Promise<Lead | null> {
   const timestamp = new Date().toISOString();
   
-  // Fetch current lead to validate progression
-  const currentLeads = await getLeads();
-  const currentLead = currentLeads.find(l => l.lead_id === leadId);
+  // Use provided currentLead, or fetch if not provided
+  let leadToValidate = currentLead;
+  if (!leadToValidate) {
+    const currentLeads = await getLeads();
+    leadToValidate = currentLeads.find(l => l.lead_id === leadId);
+  }
 
-  if (updates.pipeline_stage && currentLead && !canTransition(currentLead.pipeline_stage, updates.pipeline_stage)) {
-    console.warn(`Attempted invalid stage transition: ${currentLead.pipeline_stage} -> ${updates.pipeline_stage}`);
+  if (updates.pipeline_stage && leadToValidate && !canTransition(leadToValidate.pipeline_stage, updates.pipeline_stage)) {
+    console.warn(`Attempted invalid stage transition: ${leadToValidate.pipeline_stage} -> ${updates.pipeline_stage}`);
     // Strip the invalid update if it would move backward
     delete updates.pipeline_stage;
-    if (Object.keys(updates).length === 0) return currentLead;
+    if (Object.keys(updates).length === 0) return leadToValidate;
   }
   const token = await getAuthToken();
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };

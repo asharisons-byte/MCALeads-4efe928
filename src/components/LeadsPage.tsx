@@ -172,6 +172,34 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
     await activeControllerRef.current?.advanceManualCall();
   }, []);
 
+  // ── BULK ENRICH ──────────────────────────────────────────────────────────
+  const handleBulkEnrich = useCallback(async () => {
+    const selected = getSelectedLeads(leadsRef.current, selectedLeadIds);
+    if (!selected.length) return;
+
+    activeControllerRef.current?.cancel();
+
+    const controller = new BulkQueueController({
+      opType: 'AI_CALL', // Reusing AI_CALL type as placeholder for enrichment
+      gapMs: 0,
+      onProgress,
+      executor: async (item) => {
+        try {
+          await props.onTriggerAIEnrichment([item.leadId]);
+          return { success: true };
+        } catch (err: any) {
+          return { success: false, error: err?.message ?? 'Enrichment failed' };
+        }
+      },
+    });
+
+    activeControllerRef.current = controller;
+    controller.enqueue(
+      selected.map((l) => ({ leadId: l.lead_id, leadName: l.business_name || l.lead_id }))
+    );
+    controller.start();
+  }, [onProgress, props.onTriggerAIEnrichment]);
+
   // ── BULK SMS — BST queue, 5-min gap ──────────────────────────────────────
   const handleBulkSMS = useCallback(async () => {
     const selected = getSelectedLeads(leads, selectedLeadIds);

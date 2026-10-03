@@ -228,8 +228,9 @@ export function App() {
     }
 
     try {
-      // 2. Perform backend mutation exactly once
-      const updated = await updateLead(leadId, updates);
+      // 2. Perform backend mutation with current state validation
+      const currentLead = leads.find(l => l.lead_id === leadId);
+      const updated = await updateLead(leadId, updates, currentLead);
       
       if (updated) {
         // 3. On success, ensure state matches backend
