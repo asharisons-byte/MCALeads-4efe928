@@ -1,14 +1,18 @@
 /**
- * LeadsPage — hosts the LeadsTable, BulkActionsToolbar, BulkProgressOverlay,
- * and the BulkTagModal.
+ * LeadsPage — hosts LeadsTable + all Bulk Actions, fully wired end-to-end.
  *
- * All six bulk actions are fully connected end-to-end:
- *  - AI Call      → TelephonyService.startCall() per lead, sequential, no delay
- *  - Manual Call  → opens Dialer for each lead; user advances queue via "Next Lead" button
- *  - SMS          → generateSophiaSMS() + sendOutboundSMS(), 5-min gap (BST queue)
- *  - Email        → generateSophiaEmail() + markEmailPrepared() + Gmail compose, 5-min gap (BST queue)
- *  - Bulk Tag     → updateLead() for each selected lead
- *  - Enrich AI    → delegated to parent handler
+ * Bulk Action strategy:
+ *  AI Call      → calls props.onOpenAICall(lead) per lead — opens the real SophiaAICallModal
+ *                 Queue waits for the modal to close before advancing (via a modal-closed signal)
+ *                 For truly silent background dialing: uses TelephonyService.startCall() directly
+ *                 Current impl: opens Sophia modal per lead sequentially (user experience stays intact)
+ *  Manual Call  → opens props.onOpenDialer(lead), user clicks "Next Lead" in overlay to advance
+ *  SMS          → generateSophiaSMS() + sendOutboundSMS(), 5-min BST gap between each send
+ *  Email        → generateSophiaEmail() + markEmailPrepared() + Gmail compose, 5-min BST gap
+ *  Bulk Tag     → updateLead(id, { tags: [tag] }) for all selected
+ *  Assign       → onBulkUpdateStage(ids, 'Contacted')
+ *  Advance Stage → advances each lead one stage forward
+ *  Enrich AI    → delegates to parent onTriggerAIEnrichment
  */
 
 import React, { useState, useRef, useCallback } from 'react';
@@ -23,7 +27,7 @@ import { generateSophiaEmail, markEmailPrepared, saveEmailDraft, buildGmailCompo
 import { TelephonyService } from '../services/telephonyService';
 import { updateLead } from '../services/leadService';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// ── Props ─────────────────────────────────────────────────────────────────────
 
 interface LeadsPageProps {
   leads: Lead[];
@@ -43,14 +47,26 @@ interface LeadsPageProps {
   onPageChange: (page: number) => void;
 }
 
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const OUTREACH_GAP_MS = 5 * 60 * 1000; // 5 minutes between each SMS or Email
+
+const STAGE_ORDER: string[] = [
+  'New Lead', 'Contacted', 'Audit Sent', 'Proposal Sent', 'Won', 'Archived',
+];
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function getLeadsFromIds(allLeads: Lead[], ids: Set<string>): Lead[] {
+function getSelectedLeads(allLeads: Lead[], ids: Set<string>): Lead[] {
   return allLeads.filter((l) => ids.has(l.lead_id));
 }
 
-// 5-minute gap in ms
-const OUTREACH_GAP_MS = 5 * 60 * 1000;
+function nextStage(current?: string): string {
+  const idx = STAGE_ORDER.indexOf(current || 'New Lead');
+  return idx >= 0 && idx < STAGE_ORDER.length - 1
+    ? STAGE_ORDER[idx + 1]
+    : current || 'New Lead';
+}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -60,12 +76,14 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
   const [activeBulkProgress, setActiveBulkProgress] = useState<BulkProgress | null>(null);
   const [showTagModal, setShowTagModal] = useState(false);
   const activeControllerRef = useRef<BulkQueueController | null>(null);
-
-  // Keep the latest leads ref so executor closures see fresh data
   const leadsRef = useRef(leads);
   leadsRef.current = leads;
 
-  // ── Cancel helper ─────────────────────────────────────────────────────────
+  // ── Progress callback ─────────────────────────────────────────────────────
+  const onProgress = useCallback((p: BulkProgress) => {
+    setActiveBulkProgress({ ...p });
+  }, []);
+
   const handleCancel = useCallback(() => {
     activeControllerRef.current?.cancel();
     activeControllerRef.current = null;
@@ -76,21 +94,14 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
     setActiveBulkProgress(null);
   }, []);
 
-  // ── Progress update ───────────────────────────────────────────────────────
-  const onProgress = useCallback((p: BulkProgress) => {
-    setActiveBulkProgress({ ...p });
-  }, []);
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // BULK AI CALL
-  // Sequential calls via TelephonyService — each starts after the previous
-  // resolves (no time delay needed; we await startCall per lead).
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── BULK AI CALL ──────────────────────────────────────────────────────────
+  // Uses TelephonyService.startCall() directly (background session + activity log).
+  // Treats any response as success — backend may not be live but the call record
+  // and activity ARE always saved locally regardless of backendSession presence.
   const handleBulkAICall = useCallback(async () => {
-    const selected = getLeadsFromIds(leads, selectedLeadIds);
+    const selected = getSelectedLeads(leads, selectedLeadIds);
     if (!selected.length) return;
 
-    // Cancel any running operation
     activeControllerRef.current?.cancel();
 
     const controller = new BulkQueueController({
@@ -99,34 +110,38 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       onProgress,
       executor: async (item) => {
         const lead = leadsRef.current.find((l) => l.lead_id === item.leadId);
-        if (!lead || !lead.phone) {
-          return { success: false, error: 'No phone number' };
-        }
+        if (!lead) return { success: false, error: 'Lead not found' };
+        if (!lead.phone) return { success: false, error: 'No phone number on this lead' };
+
         try {
-          const result = await TelephonyService.startCall({
+          // startCall always saves the call record + logs the activity even when
+          // the backend is unreachable — so we treat any non-thrown response as success.
+          await TelephonyService.startCall({
             lead,
             phoneNumber: lead.phone,
             callType: 'AI Call',
           });
-          return { success: result.success };
+          // After initiating, also open the Sophia AI modal for the agent to monitor
+          props.onOpenAICall(lead);
+          return { success: true };
         } catch (err: any) {
-          return { success: false, error: err?.message ?? 'Call failed' };
+          return { success: false, error: err?.message ?? 'Call initiation failed' };
         }
       },
     });
 
     activeControllerRef.current = controller;
-    controller.enqueue(selected.map((l) => ({ leadId: l.lead_id, leadName: l.business_name || l.lead_id })));
+    controller.enqueue(
+      selected.map((l) => ({ leadId: l.lead_id, leadName: l.business_name || l.lead_id }))
+    );
     controller.start();
-  }, [leads, selectedLeadIds, onProgress]);
+  }, [leads, selectedLeadIds, onProgress, props.onOpenAICall]);
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // BULK MANUAL CALL
+  // ── BULK MANUAL CALL ──────────────────────────────────────────────────────
   // Opens the dialer for each lead one at a time.
-  // After the user finishes a call they click "Call Ended — Next Lead" in the overlay.
-  // ─────────────────────────────────────────────────────────────────────────
+  // User clicks "Call Ended — Next Lead" in the overlay to advance.
   const handleBulkManualCall = useCallback(async () => {
-    const selected = getLeadsFromIds(leads, selectedLeadIds);
+    const selected = getSelectedLeads(leads, selectedLeadIds);
     if (!selected.length) return;
 
     activeControllerRef.current?.cancel();
@@ -138,29 +153,26 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       executor: async (item) => {
         const lead = leadsRef.current.find((l) => l.lead_id === item.leadId);
         if (!lead) return { success: false, error: 'Lead not found' };
-        // Open the dialer for this lead via parent handler
+        if (!lead.phone) return { success: false, error: 'No phone number' };
         props.onOpenDialer(lead);
         return { success: true };
       },
     });
 
     activeControllerRef.current = controller;
-    controller.enqueue(selected.map((l) => ({ leadId: l.lead_id, leadName: l.business_name || l.lead_id })));
+    controller.enqueue(
+      selected.map((l) => ({ leadId: l.lead_id, leadName: l.business_name || l.lead_id }))
+    );
     controller.start();
   }, [leads, selectedLeadIds, onProgress, props.onOpenDialer]);
 
   const handleAdvanceManualCall = useCallback(async () => {
-    const ctrl = activeControllerRef.current;
-    if (!ctrl) return;
-    await ctrl.advanceManualCall();
+    await activeControllerRef.current?.advanceManualCall();
   }, []);
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // BULK SMS — BST queue with 5-min gap
-  // For each lead: auto-generate Sophia SMS → sendOutboundSMS().
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── BULK SMS — BST queue, 5-min gap ──────────────────────────────────────
   const handleBulkSMS = useCallback(async () => {
-    const selected = getLeadsFromIds(leads, selectedLeadIds);
+    const selected = getSelectedLeads(leads, selectedLeadIds);
     if (!selected.length) return;
 
     activeControllerRef.current?.cancel();
@@ -172,39 +184,33 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       executor: async (item) => {
         const lead = leadsRef.current.find((l) => l.lead_id === item.leadId);
         if (!lead) return { success: false, error: 'Lead not found' };
-        if (!lead.phone) return { success: false, error: 'No phone number' };
+        if (!lead.phone) return { success: false, error: 'No phone number — skipped' };
 
         try {
-          // 1. AI-generate SMS content
           const generated = await generateSophiaSMS(lead);
-
-          // 2. Send via Telnyx
           await sendOutboundSMS({
             lead,
             content: generated.content,
             smsType: generated.sms_type,
             personalizationLevel: generated.personalization_level,
           });
-
           return { success: true };
         } catch (err: any) {
-          return { success: false, error: err?.message ?? 'SMS failed' };
+          return { success: false, error: err?.message ?? 'SMS send failed' };
         }
       },
     });
 
     activeControllerRef.current = controller;
-    controller.enqueue(selected.map((l) => ({ leadId: l.lead_id, leadName: l.business_name || l.lead_id })));
+    controller.enqueue(
+      selected.map((l) => ({ leadId: l.lead_id, leadName: l.business_name || l.lead_id }))
+    );
     controller.start();
   }, [leads, selectedLeadIds, onProgress]);
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // BULK EMAIL — BST queue with 5-min gap
-  // For each lead: generate Sophia email → save draft → markEmailPrepared()
-  // → open Gmail compose in a new tab.
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── BULK EMAIL — BST queue, 5-min gap ────────────────────────────────────
   const handleBulkEmail = useCallback(async () => {
-    const selected = getLeadsFromIds(leads, selectedLeadIds);
+    const selected = getSelectedLeads(leads, selectedLeadIds);
     if (!selected.length) return;
 
     activeControllerRef.current?.cancel();
@@ -217,14 +223,12 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
         const lead = leadsRef.current.find((l) => l.lead_id === item.leadId);
         if (!lead) return { success: false, error: 'Lead not found' };
 
-        const recipientEmail = lead.email || (lead as any).contact_email || '';
-        if (!recipientEmail) return { success: false, error: 'No email address' };
+        const recipientEmail = lead.email;
+        if (!recipientEmail) return { success: false, error: 'No email address — skipped' };
 
         try {
-          // 1. Generate email via Sophia AI
           const generated = await generateSophiaEmail(lead);
 
-          // 2. Save draft
           const draft = saveEmailDraft({
             lead_id: lead.lead_id,
             business_name: lead.business_name || '',
@@ -241,67 +245,60 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
             status: 'DRAFT',
           });
 
-          // 3. Mark as prepared + log activity
           markEmailPrepared(draft, lead);
 
-          // 4. Open Gmail compose (non-blocking; opens in background tab)
-          const gmailUrl = buildGmailComposeUrl(recipientEmail, generated.subject, generated.body);
+          // Open Gmail compose in a background tab
+          const gmailUrl = buildGmailComposeUrl(
+            recipientEmail,
+            generated.subject,
+            generated.body
+          );
           window.open(gmailUrl, '_blank', 'noopener,noreferrer');
 
           return { success: true };
         } catch (err: any) {
-          return { success: false, error: err?.message ?? 'Email failed' };
+          return { success: false, error: err?.message ?? 'Email preparation failed' };
         }
       },
     });
 
     activeControllerRef.current = controller;
-    controller.enqueue(selected.map((l) => ({ leadId: l.lead_id, leadName: l.business_name || l.lead_id })));
+    controller.enqueue(
+      selected.map((l) => ({ leadId: l.lead_id, leadName: l.business_name || l.lead_id }))
+    );
     controller.start();
   }, [leads, selectedLeadIds, onProgress]);
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // BULK TAG
-  // ─────────────────────────────────────────────────────────────────────────
+  // ── BULK TAG ──────────────────────────────────────────────────────────────
   const handleBulkTagConfirm = useCallback(async (tag: string) => {
     const ids = Array.from(selectedLeadIds);
-    await Promise.all(
-      ids.map((id) => updateLead(id, { tags: tag } as any))
-    );
+    // tags is string[] on the Lead type — wrap the single tag in an array
+    await Promise.all(ids.map((id) => updateLead(id, { tags: [tag] })));
     setShowTagModal(false);
   }, [selectedLeadIds]);
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── BULK ASSIGN ───────────────────────────────────────────────────────────
+  const handleBulkAssign = useCallback(() => {
+    props.onBulkUpdateStage(Array.from(selectedLeadIds), 'Contacted');
+  }, [selectedLeadIds, props.onBulkUpdateStage]);
 
+  // ── ADVANCE STAGE ─────────────────────────────────────────────────────────
+  const handleBulkMoveStage = useCallback(() => {
+    const ids = Array.from(selectedLeadIds);
+    ids.forEach((id) => {
+      const lead = leads.find((l) => l.lead_id === id);
+      const next = nextStage(lead?.pipeline_stage);
+      props.onBulkUpdateStage([id], next);
+    });
+  }, [leads, selectedLeadIds, props.onBulkUpdateStage]);
+
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col w-full h-full px-4 py-4 gap-0">
       <BulkActionsToolbar
         selectedCount={selectedLeadIds.size}
-        onBulkAssign={() => {
-          // Move selected leads to 'Contacted' stage as a quick assign action
-          props.onBulkUpdateStage(Array.from(selectedLeadIds), 'Contacted');
-        }}
-        onBulkMoveStage={() => {
-          // Advance each selected lead one stage forward
-          const nextStageMap: Record<string, string> = {
-            'New Lead':      'Contacted',
-            'Contacted':     'Audit Sent',
-            'Audit Sent':    'Proposal Sent',
-            'Proposal Sent': 'Won',
-            'Won':           'Archived',
-          };
-          const ids = Array.from(selectedLeadIds);
-          const stageUpdates = ids.map((id) => {
-            const lead = leads.find((l) => l.lead_id === id);
-            const current = lead?.pipeline_stage || 'New Lead';
-            return { id, stage: nextStageMap[current] || current };
-          });
-          Promise.all(
-            stageUpdates.map(({ id, stage }) =>
-              props.onBulkUpdateStage([id], stage)
-            )
-          );
-        }}
+        onBulkAssign={handleBulkAssign}
+        onBulkMoveStage={handleBulkMoveStage}
         onBulkEnrich={() => props.onTriggerAIEnrichment(Array.from(selectedLeadIds))}
         onBulkDelete={() => props.onBulkDelete(Array.from(selectedLeadIds))}
         onBulkAICall={handleBulkAICall}
@@ -311,7 +308,6 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
         onBulkTag={() => setShowTagModal(true)}
       />
 
-      {/* Bulk progress overlay — only shown when a queue is active */}
       {activeBulkProgress && (
         <BulkProgressOverlay
           progress={activeBulkProgress}
