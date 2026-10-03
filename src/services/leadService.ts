@@ -612,6 +612,9 @@ export async function executeBulkAICall(
 ): Promise<void> {
   const currentLeads = await getLeads();
   const total = leadIds.length;
+  let successful = 0;
+  let failed = 0;
+  let skipped = 0;
   
   for (let i = 0; i < leadIds.length; i++) {
     const leadId = leadIds[i];
@@ -619,13 +622,19 @@ export async function executeBulkAICall(
     
     // Update progress
     onProgress({
+      opType: 'AI_CALL',
       total,
-      pending: total - i,
+      pending: total - i - 1,
       running: 1,
+      successful,
+      failed,
+      skipped,
       currentLeadName: lead?.business_name || leadId,
+      isComplete: false,
     });
 
     if (!lead || !lead.phone) {
+      skipped++;
       console.warn(`Skipping AI call for lead ${leadId}: No lead or phone found.`);
       continue;
     }
@@ -637,17 +646,23 @@ export async function executeBulkAICall(
         phoneNumber: lead.phone,
         callType: 'AI Call',
       });
+      successful++;
       console.log(`Successfully initiated AI call for ${lead.business_name}`);
     } catch (err) {
+      failed++;
       console.error(`Failed to initiate AI call for ${leadId}:`, err);
     }
   }
 
   // Final progress update
   onProgress({
+    opType: 'AI_CALL',
     total,
     pending: 0,
     running: 0,
+    successful,
+    failed,
+    skipped,
     isComplete: true,
   });
 }
