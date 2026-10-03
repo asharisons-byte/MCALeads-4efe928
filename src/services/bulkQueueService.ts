@@ -1,31 +1,25 @@
 /**
- * BulkQueueService — Binary Search Tree priority queue for bulk outreach operations.
+ * BulkQueueService — Binary Search Tree priority queue for bulk outreach.
  *
- * Design:
- *  - Each item in the BST is keyed by its scheduled execution timestamp (ms).
- *  - Items with smaller timestamps have higher priority (execute first).
- *  - SMS and Email queues each maintain a 5-minute minimum gap between sends
- *    to avoid carrier spam signals and Gmail rate limits.
- *  - AI Calls have no delay — each call starts immediately after the previous ends.
- *  - Manual Calls pop one lead at a time and wait for explicit "call ended" signal.
+ * BST keyed by scheduledAt (epoch ms). popMin() always returns the next
+ * item to execute. For SMS/Email: items are spaced OUTREACH_GAP_MS apart.
+ * For calls: items are spaced 1ms apart (essentially sequential, no delay).
  *
- * The queue never mutates the lead directly — it calls the provided executor
- * function and emits progress events via the onProgress callback.
+ * MANUAL_CALL mode: queue pauses after each item and waits for the caller
+ * to invoke advanceManualCall() — e.g., after user closes the dialer.
  */
 
 export type BulkOpType = 'AI_CALL' | 'MANUAL_CALL' | 'SMS' | 'EMAIL';
-
 export type ItemStatus = 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'SKIPPED' | 'CANCELLED';
 
 export interface QueueItem {
-  id: string;           // unique queue item id
+  id: string;
   leadId: string;
   leadName: string;
-  scheduledAt: number;  // epoch ms — BST key
+  scheduledAt: number;   // epoch ms — BST sort key
   status: ItemStatus;
   error?: string;
   completedAt?: number;
-  // For SMS/Email: track if already processed so we never double-send
   dedupKey: string;
 }
 
@@ -39,7 +33,7 @@ export interface BulkProgress {
   skipped: number;
   cancelled: number;
   currentLeadName?: string;
-  nextScheduledAt?: number;   // epoch ms — used for countdown timer
+  nextScheduledAt?: number;
   isComplete: boolean;
   items: QueueItem[];
 }
@@ -47,76 +41,57 @@ export interface BulkProgress {
 export type ProgressCallback = (progress: BulkProgress) => void;
 export type ExecutorFn = (item: QueueItem) => Promise<{ success: boolean; error?: string }>;
 
-// ─── BST Node ────────────────────────────────────────────────────────────────
+// ── BST ───────────────────────────────────────────────────────────────────────
 
 class BSTNode {
-  key: number;   // scheduledAt ms
-  items: QueueItem[] = []; // multiple items can share the same ms
+  key: number;
+  items: QueueItem[];
   left: BSTNode | null = null;
   right: BSTNode | null = null;
-
   constructor(key: number, item: QueueItem) {
     this.key = key;
     this.items = [item];
   }
 }
 
-// ─── BST Priority Queue ───────────────────────────────────────────────────────
-
 class BSTQueue {
   private root: BSTNode | null = null;
   private _size = 0;
-
   get size() { return this._size; }
 
   insert(item: QueueItem): void {
     const key = item.scheduledAt;
-    if (!this.root) {
-      this.root = new BSTNode(key, item);
-    } else {
-      this._insertNode(this.root, key, item);
-    }
+    if (!this.root) { this.root = new BSTNode(key, item); }
+    else { this._ins(this.root, key, item); }
     this._size++;
   }
 
-  private _insertNode(node: BSTNode, key: number, item: QueueItem): void {
-    if (key === node.key) {
-      node.items.push(item);
-    } else if (key < node.key) {
+  private _ins(node: BSTNode, key: number, item: QueueItem): void {
+    if (key === node.key) { node.items.push(item); }
+    else if (key < node.key) {
       if (!node.left) node.left = new BSTNode(key, item);
-      else this._insertNode(node.left, key, item);
+      else this._ins(node.left, key, item);
     } else {
       if (!node.right) node.right = new BSTNode(key, item);
-      else this._insertNode(node.right, key, item);
+      else this._ins(node.right, key, item);
     }
   }
 
-  /** Pop the item with the smallest scheduledAt (highest priority). */
   popMin(): QueueItem | null {
     if (!this.root) return null;
     const { node, parent } = this._findMin(this.root, null);
-
     const item = node.items.shift()!;
     this._size--;
-
     if (node.items.length === 0) {
-      // Remove this BST node
-      if (!parent) {
-        // root is the minimum — promote right child
-        this.root = node.right;
-      } else {
-        parent.left = node.right; // min node never has a left child
-      }
+      if (!parent) this.root = node.right;
+      else parent.left = node.right;
     }
-
     return item;
   }
 
-  /** Peek at the next item without removing it. */
   peekMin(): QueueItem | null {
     if (!this.root) return null;
-    const { node } = this._findMin(this.root, null);
-    return node.items[0] ?? null;
+    return this._findMin(this.root, null).node.items[0] ?? null;
   }
 
   private _findMin(node: BSTNode, parent: BSTNode | null): { node: BSTNode; parent: BSTNode | null } {
@@ -126,13 +101,12 @@ class BSTQueue {
 
   isEmpty(): boolean { return this._size === 0; }
 
-  /** Drain all remaining items (for cancel). */
   drain(): QueueItem[] {
-    const result: QueueItem[] = [];
-    this._inOrder(this.root, result);
+    const acc: QueueItem[] = [];
+    this._inOrder(this.root, acc);
     this.root = null;
     this._size = 0;
-    return result;
+    return acc;
   }
 
   private _inOrder(node: BSTNode | null, acc: QueueItem[]): void {
@@ -143,7 +117,7 @@ class BSTQueue {
   }
 }
 
-// ─── BulkQueue Controller ─────────────────────────────────────────────────────
+// ── Controller ────────────────────────────────────────────────────────────────
 
 export class BulkQueueController {
   private opType: BulkOpType;
@@ -154,10 +128,10 @@ export class BulkQueueController {
   private dedupSet: Set<string> = new Set();
   private isCancelled = false;
   private isRunning = false;
-  private countdownInterval: ReturnType<typeof setInterval> | null = null;
+  private countdownTimer: ReturnType<typeof setInterval> | null = null;
 
-  /** Delay between consecutive SMS/Email sends (ms). Default = 5 minutes. */
-  private gapMs: number;
+  /** ms gap between SMS / Email sends */
+  readonly gapMs: number;
 
   constructor(opts: {
     opType: BulkOpType;
@@ -168,24 +142,20 @@ export class BulkQueueController {
     this.opType = opts.opType;
     this.executor = opts.executor;
     this.onProgress = opts.onProgress;
-    this.gapMs = opts.gapMs ?? 5 * 60 * 1000; // 5 min default
+    this.gapMs = opts.gapMs ?? 5 * 60 * 1000;
   }
 
-  /**
-   * Enqueue a list of leads. Each lead gets a scheduled time:
-   *   - SMS / EMAIL: t(0) = now, t(n) = now + n × gapMs
-   *   - AI_CALL / MANUAL_CALL: all scheduled at now (sequential by index, no clock delay)
-   */
   enqueue(leads: { leadId: string; leadName: string }[]): void {
     const now = Date.now();
+    const useDelay = this.opType === 'SMS' || this.opType === 'EMAIL';
 
     leads.forEach((lead, idx) => {
-      // Dedup: never queue the same lead twice in one session
-      if (this.dedupSet.has(lead.leadId)) return;
+      if (this.dedupSet.has(lead.leadId)) return; // dedup
       this.dedupSet.add(lead.leadId);
 
-      const useDelay = this.opType === 'SMS' || this.opType === 'EMAIL';
-      const scheduledAt = useDelay ? now + idx * this.gapMs : now + idx; // +idx ensures BST ordering for calls
+      const scheduledAt = useDelay
+        ? now + idx * this.gapMs       // staggered for SMS/Email
+        : now + idx;                    // 1ms apart for calls (preserves order)
 
       const item: QueueItem = {
         id: `bq-${Date.now()}-${idx}`,
@@ -195,70 +165,59 @@ export class BulkQueueController {
         status: 'PENDING',
         dedupKey: lead.leadId,
       };
-
       this.bst.insert(item);
       this.allItems.set(item.id, item);
     });
-
     this._emit();
   }
 
-  /** Start processing. For MANUAL_CALL: returns after popping the first item. */
   async start(): Promise<void> {
     if (this.isRunning || this.isCancelled) return;
     this.isRunning = true;
-    await this._processNext();
+    await this._next();
   }
 
-  /** Signal that the current manual call is done — advance to the next. */
+  /** Signal that the current manual call ended — process the next lead */
   async advanceManualCall(): Promise<void> {
-    if (this.opType !== 'MANUAL_CALL') return;
-    await this._processNext();
+    if (this.opType !== 'MANUAL_CALL' || this.isRunning) return;
+    this.isRunning = true;
+    await this._next();
   }
 
   cancel(): void {
     this.isCancelled = true;
     this.isRunning = false;
     this._stopCountdown();
-
-    // Mark all remaining PENDING as CANCELLED
     this.bst.drain().forEach((item) => {
       item.status = 'CANCELLED';
       this.allItems.set(item.id, item);
     });
-
     this._emit();
   }
 
-  // ── Internal ──────────────────────────────────────────────────────────────
+  // ── Private ───────────────────────────────────────────────────────────────
 
-  private async _processNext(): Promise<void> {
-    if (this.isCancelled) return;
+  private async _next(): Promise<void> {
+    if (this.isCancelled) { this.isRunning = false; return; }
+    if (this.bst.isEmpty()) { this.isRunning = false; this._emit(); return; }
 
-    const next = this.bst.peekMin();
-    if (!next) {
-      this.isRunning = false;
-      this._stopCountdown();
-      this._emit();
-      return;
-    }
+    // Wait until the next item's scheduled time
+    const peek = this.bst.peekMin()!;
+    const waitMs = Math.max(0, peek.scheduledAt - Date.now());
 
-    const now = Date.now();
-    const waitMs = Math.max(0, next.scheduledAt - now);
-
-    if (waitMs > 0) {
-      // Start countdown ticker so UI updates every second
-      this._startCountdown(next.scheduledAt);
+    if (waitMs > 500) {
+      this._startCountdown(peek.scheduledAt);
       this._emit();
       await this._sleep(waitMs);
       this._stopCountdown();
     }
 
-    if (this.isCancelled) return;
+    if (this.isCancelled) { this.isRunning = false; return; }
 
     const item = this.bst.popMin();
-    if (!item) return;
+    if (!item) { this.isRunning = false; return; }
 
+    // Mark running
     item.status = 'RUNNING';
     this.allItems.set(item.id, item);
     this._emit();
@@ -266,46 +225,45 @@ export class BulkQueueController {
     try {
       const result = await this.executor(item);
       item.status = result.success ? 'SUCCESS' : 'FAILED';
-      item.error = result.error;
+      if (!result.success) item.error = result.error || 'Unknown error';
     } catch (err: any) {
       item.status = 'FAILED';
-      item.error = err?.message ?? 'Unknown error';
+      item.error = err?.message ?? 'Unhandled error';
     }
 
     item.completedAt = Date.now();
     this.allItems.set(item.id, item);
     this._emit();
 
-    // For MANUAL_CALL mode: stop here and wait for external advance() call
+    // MANUAL_CALL: pause and wait for advanceManualCall() signal
     if (this.opType === 'MANUAL_CALL') {
       this.isRunning = false;
       return;
     }
 
-    // For all others: continue automatically
-    await this._processNext();
+    // Everything else: continue immediately
+    await this._next();
   }
 
   private _startCountdown(targetMs: number): void {
     this._stopCountdown();
-    this.countdownInterval = setInterval(() => {
-      this._emit(targetMs);
-    }, 1000);
+    this.countdownTimer = setInterval(() => this._emit(targetMs), 1000);
   }
 
   private _stopCountdown(): void {
-    if (this.countdownInterval !== null) {
-      clearInterval(this.countdownInterval);
-      this.countdownInterval = null;
+    if (this.countdownTimer !== null) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = null;
     }
   }
 
   private _emit(nextScheduledAt?: number): void {
     const items = Array.from(this.allItems.values());
-    const running = items.find((i) => i.status === 'RUNNING');
+    const runningItem = items.find((i) => i.status === 'RUNNING');
     const nextPending = this.bst.peekMin();
+    const done = !this.isRunning && this.bst.isEmpty();
 
-    const progress: BulkProgress = {
+    this.onProgress({
       opType: this.opType,
       total: items.length,
       pending: items.filter((i) => i.status === 'PENDING').length,
@@ -314,13 +272,11 @@ export class BulkQueueController {
       failed: items.filter((i) => i.status === 'FAILED').length,
       skipped: items.filter((i) => i.status === 'SKIPPED').length,
       cancelled: items.filter((i) => i.status === 'CANCELLED').length,
-      currentLeadName: running?.leadName,
+      currentLeadName: runningItem?.leadName,
       nextScheduledAt: nextScheduledAt ?? nextPending?.scheduledAt,
-      isComplete: !this.isRunning && this.bst.isEmpty(),
+      isComplete: done,
       items,
-    };
-
-    this.onProgress(progress);
+    });
   }
 
   private _sleep(ms: number): Promise<void> {
