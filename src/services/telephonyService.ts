@@ -108,9 +108,12 @@ export const TelephonyService = {
       if (res.ok) {
         const data = await res.json();
         backendSession = data.session;
+      } else {
+        throw new Error(`Telephony API rejected request: ${res.status} ${res.statusText}`);
       }
-    } catch (err) {
-      console.warn('Backend call start request failed, maintaining client session:', err);
+    } catch (err: any) {
+      console.error('Backend call start request failed:', err);
+      throw err; // Propagate error so bulk queue can handle failure
     }
 
     const callId = backendSession?.callId || `call_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;

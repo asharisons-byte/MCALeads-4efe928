@@ -10,6 +10,7 @@ import {
 } from '../types';
 import { calculateLeadScore } from './scoringService.js';
 import { calculateMultiDimensionalScores } from './leadIntelligenceService.js';
+import { TelephonyService } from './telephonyService.js';
 
 // Centralized Event Emitter
 export const leadEvents = new EventEmitter();
@@ -603,6 +604,52 @@ export async function bulkDelete(leadIds: string[]): Promise<void> {
       // Continue to next lead even if one fails
     }
   }
+}
+
+export async function executeBulkAICall(
+  leadIds: string[],
+  onProgress: (progress: any) => void
+): Promise<void> {
+  const currentLeads = await getLeads();
+  const total = leadIds.length;
+  
+  for (let i = 0; i < leadIds.length; i++) {
+    const leadId = leadIds[i];
+    const lead = currentLeads.find((l) => l.lead_id === leadId);
+    
+    // Update progress
+    onProgress({
+      total,
+      pending: total - i,
+      running: 1,
+      currentLeadName: lead?.business_name || leadId,
+    });
+
+    if (!lead || !lead.phone) {
+      console.warn(`Skipping AI call for lead ${leadId}: No lead or phone found.`);
+      continue;
+    }
+
+    try {
+      // Silent background call
+      await TelephonyService.startCall({
+        lead,
+        phoneNumber: lead.phone,
+        callType: 'AI Call',
+      });
+      console.log(`Successfully initiated AI call for ${lead.business_name}`);
+    } catch (err) {
+      console.error(`Failed to initiate AI call for ${leadId}:`, err);
+    }
+  }
+
+  // Final progress update
+  onProgress({
+    total,
+    pending: 0,
+    running: 0,
+    isComplete: true,
+  });
 }
 
 export async function addNoteToLead(
