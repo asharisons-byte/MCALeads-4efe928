@@ -2,10 +2,9 @@
  * LeadsPage — hosts LeadsTable + all Bulk Actions, fully wired end-to-end.
  *
  * Bulk Action strategy:
- *  AI Call      → calls props.onOpenAICall(lead) per lead — opens the real SophiaAICallModal
- *                 Queue waits for the modal to close before advancing (via a modal-closed signal)
- *                 For truly silent background dialing: uses TelephonyService.startCall() directly
- *                 Current impl: opens Sophia modal per lead sequentially (user experience stays intact)
+ *  AI Call      → places each call through the Python backend (/api/outbound/call, same as
+ *                 SophiaAICallModal) and waits for it to end before dialing the next lead.
+ *                 Cancel hangs up the call in progress.
  *  Manual Call  → opens props.onOpenDialer(lead), user clicks "Next Lead" in overlay to advance
  *  SMS          → generateSophiaSMS() + sendOutboundSMS(), 5-min BST gap between each send
  *  Email        → generateSophiaEmail() + markEmailPrepared() + Gmail compose, 5-min BST gap
@@ -24,7 +23,7 @@ import { BulkQueueController, BulkProgress } from '../services/bulkQueueService'
 import { Lead } from '../types';
 import { sendOutboundSMS, generateSophiaSMS } from '../services/messagingService';
 import { generateSophiaEmail, markEmailPrepared, saveEmailDraft, buildGmailComposeUrl } from '../services/emailService';
-import { TelephonyService } from '../services/telephonyService';
+import { checkAIBackend, runAICall, INTER_CALL_PAUSE_MS, bulkSleep } from '../services/bulkAICallService';
 import { updateLead } from '../services/leadService';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -79,6 +78,11 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
   const activeControllerRef = useRef<BulkQueueController | null>(null);
   const leadsRef = useRef(leads);
   leadsRef.current = leads;
+  // Always-fresh selection so bulk handlers never act on a stale snapshot
+  const selectedIdsRef = useRef(selectedLeadIds);
+  selectedIdsRef.current = selectedLeadIds;
+  // Aborts the in-flight AI call (and hangs it up) on cancel / close
+  const aiCallAbortRef = useRef<AbortController | null>(null);
 
   // ── Progress callback ─────────────────────────────────────────────────────
   const onProgress = useCallback((p: BulkProgress) => {
@@ -86,49 +90,51 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
   }, [setActiveBulkProgress]);
 
   const handleCancel = useCallback(() => {
+    aiCallAbortRef.current?.abort();
     activeControllerRef.current?.cancel();
     activeControllerRef.current = null;
   }, []);
 
   const handleClose = useCallback(() => {
+    aiCallAbortRef.current?.abort();
     activeControllerRef.current = null;
     setActiveBulkProgress(null);
   }, [setActiveBulkProgress]);
 
   // ── BULK AI CALL ──────────────────────────────────────────────────────────
   const handleBulkAICall = useCallback(async () => {
-    const selected = getSelectedLeads(leadsRef.current, selectedLeadIds);
+    const selected = getSelectedLeads(leadsRef.current, selectedIdsRef.current);
     if (!selected.length) return;
 
     activeControllerRef.current?.cancel();
+    aiCallAbortRef.current?.abort();
+
+    // One up-front check so a bad VITE_AI_BACKEND_URL / down server shows ONE clear
+    // message instead of N identical per-lead failures.
+    const health = await checkAIBackend();
+    if (!health.ok) {
+      alert(`Bulk AI Call can't start.\n\n${health.error}`);
+      return;
+    }
+
+    const abort = new AbortController();
+    aiCallAbortRef.current = abort;
 
     const controller = new BulkQueueController({
       opType: 'AI_CALL',
       gapMs: 0,
       onProgress,
       executor: async (item) => {
+        if (abort.signal.aborted) return { success: false, error: 'Cancelled' };
         const lead = leadsRef.current.find((l) => l.lead_id === item.leadId);
         if (!lead) return { success: false, error: 'Lead not found' };
         if (!lead.phone) return { success: false, error: 'No phone number' };
 
-        try {
-          const { callRecord } = await TelephonyService.startCall({
-            lead,
-            phoneNumber: lead.phone,
-            callType: 'AI Call',
-          });
-          
-          // Poll for completion (silent background)
-          let isDone = false;
-          while (!isDone) {
-            await new Promise(r => setTimeout(r, 2000));
-            const status = await TelephonyService.getCallStatus(callRecord.call_id);
-            if (status.status === 'COMPLETED' || status.status === 'FAILED') isDone = true;
-          }
-          return { success: true };
-        } catch (err: any) {
-          return { success: false, error: err?.message ?? 'Call failed' };
-        }
+        const result = await runAICall(lead, abort.signal);
+        if (!abort.signal.aborted) await bulkSleep(INTER_CALL_PAUSE_MS);
+        return result.success
+          ? { success: true }
+          : { success: false, error: result.error || 'Call failed' };
       },
     });
 
@@ -137,11 +143,11 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       selected.map((l) => ({ leadId: l.lead_id, leadName: l.business_name || l.lead_id }))
     );
     controller.start();
-  }, [onProgress, props.onOpenAICall]);
+  }, [onProgress]);
 
   // ── BULK MANUAL CALL ──────────────────────────────────────────────────────
   const handleBulkManualCall = useCallback(async () => {
-    const selected = getSelectedLeads(leadsRef.current, selectedLeadIds);
+    const selected = getSelectedLeads(leadsRef.current, selectedIdsRef.current);
     if (!selected.length) return;
 
     activeControllerRef.current?.cancel();
@@ -172,7 +178,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
 
   // ── BULK ENRICH ──────────────────────────────────────────────────────────
   const handleBulkEnrich = useCallback(async () => {
-    const selected = getSelectedLeads(leadsRef.current, selectedLeadIds);
+    const selected = getSelectedLeads(leadsRef.current, selectedIdsRef.current);
     if (!selected.length) return;
 
     activeControllerRef.current?.cancel();
