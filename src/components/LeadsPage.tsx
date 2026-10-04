@@ -24,7 +24,7 @@ import { Lead } from '../types';
 import { sendOutboundSMS, generateSophiaSMS } from '../services/messagingService';
 import { generateSophiaEmail, markEmailPrepared, saveEmailDraft, buildGmailComposeUrl } from '../services/emailService';
 import { checkAIBackend, runAICall, INTER_CALL_PAUSE_MS, bulkSleep } from '../services/bulkAICallService';
-import { updateLead } from '../services/leadService';
+import { updateLead, addActivity } from '../services/leadService';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -131,6 +131,44 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
         if (!lead.phone) return { success: false, error: 'No phone number' };
 
         const result = await runAICall(lead, abort.signal);
+
+        // CRM update rule (same as the single-call modal):
+        //   real conversation  -> log activity + New Lead -> Contacted
+        //   voicemail / no answer / failed / cancelled -> leave the lead untouched
+        if (result.success && result.connected) {
+          try {
+            const now = Date.now();
+            addActivity({
+              id: `act-ai-call-${now}-${lead.lead_id}`,
+              activity_id: `act-ai-call-${now}-${lead.lead_id}`,
+              lead_id: lead.lead_id,
+              lead_name: lead.business_name,
+              timestamp: new Date().toISOString(),
+              type: 'call_completed',
+              activity_type: 'call_completed',
+              channel: 'AI_CALL',
+              title: `Sophia AI Call Completed (${result.durationSec ?? 0}s)`,
+              description: `Bulk AI call connected — prospect spoke (${result.prospectTurns ?? 0} responses).`,
+              author: 'Sophia (AI Sales Rep)',
+              source: 'Sophia (AI)',
+              metadata: {
+                direction: 'OUTBOUND',
+                status: 'COMPLETED',
+                call_id: result.callControlId,
+                bulk: true,
+              },
+            } as any);
+
+            const latest = leadsRef.current.find((l) => l.lead_id === lead.lead_id) || lead;
+            const stage = String(latest.pipeline_stage || '').toLowerCase().replace('_', ' ');
+            if (!stage || stage === 'new lead') {
+              await props.onBulkUpdateStage([lead.lead_id], 'Contacted');
+            }
+          } catch (e) {
+            console.error('[Bulk AI_CALL] CRM update failed for', lead.lead_id, e);
+          }
+        }
+
         if (!abort.signal.aborted) await bulkSleep(INTER_CALL_PAUSE_MS);
         return result.success
           ? { success: true }
@@ -143,7 +181,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       selected.map((l) => ({ leadId: l.lead_id, leadName: l.business_name || l.lead_id }))
     );
     controller.start();
-  }, [onProgress]);
+  }, [onProgress, props.onBulkUpdateStage]);
 
   // ── BULK MANUAL CALL ──────────────────────────────────────────────────────
   const handleBulkManualCall = useCallback(async () => {
