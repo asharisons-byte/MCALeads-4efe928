@@ -32,6 +32,29 @@ export interface BulkCallResult {
   error?: string;
   outcome?: string;
   callControlId?: string;
+  /** True only when a real person spoke (not voicemail / no answer / short ring-out). */
+  connected?: boolean;
+  voicemail?: boolean;
+  /** Number of spoken turns from the prospect (voicemail greetings excluded). */
+  prospectTurns?: number;
+  durationSec?: number;
+}
+
+// Same detector the single-call modal uses for answering machines / voicemail greetings
+const VOICEMAIL_RX =
+  /you('| a)re trying to reach|you have reached|at the tone|after the (tone|beep)|record your message|leave (a|your) message|voice ?mail|mailbox|can'?t take your call|cannot take your call|unable to take your call|not been set up|hasn'?t been set up/i;
+
+type RemoteTurn = { role: string; content: string };
+
+/** Mirrors SophiaAICallModal.handleEndCall classification. */
+function classify(turns: RemoteTurn[], outcome: string, reason: string, durationSec: number) {
+  const hint = `${outcome} ${reason}`.toLowerCase();
+  const prospect = turns.filter((t) => t.role !== 'assistant');
+  const heardVoicemail =
+    /voice ?mail|machine|answering/.test(hint) || prospect.some((t) => VOICEMAIL_RX.test(t.content || ''));
+  const human = prospect.filter((t) => !VOICEMAIL_RX.test(t.content || ''));
+  const connected = human.length > 0 && !/voice ?mail|machine/.test(hint);
+  return { connected, voicemail: heardVoicemail && !connected, prospectTurns: human.length, durationSec };
 }
 
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
@@ -142,6 +165,11 @@ export async function runAICall(lead: Lead, signal?: AbortSignal): Promise<BulkC
   const startedAt = Date.now();
   let notFound = 0;
   let pollErrors = 0;
+  let lastTurns: RemoteTurn[] = [];
+  const finish = (base: BulkCallResult, reason = ''): BulkCallResult => ({
+    ...base,
+    ...classify(lastTurns, base.outcome || '', reason, Math.round((Date.now() - startedAt) / 1000)),
+  });
 
   while (true) {
     if (signal?.aborted) {
@@ -161,7 +189,7 @@ export async function runAICall(lead: Lead, signal?: AbortSignal): Promise<BulkC
 
       if (r.status === 404) {
         // Backend already cleaned the call up => it is over
-        if (++notFound >= MAX_NOT_FOUND) return { success: true, outcome: 'call_not_found', callControlId };
+        if (++notFound >= MAX_NOT_FOUND) return finish({ success: true, outcome: 'call_not_found', callControlId });
         continue;
       }
       notFound = 0;
@@ -175,12 +203,14 @@ export async function runAICall(lead: Lead, signal?: AbortSignal): Promise<BulkC
 
       const d = await r.json();
       const status = String(d.status || '').toLowerCase();
+      // Keep the freshest transcript (same rule as the modal: only overwrite when non-empty)
+      if (Array.isArray(d.turns) && d.turns.length > 0) lastTurns = d.turns;
       if (ENDED_STATUSES.has(status) || d.ended === true) {
         const outcome = String(d.outcome || status);
         if (status === 'failed') {
           return { success: false, error: d.reason ? `Call failed: ${d.reason}` : 'Call failed', outcome, callControlId };
         }
-        return { success: true, outcome, callControlId };
+        return finish({ success: true, outcome, callControlId }, d.reason ? String(d.reason) : '');
       }
     } catch (e: any) {
       if (e?.name === 'AbortError') continue;

@@ -418,11 +418,9 @@ export const TelephonyService = {
         (lead.pipeline_stage as string)?.toLowerCase() === 'new lead' ||
         (lead.pipeline_stage as string)?.toLowerCase() === 'new_lead';
 
-      // Any placed call counts as outreach (not just connected ones), except calls that
-      // turned out to be a wrong number or a Do Not Contact request.
-      const isOutreachAttempt = outcome !== 'Do Not Contact' && outcome !== ('Wrong Number' as any);
-
-      if (isNewLead && (isConnectedOutcome || isOutreachAttempt) && onLeadUpdate) {
+      // Only a real response advances the stage. No Answer / Voicemail / Wrong Number /
+      // Do Not Contact leave the lead exactly as it was.
+      if (isNewLead && isConnectedOutcome && onLeadUpdate) {
         onLeadUpdate(lead.lead_id, {
           pipeline_stage: 'Contacted',
         });
