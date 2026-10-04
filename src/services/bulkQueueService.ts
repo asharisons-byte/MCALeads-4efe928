@@ -230,6 +230,9 @@ export class BulkQueueController {
       item.status = 'FAILED';
       item.error = err?.message ?? 'Unhandled error';
     }
+    if (item.status === 'FAILED') {
+      console.error(`[Bulk ${this.opType}] FAILED for "${item.leadName}" (${item.leadId}): ${item.error}`);
+    }
 
     item.completedAt = Date.now();
     this.allItems.set(item.id, item);
