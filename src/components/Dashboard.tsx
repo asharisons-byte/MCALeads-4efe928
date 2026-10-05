@@ -124,7 +124,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <Users className="w-4 h-4 text-[var(--secondary)]" />
           </div>
           <div className="mt-3">
-            <div className="font-bold font-mono" style="font-size:28px;line-height:1;letter-spacing:-0.04em;color:var(--primary-container)">{totalLeads}</div>
+            <div className="font-bold font-mono" style={{fontSize: 28, lineHeight: 1, letterSpacing: '-0.04em', color: 'var(--primary-container)'}}>{totalLeads}</div>
             <div className="hud-metric-label mt-1">Database count</div>
           </div>
         </div>
