@@ -111,7 +111,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
     setLocalPage(page);
     onPageChange?.(page);
   };
-  const pageSize = 15;
+  const pageSize = 100;
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [showBulkStageModal, setShowBulkStageModal] = useState(false);
   const [showBulkReassignModal, setShowBulkReassignModal] = useState(false);
@@ -264,11 +264,15 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   };
 
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      onSelectionChange(new Set(paginatedLeads.map((l) => l.lead_id)));
-    } else {
-      onSelectionChange(new Set());
-    }
+    const next = new Set(selectedLeadIds);
+    paginatedLeads.forEach((l) => {
+      if (checked) {
+        next.add(l.lead_id);
+      } else {
+        next.delete(l.lead_id);
+      }
+    });
+    onSelectionChange(next);
   };
 
   const handleSelectRow = (leadId: string) => {
