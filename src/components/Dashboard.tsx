@@ -82,19 +82,19 @@ export const Dashboard: React.FC<DashboardProps> = ({
   });
 
   return (
-    <div id="mca-dashboard" className="p-8 space-y-8 max-w-7xl mx-auto">
+    <div id="mca-dashboard" className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Primary Dashboard Message Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#12192d] via-[#161f38] to-[#121829] border border-slate-800 p-7 shadow-xl">
+      <div className="hud-banner p-6 shadow-xl">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="max-w-2xl space-y-2">
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-[rgba(139,92,246,0.06)] border border-[rgba(139,92,246,0.15)] text-[var(--secondary)] text-xs font-semibold">
+              <Sparkles className="w-3.5 h-3.5 text-[var(--secondary)]" />
               <span>Sophia AI Command Center</span>
             </div>
-            <h1 className="text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
+            <h1 className="font-extrabold text-[var(--primary-container)] tracking-tight" style={{fontFamily:"var(--font-display)",fontSize:26,letterSpacing:"-0.02em"}}>
               Your Lead Pipeline
             </h1>
-            <p className="text-sm text-slate-300 leading-relaxed font-normal">
+            <p className="text-sm text-[var(--on-surface-variant)] leading-relaxed font-normal">
               Discover the highest-value businesses, understand their marketing gaps, and prioritize the opportunities most likely to convert.
             </p>
           </div>
@@ -103,7 +103,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
             <button
               id="dashboard-btn-sophia-ask"
               onClick={onOpenSophia}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/20"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-none bg-[var(--secondary-container)] hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-[0_0_14px_rgba(139,92,246,0.2)]"
             >
               <Bot className="w-4 h-4" />
               <span>Ask Sophia</span>
@@ -112,99 +112,99 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Ambient background glow */}
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-[var(--secondary-container)]/10 rounded-sm blur-3xl pointer-events-none" />
       </div>
 
       {/* Top KPI Cards (Dynamically Calculated) */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {/* Total Leads */}
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-colors">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="hud-metric-card flex flex-col justify-between hover:border-[var(--hud-border-bright)] transition-colors">
+          <div className="flex items-center justify-between mb-2">
             <span>Total Leads</span>
-            <Users className="w-4 h-4 text-indigo-400" />
+            <Users className="w-4 h-4 text-[var(--secondary)]" />
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-extrabold text-white font-mono">{totalLeads}</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Database count</div>
+            <div className="font-bold font-mono" style="font-size:28px;line-height:1;letter-spacing:-0.04em;color:var(--primary-container)">{totalLeads}</div>
+            <div className="hud-metric-label mt-1">Database count</div>
           </div>
         </div>
 
         {/* Hot Targets */}
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-colors">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="hud-metric-card flex flex-col justify-between hover:border-[var(--hud-border-bright)] transition-colors">
+          <div className="flex items-center justify-between mb-2">
             <span>Hot Targets</span>
             <Flame className="w-4 h-4 text-amber-400" />
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-extrabold text-amber-400 font-mono">{hotTargets}</div>
-            <div className="text-[11px] text-amber-300/80 mt-0.5">High fit &amp; gaps</div>
+            <div className="hud-metric-value" style={{color:"var(--hud-amber)",textShadow:"0 0 10px rgba(245,158,11,0.4)"}}>{hotTargets}</div>
+            <div className="text-[11px] text-[var(--hud-amber)]/80 mt-0.5">High fit &amp; gaps</div>
           </div>
         </div>
 
         {/* Average Score */}
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-colors">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="hud-metric-card flex flex-col justify-between hover:border-[var(--hud-border-bright)] transition-colors">
+          <div className="flex items-center justify-between mb-2">
             <span>Average Score</span>
             <Award className="w-4 h-4 text-purple-400" />
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-extrabold text-purple-400 font-mono">{avgScore}</div>
-            <div className="text-[11px] text-slate-400 mt-0.5">0–100 weighted</div>
+            <div className="hud-metric-value" style={{color:"var(--secondary)",textShadow:"0 0 10px rgba(139,92,246,0.4)"}}>{avgScore}</div>
+            <div className="hud-metric-label mt-1">0–100 weighted</div>
           </div>
         </div>
 
         {/* Potential MRR */}
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-colors">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="hud-metric-card flex flex-col justify-between hover:border-[var(--hud-border-bright)] transition-colors">
+          <div className="flex items-center justify-between mb-2">
             <span>Potential MRR</span>
             <DollarSign className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-extrabold text-emerald-400 font-mono">
+            <div className="hud-metric-value">
               ${potentialMRR.toLocaleString()}/mo
             </div>
-            <div className="text-[11px] text-slate-400 mt-0.5">All prospects</div>
+            <div className="hud-metric-label mt-1">All prospects</div>
           </div>
         </div>
 
         {/* Pipeline MRR */}
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-colors">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="hud-metric-card flex flex-col justify-between hover:border-[var(--hud-border-bright)] transition-colors">
+          <div className="flex items-center justify-between mb-2">
             <span>Pipeline MRR</span>
             <TrendingUp className="w-4 h-4 text-blue-400" />
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-extrabold text-blue-400 font-mono">
+            <div className="hud-metric-value" style={{color:"var(--tertiary-fixed-dim)",textShadow:"0 0 10px rgba(76,215,246,0.4)"}}>
               ${pipelineMRR.toLocaleString()}/mo
             </div>
-            <div className="text-[11px] text-slate-400 mt-0.5">Active stages</div>
+            <div className="hud-metric-label mt-1">Active stages</div>
           </div>
         </div>
 
         {/* GMB / Web Gaps */}
-        <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-colors">
-          <div className="flex items-center justify-between text-slate-400 text-xs font-medium">
+        <div className="hud-metric-card flex flex-col justify-between hover:border-[var(--hud-border-bright)] transition-colors">
+          <div className="flex items-center justify-between mb-2">
             <span>GMB / Web Gaps</span>
             <AlertTriangle className="w-4 h-4 text-rose-400" />
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-extrabold text-rose-400 font-mono">{gmbWebGaps}</div>
-            <div className="text-[11px] text-rose-300/80 mt-0.5">Primary pitch targets</div>
+            <div className="hud-metric-value" style={{color:"var(--error)",textShadow:"0 0 10px rgba(255,180,171,0.4)"}}>{gmbWebGaps}</div>
+            <div className="hud-metric-label mt-1" style={{color:"var(--error)"}}>Primary pitch targets</div>
           </div>
         </div>
       </div>
       
       {/* Activity Trend Chart */}
-      <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
+      <div className="p-6 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-4">
         <h3 className="text-sm font-bold text-white flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-indigo-400" />
+          <TrendingUp className="w-4 h-4 text-[var(--secondary)]" />
           <span>Activity Trends (Past 30 Days)</span>
         </h3>
         <DashboardActivityChart activities={activities} />
       </div>
 
       {/* Sophia's Recommendations Section (Generated from actual CRM records) */}
-      <div className="p-6 rounded-2xl bg-slate-900/60 border border-indigo-500/20 space-y-4">
+      <div className="p-6 rounded-none bg-[var(--surface-container-lowest)] border border-[rgba(139,92,246,0.2)] space-y-4 border-l-2 border-l-[var(--secondary)]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">

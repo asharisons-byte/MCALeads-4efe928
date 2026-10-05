@@ -1,29 +1,545 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@600;700&display=swap');
+
+/* =====================================================
+   AUTONOMOUS KINETIC HUD — Design System
+   Stitch "Autonomous Kinetic HUD" Visual Language
+   ===================================================== */
+
+:root {
+  /* Core Palette */
+  --hud-void:           #050608;
+  --hud-obsidian:       #090A0F;
+  --hud-graphite:       #0D0F17;
+  --hud-carbon:         #131722;
+  --hud-steel:          #1A1C26;
+  --hud-chrome:         #242736;
+
+  /* Borders */
+  --hud-border-dim:     rgba(255,255,255,0.06);
+  --hud-border-base:    rgba(255,255,255,0.08);
+  --hud-border-bright:  rgba(255,255,255,0.15);
+
+  /* Semantic Colors */
+  --hud-emerald:        #00FF9D;
+  --hud-emerald-dim:    #00E38B;
+  --hud-emerald-glow:   rgba(0,255,157,0.25);
+  --hud-violet:         #8B5CF6;
+  --hud-violet-dim:     #571BC1;
+  --hud-violet-glow:    rgba(139,92,246,0.3);
+  --hud-cyan:           #06B6D4;
+  --hud-cyan-dim:       #4CD7F6;
+  --hud-amber:          #F59E0B;
+  --hud-crimson:        #EF4444;
+
+  /* Typography tokens */
+  --font-display:       'Space Grotesk', system-ui, sans-serif;
+  --font-mono:          'JetBrains Mono', 'Courier New', monospace;
+
+  /* Stitch color tokens */
+  --surface:            #121318;
+  --surface-dim:        #121318;
+  --surface-container-lowest: #0d0e13;
+  --surface-container-low:    #1a1b21;
+  --surface-container:        #1e1f25;
+  --surface-container-high:   #292a2f;
+  --surface-container-highest:#34343a;
+  --on-surface:         #e3e1e9;
+  --on-surface-variant: #b9cbbc;
+  --outline:            #849587;
+  --outline-variant:    #3b4a3f;
+  --primary:            #f4fff3;
+  --primary-container:  #00ff9d;
+  --primary-fixed:      #56ffa8;
+  --primary-fixed-dim:  #00e38b;
+  --secondary:          #d0bcff;
+  --secondary-container:#571bc1;
+  --on-secondary-container: #c4abff;
+  --tertiary-fixed-dim: #4cd7f6;
+  --error:              #ffb4ab;
+  --error-container:    #93000a;
+}
 
 @layer base {
-  body {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    background-color: #090d16;
-    color: #f1f5f9;
+  html, body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--hud-void);
+    color: var(--on-surface);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 20px;
+    antialiased: true;
     overflow-x: hidden;
+    overscroll-behavior: none;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Zero radius mandate from Stitch */
+  .hud-card, .hud-panel, .hud-btn {
+    border-radius: 0 !important;
   }
 }
 
-/* Custom slick CRM scrollbars */
-::-webkit-scrollbar {
+/* ─── Scrollbars ─── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,255,157,0.25); }
+
+/* ─── HUD Sidebar ─── */
+.hud-sidebar {
+  background: var(--surface-container-lowest);
+  border-right: 1px solid var(--hud-border-base);
+  font-family: var(--font-mono);
+}
+
+.hud-sidebar-brand {
+  background: var(--surface-container-low);
+  border-bottom: 1px solid var(--hud-border-base);
+  padding: 1rem;
+}
+
+.hud-sidebar-section-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--outline);
+  padding: 0.5rem 0.5rem 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hud-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.375rem 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--on-surface-variant);
+  text-decoration: none;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  text-align: left;
+  border-radius: 0;
+}
+
+.hud-nav-item:hover {
+  background: var(--surface-container-high);
+  color: var(--on-surface);
+}
+
+.hud-nav-item.active {
+  background: var(--surface-container);
+  color: var(--primary-container);
+  font-weight: 700;
+}
+
+.hud-nav-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0;
+}
+
+/* ─── HUD Header ─── */
+.hud-header {
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--hud-border-base);
+  font-family: var(--font-mono);
+}
+
+.hud-search-input {
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--hud-border-base);
+  color: var(--on-surface);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  border-radius: 0;
+  padding: 0.375rem 1rem 0.375rem 2.5rem;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.hud-search-input:focus {
+  border-color: var(--primary-container);
+  box-shadow: 0 0 0 1px var(--hud-emerald-glow);
+  caret-color: var(--primary-container);
+}
+
+.hud-search-input::placeholder {
+  color: var(--outline);
+}
+
+/* ─── Primary Kinetic Button ─── */
+.hud-btn-primary {
+  background: var(--primary-container);
+  color: #002110;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 0;
+  padding: 0.375rem 1rem;
+  cursor: pointer;
+  transition: box-shadow 0.15s, background 0.15s;
+}
+
+.hud-btn-primary:hover {
+  background: var(--primary-fixed);
+  box-shadow: 0 0 12px var(--hud-emerald-glow);
+}
+
+/* ─── Secondary Ghost Button ─── */
+.hud-btn-ghost {
+  background: var(--hud-obsidian);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 0;
+  padding: 0.375rem 1rem;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.hud-btn-ghost:hover {
+  border-color: var(--hud-violet);
+  box-shadow: 0 0 10px var(--hud-violet-glow);
+}
+
+/* ─── Sophia AI Button ─── */
+.hud-btn-sophia {
+  background: var(--secondary-container);
+  color: var(--on-secondary-container);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  border-radius: 0;
+  padding: 0.375rem 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 0 14px rgba(87,27,193,0.5);
+  transition: box-shadow 0.15s, background 0.15s;
+}
+
+.hud-btn-sophia:hover {
+  box-shadow: 0 0 20px var(--hud-violet-glow);
+  background: color-mix(in srgb, var(--secondary-container) 80%, #000);
+}
+
+/* ─── Metric HUD Cards ─── */
+.hud-metric-card {
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--hud-border-base);
+  border-radius: 0;
+  padding: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.hud-metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--primary-container);
+}
+
+.hud-metric-card.violet::before { background: var(--secondary); }
+.hud-metric-card.cyan::before   { background: var(--tertiary-fixed-dim); }
+.hud-metric-card.amber::before  { background: var(--hud-amber); }
+.hud-metric-card.red::before    { background: var(--error); }
+
+.hud-metric-value {
+  font-family: var(--font-mono);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 36px;
+  letter-spacing: -0.04em;
+  color: var(--primary-container);
+  text-shadow: 0 0 12px var(--hud-emerald-glow);
+}
+
+.hud-metric-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--outline);
+}
+
+/* ─── Tables ─── */
+.hud-table-row {
+  border-bottom: 1px solid var(--hud-border-dim);
+  transition: background 0.1s;
+}
+
+.hud-table-row:hover {
+  background: rgba(0,255,157,0.04);
+}
+
+.hud-table-header {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--outline);
+  border-bottom: 1px solid var(--hud-border-base);
+  padding: 0.5rem;
+}
+
+/* ─── Status Badges ─── */
+.hud-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.125rem 0.375rem;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.04);
+  border-radius: 0;
+}
+
+.hud-badge-emerald {
+  border-color: var(--hud-emerald-glow);
+  color: var(--primary-container);
+  background: rgba(0,255,157,0.06);
+}
+
+.hud-badge-violet {
+  border-color: var(--hud-violet-glow);
+  color: var(--secondary);
+  background: rgba(139,92,246,0.06);
+}
+
+.hud-badge-amber {
+  border-color: rgba(245,158,11,0.3);
+  color: var(--hud-amber);
+  background: rgba(245,158,11,0.06);
+}
+
+.hud-badge-red {
+  border-color: rgba(239,68,68,0.3);
+  color: var(--error);
+  background: rgba(239,68,68,0.06);
+}
+
+.hud-badge-live {
+  color: #002110;
+  background: var(--primary-container);
+  border-color: var(--primary-container);
+  animation: none;
+}
+
+/* ─── Dividers & Grid ─── */
+.hud-divider {
+  border: none;
+  border-top: 1px solid var(--hud-border-base);
+  margin: 0;
+}
+
+/* ─── Pulse / Glow Animations ─── */
+@keyframes hud-pulse-emerald {
+  0%, 100% { box-shadow: 0 0 6px var(--hud-emerald-glow); }
+  50%       { box-shadow: 0 0 16px var(--hud-emerald-glow); }
+}
+
+@keyframes hud-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.hud-live-dot {
   width: 6px;
   height: 6px;
+  border-radius: 50%;
+  background: var(--primary-container);
+  display: inline-block;
+  animation: hud-blink 1.4s ease-in-out infinite;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
+/* ─── Panel Surfaces ─── */
+.hud-panel {
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--hud-border-base);
+  border-radius: 0;
 }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.2);
-  border-radius: 9999px;
+.hud-panel-inner {
+  background: var(--surface-container);
+  border-radius: 0;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.4);
+/* ─── Forms ─── */
+.hud-input {
+  background: var(--hud-obsidian);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--on-surface);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  border-radius: 0;
+  padding: 0.5rem 0.75rem;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  caret-color: var(--primary-container);
+}
+
+.hud-input:focus {
+  border-color: var(--primary-container);
+  box-shadow: inset 0 0 0 1px rgba(0,255,157,0.15);
+}
+
+.hud-input::placeholder { color: var(--outline); }
+
+.hud-select {
+  background: var(--surface-container);
+  border: 1px solid var(--hud-border-base);
+  color: var(--on-surface);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 0;
+  padding: 0.375rem 0.75rem;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+}
+
+/* ─── Dashboard Banner ─── */
+.hud-banner {
+  background: var(--surface-container-low);
+  border: 1px solid var(--hud-border-base);
+  border-left: 2px solid var(--primary-container);
+  border-radius: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.hud-banner::after {
+  content: '';
+  position: absolute;
+  top: -30%;
+  right: -5%;
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ─── Overrides: remove Tailwind rounding from key elements ─── */
+.rounded-xl, .rounded-lg, .rounded-2xl, .rounded-full {
+  /* Keep --but only for profile avatars / pill labels in interactive areas */
+}
+
+/* ─── Modal / Overlay ─── */
+.hud-modal-backdrop {
+  background: rgba(5,6,8,0.85);
+  backdrop-filter: blur(6px);
+}
+
+.hud-modal {
+  background: var(--hud-graphite);
+  border: 1px solid var(--hud-border-base);
+  box-shadow: 0 0 30px rgba(0,0,0,0.6), 0 0 16px var(--hud-emerald-glow);
+  border-radius: 0;
+}
+
+/* ─── Search dropdown ─── */
+.hud-search-results {
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--hud-border-base);
+  border-top: none;
+  border-radius: 0;
+}
+
+/* ─── Progress bars ─── */
+.hud-progress-track {
+  background: var(--surface-container-high);
+  height: 3px;
+  overflow: hidden;
+  border-radius: 0;
+}
+
+.hud-progress-fill {
+  height: 100%;
+  background: var(--primary-container);
+  transition: width 0.4s ease;
+}
+
+/* ─── Crosshair accent (decorative) ─── */
+.hud-crosshair::before,
+.hud-crosshair::after {
+  content: '';
+  position: absolute;
+  background: var(--hud-emerald);
+  opacity: 0.3;
+}
+.hud-crosshair::before { width: 1px; height: 8px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+.hud-crosshair::after  { width: 8px; height: 1px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
+
+/* ─── Utility overrides for upgrade ─── */
+.hud-text-emerald { color: var(--primary-container) !important; }
+.hud-text-violet  { color: var(--secondary) !important; }
+.hud-text-cyan    { color: var(--tertiary-fixed-dim) !important; }
+.hud-text-amber   { color: var(--hud-amber) !important; }
+.hud-text-dim     { color: var(--on-surface-variant) !important; }
+.hud-text-outline { color: var(--outline) !important; }
+.hud-font-display { font-family: var(--font-display) !important; }
+.hud-font-mono    { font-family: var(--font-mono) !important; }
+
+/* MCA HUD application shell */
+.hud-app-shell {
+  background:
+    radial-gradient(circle at 78% 8%, rgba(0, 255, 157, 0.035), transparent 24rem),
+    radial-gradient(circle at 18% 92%, rgba(76, 215, 246, 0.025), transparent 22rem),
+    var(--hud-void);
+}
+
+.hud-main-shell {
+  background: var(--hud-void);
+}
+
+.hud-main-content {
+  background:
+    linear-gradient(
+      180deg,
+      var(--hud-void) 0%,
+      var(--hud-obsidian) 100%
+    );
+  scrollbar-color: var(--hud-border-base) transparent;
+  scrollbar-width: thin;
 }

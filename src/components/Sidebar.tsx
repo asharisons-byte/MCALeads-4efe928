@@ -22,6 +22,8 @@ import {
   FileCheck,
   ShieldCheck,
   FileSpreadsheet,
+  Zap,
+  Activity,
 } from 'lucide-react';
 
 import { canAccess, normalizeAppRole } from '../utils/roleUtils.js';
@@ -87,27 +89,89 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       id="mca-sidebar"
-      className="w-64 h-screen bg-[#0d121f] border-r border-slate-800/80 flex flex-col flex-shrink-0 select-none z-20"
+      className="hud-sidebar w-72 h-screen flex flex-col flex-shrink-0 select-none z-20" style={{ width: "288px" }}
     >
       {/* Brand Header */}
-      <div className="p-5 border-b border-slate-800/80 bg-gradient-to-b from-slate-900/60 to-transparent">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-violet-700 flex items-center justify-center font-extrabold text-white text-base tracking-wider shadow-lg shadow-indigo-600/20 border border-indigo-400/20">
-            MCA
+      <div className="hud-sidebar-brand">
+        <div className="flex items-center gap-3">
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              background: 'var(--primary-container)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <Zap size={18} color="#002110" strokeWidth={2.5} />
           </div>
-          <div>
-            <div className="text-sm font-bold tracking-tight text-white flex items-center gap-1.5">
-              <span>Lead Agency Suite</span>
+          <div className="min-w-0">
+            <div
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontSize: 16,
+                fontWeight: 700,
+                letterSpacing: '-0.02em',
+                color: 'var(--primary-container)',
+                lineHeight: 1,
+              }}
+            >
+              Marketing Charm
             </div>
-            <div className="text-[11px] font-medium text-slate-400">
-              Marketing Charm Agency
+            <div
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 9,
+                fontWeight: 700,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: 'var(--primary-fixed-dim)',
+                marginTop: 3,
+              }}
+            >
+              Lead Agency Suite
             </div>
           </div>
+        </div>
+
+        <div
+          className="flex items-center justify-between mt-3 px-2 py-1"
+          style={{ background: 'var(--surface-container)' }}
+        >
+          <div className="flex items-center gap-2">
+            <span className="hud-live-dot" />
+            <span
+              style={{
+                fontFamily: 'var(--font-mono)',
+                fontSize: 9,
+                fontWeight: 700,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                color: 'var(--primary-fixed)',
+              }}
+            >
+              SWARM ONLINE
+            </span>
+          </div>
+          <span
+            style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 9,
+              fontWeight: 700,
+              letterSpacing: '0.08em',
+              color: 'var(--outline)',
+              textTransform: 'uppercase',
+            }}
+          >
+            MCA HUD
+          </span>
         </div>
       </div>
 
       {/* Navigation Groups */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
+      <div className="flex-1 overflow-y-auto px-2 py-3 space-y-3">
         {/* WORKSPACE */}
         <div>
           <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
@@ -118,13 +182,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 id="nav-command-center"
                 onClick={() => onNavigate('command_center')}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                  currentTab === 'command_center'
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                className={`hud-nav-item ${
+                  currentTab === 'command_center' ? "active" : ""
                 }`}
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2">
                   <LayoutDashboard className="w-4 h-4 text-indigo-400" />
                   <span>Command Center</span>
                 </div>
@@ -135,13 +197,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 id="nav-dashboard"
                 onClick={() => onNavigate('dashboard')}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                  currentTab === 'dashboard'
-                    ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                className={`hud-nav-item ${
+                  currentTab === 'dashboard' ? "active" : ""
                 }`}
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2">
                   <LayoutDashboard className="w-4 h-4 text-indigo-400" />
                   <span>Dashboard</span>
                 </div>
@@ -151,13 +211,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               id="nav-leads"
               onClick={() => onNavigate('leads')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'leads'
-                  ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              className={`hud-nav-item ${
+                currentTab === 'leads' ? "active" : ""
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-slate-400" />
                 <span>Leads</span>
               </div>
@@ -169,13 +227,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               id="nav-import-leads"
               onClick={() => onNavigate('import_leads')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'import_leads'
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              className={`hud-nav-item ${
+                currentTab === 'import_leads' ? "active" : ""
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <FileSpreadsheet className="w-4 h-4 text-indigo-400" />
                 <span>Import Leads</span>
               </div>
@@ -184,13 +240,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               id="nav-lead-lists"
               onClick={() => onNavigate('lead_lists')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'lead_lists'
-                  ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              className={`hud-nav-item ${
+                currentTab === 'lead_lists' ? "active" : ""
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <ListFilter className="w-4 h-4 text-slate-400" />
                 <span>Lead Lists</span>
               </div>
@@ -200,21 +254,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* AI WORKFORCE & AUTOMATION */}
         <div>
-          <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-            <span>AI Workforce</span>
-          </div>
+          <div className="hud-sidebar-section-label"><span>AI Workforce</span></div>
           <div className="space-y-1">
             {!isSalesRep && (
               <button
                 id="nav-ai-workforce"
                 onClick={() => onNavigate('ai_workforce')}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                  currentTab === 'ai_workforce'
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                className={`hud-nav-item ${
+                  currentTab === 'ai_workforce' ? "active" : ""
                 }`}
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2">
                   <Bot className="w-4 h-4 text-indigo-400" />
                   <span>Agency AI Workforce</span>
                 </div>
@@ -227,13 +277,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               id="nav-ai-approvals"
               onClick={() => onNavigate('ai_approvals')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'ai_approvals'
-                  ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30 font-bold'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              className={`hud-nav-item ${
+                currentTab === 'ai_approvals' ? "active" : ""
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-amber-400" />
                 <span>Approval Center</span>
               </div>
@@ -252,20 +300,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* CLIENT EXPERIENCE & WHITE-LABEL PORTAL */}
         <div>
-          <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-            <span>Client Experience</span>
-          </div>
+          <div className="hud-sidebar-section-label"><span>Client Experience</span></div>
           <div className="space-y-1">
             <button
               id="nav-client-portal"
               onClick={() => onNavigate('client_portal')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'client_portal'
-                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-600/30 font-bold'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              className={`hud-nav-item ${
+                currentTab === 'client_portal' ? "active" : ""
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-purple-400" />
                 <span>Client Portal</span>
               </div>
@@ -285,13 +329,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               id="nav-lead-intelligence"
               onClick={() => onNavigate('lead_intelligence')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'lead_intelligence'
-                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30 font-bold'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              className={`hud-nav-item ${
+                currentTab === 'lead_intelligence' ? "active" : ""
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <Target className="w-4 h-4 text-indigo-400" />
                 <span>Lead Intelligence & Scoring</span>
               </div>
@@ -300,13 +342,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               id="nav-ai-analysis"
               onClick={() => onNavigate('ai_analysis')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'ai_analysis'
-                  ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              className={`hud-nav-item ${
+                currentTab === 'ai_analysis' ? "active" : ""
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <BrainCircuit className="w-4 h-4 text-purple-400" />
                 <span>AI Lead Analysis</span>
               </div>
@@ -315,13 +355,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               id="nav-call-intelligence"
               onClick={() => onNavigate('call_intelligence')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'call_intelligence'
-                  ? 'bg-purple-600/20 text-purple-300 border border-purple-500/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              className={`hud-nav-item ${
+                currentTab === 'call_intelligence' ? "active" : ""
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-purple-400" />
                 <span>Call Intelligence & Objections</span>
               </div>
@@ -330,13 +368,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               id="nav-lead-scoring"
               onClick={() => onNavigate('lead_scoring')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'lead_scoring'
-                  ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              className={`hud-nav-item ${
+                currentTab === 'lead_scoring' ? "active" : ""
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <Award className="w-4 h-4 text-amber-400" />
                 <span>Lead Scoring (0–100)</span>
               </div>
@@ -345,13 +381,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               id="nav-opportunities"
               onClick={() => onNavigate('opportunities')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'opportunities'
-                  ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              className={`hud-nav-item ${
+                currentTab === 'opportunities' ? "active" : ""
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-cyan-400" />
                 <span>Opportunities</span>
               </div>
@@ -371,13 +405,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               id="nav-pipeline"
               onClick={() => onNavigate('pipeline')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'pipeline'
-                  ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              className={`hud-nav-item ${
+                currentTab === 'pipeline' ? "active" : ""
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <Kanban className="w-4 h-4 text-blue-400" />
                 <span>Pipeline / Kanban</span>
               </div>
@@ -386,13 +418,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               id="nav-audits-proposals"
               onClick={() => onNavigate('audits_proposals')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'audits_proposals'
-                  ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30 font-bold'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              className={`hud-nav-item ${
+                currentTab === 'audits_proposals' ? "active" : ""
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <FileCheck className="w-4 h-4 text-amber-400" />
                 <span>Audits & Proposals</span>
               </div>
@@ -401,13 +431,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               id="nav-followups"
               onClick={() => onNavigate('follow_ups')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'follow_ups'
-                  ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              className={`hud-nav-item ${
+                currentTab === 'follow_ups' ? "active" : ""
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-amber-400" />
                 <span>Follow-Up Queue</span>
               </div>
@@ -429,13 +457,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               id="nav-email-outreach"
               onClick={() => onNavigate('email_outreach')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'email_outreach'
-                  ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              className={`hud-nav-item ${
+                currentTab === 'email_outreach' ? "active" : ""
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-blue-400" />
                 <span>Email Outreach</span>
               </div>
@@ -449,13 +475,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               id="nav-sms-outreach"
               onClick={() => onNavigate('sms')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'sms'
-                  ? 'bg-sky-600/20 text-sky-300 border border-sky-500/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              className={`hud-nav-item ${
+                currentTab === 'sms' ? "active" : ""
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-sky-400" />
                 <span>SMS Outreach</span>
               </div>
@@ -469,13 +493,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               id="nav-calls"
               onClick={() => onNavigate('calls')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'calls'
-                  ? 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              className={`hud-nav-item ${
+                currentTab === 'calls' ? "active" : ""
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-emerald-400" />
                 <span>Calls & Dialer</span>
               </div>
@@ -498,13 +520,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 id="nav-analytics"
                 onClick={() => onNavigate('analytics')}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                  currentTab === 'analytics'
-                    ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                className={`hud-nav-item ${
+                  currentTab === 'analytics' ? "active" : ""
                 }`}
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2">
                   <BarChart3 className="w-4 h-4 text-emerald-400" />
                   <span>Analytics</span>
                 </div>
@@ -514,13 +534,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               id="nav-revenue"
               onClick={() => onNavigate('revenue')}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'revenue'
-                  ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+              className={`hud-nav-item ${
+                currentTab === 'revenue' ? "active" : ""
               }`}
             >
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4 text-emerald-300" />
                 <span>Revenue Forecast</span>
               </div>
@@ -538,13 +556,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 id="nav-agency-settings"
                 onClick={() => onNavigate('agency_settings')}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                  currentTab === 'agency_settings'
-                    ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                className={`hud-nav-item ${
+                  currentTab === 'agency_settings' ? "active" : ""
                 }`}
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2">
                   <Settings className="w-4 h-4 text-slate-400" />
                   <span>Agency Settings</span>
                 </div>
@@ -555,13 +571,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 id="nav-integrations"
                 onClick={() => onNavigate('integrations')}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                  currentTab === 'integrations'
-                    ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                className={`hud-nav-item ${
+                  currentTab === 'integrations' ? "active" : ""
                 }`}
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2">
                   <Puzzle className="w-4 h-4 text-slate-400" />
                   <span>Integrations</span>
                 </div>
@@ -572,13 +586,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <button
                 id="nav-team"
                 onClick={() => onNavigate('team')}
-                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                  currentTab === 'team'
-                    ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                className={`hud-nav-item ${
+                  currentTab === 'team' ? "active" : ""
                 }`}
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2">
                   <UserCheck className="w-4 h-4 text-slate-400" />
                   <span>Team</span>
                 </div>
@@ -589,17 +601,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       {/* AI Sales Rep Sophia Card */}
-      <div className="p-3 border-t border-slate-800/80 bg-slate-900/40">
+      <div className="p-3 border-t border-[var(--hud-border-base)] bg-[var(--hud-obsidian)]">
         <div
           onClick={() => onNavigate('ai_workforce')}
-          className="p-2.5 rounded-xl bg-gradient-to-r from-indigo-950/60 to-purple-950/40 border border-indigo-500/20 flex items-center justify-between cursor-pointer hover:border-indigo-500/40 transition-colors"
+          className="p-2.5 bg-[var(--surface-container)] border border-[var(--hud-border-base)] flex items-center justify-between cursor-pointer hover:border-[var(--hud-border-bright)] transition-colors"
         >
           <div className="flex items-center space-x-2.5">
             <div className="relative">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
+              <div className="w-8 h-8 bg-[var(--primary-container)] flex items-center justify-center text-[#002110]">
                 <Bot className="w-4 h-4" />
               </div>
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-slate-900 animate-pulse" />
+              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[var(--primary-container)] ring-2 ring-[var(--hud-obsidian)] animate-pulse" />
             </div>
             <div>
               <div className="text-xs font-bold text-white flex items-center gap-1">

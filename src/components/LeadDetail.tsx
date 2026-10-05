@@ -318,12 +318,12 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
   };
 
   return (
-    <div id="mca-lead-profile" className="p-8 max-w-7xl mx-auto space-y-6">
+    <div id="mca-lead-profile" className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Top Navigation & Fast Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-semibold text-[var(--outline)] hover:text-[var(--on-surface)] transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Back to All Leads</span>
@@ -334,7 +334,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
           <button
             onClick={handleRunAIAnalysis}
             disabled={isAnalyzing}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-xs font-semibold text-white transition-all shadow-sm"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[var(--secondary-container)] hover:bg-indigo-500 disabled:opacity-50 text-xs font-semibold text-white transition-all shadow-sm"
           >
             {isAnalyzing ? (
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -347,14 +347,14 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
       </div>
 
       {/* Lead Profile Header Card */}
-      <div className="p-6 rounded-2xl bg-[#0d121f] border border-slate-800 shadow-xl space-y-6">
+      <div className="p-6 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] shadow-xl space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-2xl font-extrabold text-white tracking-tight">
                 {lead.business_name}
               </h1>
-              <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+              <span className="text-xs font-mono px-2 py-0.5 rounded-none bg-[var(--surface-container)] text-[var(--on-surface-variant)]">
                 {lead.lead_id}
               </span>
               {lead.is_hot_target && (
@@ -365,27 +365,27 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
               )}
             </div>
 
-            <div className="flex items-center gap-4 text-xs text-slate-400 flex-wrap">
-              <span className="font-semibold text-slate-300">{lead.niche}</span>
+            <div className="flex items-center gap-4 text-xs text-[var(--outline)] flex-wrap">
+              <span className="font-semibold text-[var(--on-surface-variant)]">{lead.niche}</span>
               <span>•</span>
               <span className="flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                <MapPin className="w-3.5 h-3.5 text-[var(--outline)]" />
                 {lead.city}, {lead.state} {lead.postal_code}
               </span>
               <span>•</span>
-              <span>Owner: <strong className="text-slate-200">{lead.owner || 'Sophia'}</strong></span>
+              <span>Owner: <strong className="text-[var(--on-surface)]">{lead.owner || 'Sophia'}</strong></span>
             </div>
           </div>
 
           {/* Quick Score & Pipeline Status */}
           <div className="flex items-center gap-4 flex-shrink-0">
             <div className="text-right">
-              <div className="text-xs text-slate-400">Pipeline Stage</div>
+              <div className="text-xs text-[var(--outline)]">Pipeline Stage</div>
               <select
                 value={lead.pipeline_stage}
                 onChange={(e) => handleStageChange(e.target.value as PipelineStage)}
                 disabled={isUpdating}
-                className="mt-1 bg-slate-900 border border-slate-700 text-xs font-bold text-white rounded-lg px-3 py-1.5 focus:border-indigo-500 disabled:opacity-50"
+                className="mt-1 bg-[var(--surface-container)] border border-[var(--hud-border-bright)] text-xs font-bold text-white rounded-none px-3 py-1.5 focus:border-indigo-500 disabled:opacity-50"
               >
                 <option value="New Lead">New Lead</option>
                 <option value="Contacted">Contacted</option>
@@ -401,10 +401,10 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
 
             {/* Opportunity Score (Lead Score) */}
             <div className="text-center px-2">
-              <div className="text-2xl font-extrabold text-emerald-400 font-mono">
+              <div className="text-2xl font-extrabold text-[var(--primary-container)] font-mono">
                 {lead.lead_score}
               </div>
-              <div className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
+              <div className="text-[10px] uppercase tracking-wider text-[var(--outline)] font-semibold">
                 Opportunity Score
               </div>
             </div>
@@ -413,10 +413,10 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
 
             {/* Dynamic Engagement Score (Phase 2F) */}
             <div className="text-center px-2">
-              <div className="text-2xl font-extrabold text-purple-300 font-mono">
+              <div className="text-2xl font-extrabold text-[var(--secondary)] font-mono">
                 {lead.engagement_score ?? latestIntel?.engagement_score ?? '—'}
               </div>
-              <div className="text-[10px] uppercase tracking-wider text-purple-400 font-semibold flex items-center justify-center gap-0.5">
+              <div className="text-[10px] uppercase tracking-wider text-[var(--secondary)] font-semibold flex items-center justify-center gap-0.5">
                 <Sparkles className="w-2.5 h-2.5" />
                 <span>Engagement</span>
               </div>
@@ -432,7 +432,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                     : (lead.lead_temperature || latestIntel?.lead_temperature) === 'Do Not Contact'
                     ? 'bg-red-950 text-red-300 border-red-800'
-                    : 'bg-slate-800 text-slate-300 border-slate-700'
+                    : 'bg-slate-800 text-[var(--on-surface-variant)] border-slate-700'
                 }`}
               >
                 <Flame className="w-3 h-3" />
@@ -446,32 +446,32 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
         </div>
 
         {/* Highlight Metrics */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-slate-800">
-          <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80">
-            <div className="text-[10px] text-slate-400 uppercase font-semibold">Estimated Retainer</div>
-            <div className="text-base font-bold text-emerald-400 font-mono mt-0.5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-[var(--hud-border-base)]">
+          <div className="p-3 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)]">
+            <div className="text-[10px] text-[var(--outline)] uppercase font-semibold">Estimated Retainer</div>
+            <div className="text-base font-bold text-[var(--primary-container)] font-mono mt-0.5">
               ${lead.estimated_retainer?.toLocaleString() || '1,800'}/mo
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80">
-            <div className="text-[10px] text-slate-400 uppercase font-semibold">Revenue Lift</div>
+          <div className="p-3 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)]">
+            <div className="text-[10px] text-[var(--outline)] uppercase font-semibold">Revenue Lift</div>
             <div className="text-base font-bold text-blue-400 font-mono mt-0.5">
               {lead.estimated_revenue_lift || '$4,000–$8,000/mo'}
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80">
-            <div className="text-[10px] text-slate-400 uppercase font-semibold">Google Reviews</div>
+          <div className="p-3 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)]">
+            <div className="text-[10px] text-[var(--outline)] uppercase font-semibold">Google Reviews</div>
             <div className="text-base font-bold text-amber-400 flex items-center gap-1 mt-0.5">
               <Star className="w-4 h-4 fill-amber-400" />
               <span>{lead.gmb_rating || 'N/A'}</span>
-              <span className="text-slate-400 text-xs font-normal">({lead.gmb_review_count || 0})</span>
+              <span className="text-[var(--outline)] text-xs font-normal">({lead.gmb_review_count || 0})</span>
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80">
-            <div className="text-[10px] text-slate-400 uppercase font-semibold">Recommended Service</div>
+          <div className="p-3 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)]">
+            <div className="text-[10px] text-[var(--outline)] uppercase font-semibold">Recommended Service</div>
             <div className="text-xs font-bold text-white truncate mt-1">
               {lead.recommended_service}
             </div>
@@ -517,7 +517,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
       />
 
       {/* Tabs Navigation */}
-      <div className="flex items-center gap-1 border-b border-slate-800 overflow-x-auto pb-1">
+      <div className="flex items-center gap-1 border-b border-[var(--hud-border-base)] overflow-x-auto pb-1">
         {[
           { id: 'lead_intelligence', label: 'Lead Intelligence & AI Scoring (Phase 3B)' },
           { id: 'activity', label: `Activity & Communication (${activities.length})` },
@@ -535,8 +535,8 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
             onClick={() => setActiveTab(tab.id as any)}
             className={`px-4 py-2 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
               activeTab === tab.id
-                ? 'bg-indigo-600 text-white font-bold shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                ? 'bg-[var(--secondary-container)] text-white font-bold shadow-none'
+                : 'text-[var(--outline)] hover:text-[var(--on-surface)] hover:bg-[var(--surface-container)]/40'
             }`}
           >
             {tab.label}
@@ -576,7 +576,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                 <MessageSquare className="w-4 h-4 text-sky-400" />
                 <span>SMS Outreach & Compliance Conversation</span>
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-[var(--outline)] mt-0.5">
                 Direct 1-on-1 SMS conversation with Sophia intent analysis, compliance verification, and instant simulation.
               </p>
             </div>
@@ -619,7 +619,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                     Phase 2F
                   </span>
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-xs text-[var(--outline)] mt-0.5">
                   Automated sentiment analysis, objection categorization, commitment tracking, and CRM note generation.
                 </p>
               </div>
@@ -628,7 +628,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsSophiaAICallOpen(true)}
-                className="px-3.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-purple-900/30"
+                className="px-3.5 py-1.5 rounded-lg bg-[var(--secondary-container)] hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-purple-900/30"
               >
                 <Bot className="w-3.5 h-3.5" />
                 <span>Launch Sophia AI Call</span>
@@ -645,9 +645,9 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
 
           {/* Calls List */}
           {leadCalls.length === 0 ? (
-            <div className="p-12 text-center rounded-2xl bg-slate-900/40 border border-slate-800 space-y-3">
+            <div className="p-12 text-center rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-3">
               <Phone className="w-8 h-8 text-slate-600 mx-auto" />
-              <div className="text-sm font-bold text-slate-300">No Calls Recorded Yet</div>
+              <div className="text-sm font-bold text-[var(--on-surface-variant)]">No Calls Recorded Yet</div>
               <p className="text-xs text-slate-500 max-w-md mx-auto">
                 Place an AI call with Sophia or use the manual dialer. Completed calls will automatically generate structured CRM notes, sentiment scores, and recommended follow-ups.
               </p>
@@ -659,7 +659,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                 return (
                   <div
                     key={call.call_id}
-                    className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-slate-700 transition-all space-y-4"
+                    className="p-5 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] hover:border-slate-700 transition-all space-y-4"
                   >
                     {/* Call Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
@@ -669,7 +669,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                             ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
                             : call.outcome === 'Follow Up'
                             ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                            : 'bg-slate-800 text-slate-300 border-slate-700'
+                            : 'bg-slate-800 text-[var(--on-surface-variant)] border-slate-700'
                         }`}>
                           {call.outcome || 'Logged'}
                         </span>
@@ -678,11 +678,11 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                           {call.call_type === 'AI Call' ? 'Sophia AI Voice Call' : 'Manual Outreach Call'}
                         </span>
 
-                        <span className="text-xs text-slate-400 font-mono">
+                        <span className="text-xs text-[var(--outline)] font-mono">
                           {new Date(call.started_at || call.created_at).toLocaleString()}
                         </span>
 
-                        <span className="text-xs text-slate-400">
+                        <span className="text-xs text-[var(--outline)]">
                           Duration: <strong className="text-slate-200">{call.duration}s</strong>
                         </span>
                       </div>
@@ -699,16 +699,16 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                     {/* Quick Summary */}
                     {callIntel ? (
                       <div className="space-y-3">
-                        <p className="text-xs text-slate-300 leading-relaxed">
+                        <p className="text-xs text-[var(--on-surface-variant)] leading-relaxed">
                           {callIntel.summary}
                         </p>
 
                         {/* Badges & Scores */}
                         <div className="flex items-center gap-2 flex-wrap text-xs">
-                          <span className="px-2 py-0.5 rounded bg-purple-950/60 border border-purple-500/30 text-purple-300 font-mono font-bold">
+                          <span className="px-2 py-0.5 rounded bg-purple-950/60 border border-purple-500/30 text-[var(--secondary)] font-mono font-bold">
                             Engagement: {callIntel.engagement_score}/100
                           </span>
-                          <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-bold">
+                          <span className="px-2 py-0.5 rounded bg-slate-800 text-[var(--on-surface-variant)] border border-slate-700 font-bold">
                             Sentiment: {callIntel.sentiment}
                           </span>
                           <span className={`px-2 py-0.5 rounded font-bold border ${
@@ -729,11 +729,11 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                         {/* CRM Note Preview */}
                         {callIntel.crm_notes && (
                           <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-xs space-y-1.5">
-                            <div className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-1">
+                            <div className="text-[10px] font-bold text-[var(--outline)] uppercase flex items-center gap-1">
                               <FileText className="w-3 h-3 text-indigo-400" />
                               <span>Sophia Generated CRM Note:</span>
                             </div>
-                            <p className="text-slate-300 italic">
+                            <p className="text-[var(--on-surface-variant)] italic">
                               {typeof callIntel.crm_notes === 'string'
                                 ? callIntel.crm_notes
                                 : (callIntel.crm_notes as any).key_takeaways || JSON.stringify(callIntel.crm_notes)}
@@ -742,7 +742,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                         )}
                       </div>
                     ) : (
-                      <div className="text-xs text-slate-400">
+                      <div className="text-xs text-[var(--outline)]">
                         {call.notes || 'No transcript analysis generated yet.'}
                       </div>
                     )}
@@ -758,54 +758,54 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Contact & Business Info */}
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
+          <div className="p-6 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-4">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-indigo-400" />
               <span>Contact &amp; Entity Profile</span>
             </h3>
 
             <div className="space-y-3 text-xs">
-              <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">Business Name</span>
+              <div className="flex justify-between py-2 border-b border-[var(--hud-border-dim)]">
+                <span className="text-[var(--outline)]">Business Name</span>
                 <span className="font-semibold text-white">{lead.business_name}</span>
               </div>
-              <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">Contact Decision Maker</span>
+              <div className="flex justify-between py-2 border-b border-[var(--hud-border-dim)]">
+                <span className="text-[var(--outline)]">Contact Decision Maker</span>
                 <span className="font-semibold text-slate-200">{lead.contact_name || 'Owner / Principal'}</span>
               </div>
-              <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">Direct Phone</span>
+              <div className="flex justify-between py-2 border-b border-[var(--hud-border-dim)]">
+                <span className="text-[var(--outline)]">Direct Phone</span>
                 <span className="font-mono font-semibold text-slate-200">{lead.phone || 'Not provided'}</span>
               </div>
-              <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">Direct Email</span>
+              <div className="flex justify-between py-2 border-b border-[var(--hud-border-dim)]">
+                <span className="text-[var(--outline)]">Direct Email</span>
                 <span className="font-mono font-semibold text-slate-200">{lead.email || 'Not provided'}</span>
               </div>
-              <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">Physical Address</span>
-                <span className="text-right text-slate-300">{lead.address || `${lead.city}, ${lead.state}`}</span>
+              <div className="flex justify-between py-2 border-b border-[var(--hud-border-dim)]">
+                <span className="text-[var(--outline)]">Physical Address</span>
+                <span className="text-right text-[var(--on-surface-variant)]">{lead.address || `${lead.city}, ${lead.state}`}</span>
               </div>
-              <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">Country</span>
-                <span className="text-right text-slate-300">{lead.country || 'USA'}</span>
+              <div className="flex justify-between py-2 border-b border-[var(--hud-border-dim)]">
+                <span className="text-[var(--outline)]">Country</span>
+                <span className="text-right text-[var(--on-surface-variant)]">{lead.country || 'USA'}</span>
               </div>
               <div className="flex justify-between py-2">
-                <span className="text-slate-400">Operating Hours</span>
-                <span className="text-slate-300">{lead.opening_hours || 'Mon-Fri 8:00 AM - 5:00 PM'}</span>
+                <span className="text-[var(--outline)]">Operating Hours</span>
+                <span className="text-[var(--on-surface-variant)]">{lead.opening_hours || 'Mon-Fri 8:00 AM - 5:00 PM'}</span>
               </div>
             </div>
           </div>
 
           {/* Digital Infrastructure Audit */}
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
+          <div className="p-6 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-4">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <Globe className="w-4 h-4 text-emerald-400" />
               <span>Digital Presence &amp; Speed Audit</span>
             </h3>
 
             <div className="space-y-3 text-xs">
-              <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">Website Status</span>
+              <div className="flex justify-between py-2 border-b border-[var(--hud-border-dim)]">
+                <span className="text-[var(--outline)]">Website Status</span>
                 <span
                   className={`font-semibold ${
                     lead.website_status === 'No Website'
@@ -818,8 +818,8 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                   {lead.website_status || 'Active'}
                 </span>
               </div>
-              <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">Website URL</span>
+              <div className="flex justify-between py-2 border-b border-[var(--hud-border-dim)]">
+                <span className="text-[var(--outline)]">Website URL</span>
                 {lead.website && !lead.website.toLowerCase().includes('no website') ? (
                   <a
                     href={lead.website.startsWith('http') ? lead.website : `https://${lead.website}`}
@@ -834,8 +834,8 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                   <span className="text-rose-400 font-semibold">None (Opportunity)</span>
                 )}
               </div>
-              <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">PageSpeed Performance Score</span>
+              <div className="flex justify-between py-2 border-b border-[var(--hud-border-dim)]">
+                <span className="text-[var(--outline)]">PageSpeed Performance Score</span>
                 <span
                   className={`font-mono font-bold ${
                     lead.pagespeed_score && lead.pagespeed_score < 40
@@ -846,8 +846,8 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                   {lead.pagespeed_score ? `${lead.pagespeed_score}/100` : 'Not run (No website)'}
                 </span>
               </div>
-              <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">Meta Pixel Retargeting</span>
+              <div className="flex justify-between py-2 border-b border-[var(--hud-border-dim)]">
+                <span className="text-[var(--outline)]">Meta Pixel Retargeting</span>
                 <span
                   className={`font-semibold ${
                     lead.meta_pixel_status === 'Installed' ? 'text-emerald-400' : 'text-rose-400'
@@ -856,8 +856,8 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                   {lead.meta_pixel_status || 'No Pixel'}
                 </span>
               </div>
-              <div className="flex justify-between py-2 border-b border-slate-800/60">
-                <span className="text-slate-400">Google Ads Presence</span>
+              <div className="flex justify-between py-2 border-b border-[var(--hud-border-dim)]">
+                <span className="text-[var(--outline)]">Google Ads Presence</span>
                 <span
                   className={`font-semibold ${
                     lead.google_ads_status === 'Active' ? 'text-emerald-400' : 'text-rose-400'
@@ -867,14 +867,14 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                 </span>
               </div>
               <div className="flex justify-between py-2">
-                <span className="text-slate-400">Detected CMS / Stack</span>
-                <span className="text-slate-300 font-mono">{lead.cms || 'Custom HTML / Static'}</span>
+                <span className="text-[var(--outline)]">Detected CMS / Stack</span>
+                <span className="text-[var(--on-surface-variant)] font-mono">{lead.cms || 'Custom HTML / Static'}</span>
               </div>
             </div>
           </div>
 
           {/* Google Maps & Local Search Embed */}
-          <div className="lg:col-span-2 p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
+          <div className="lg:col-span-2 p-6 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-rose-400" />
@@ -894,36 +894,36 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/60 space-y-2">
-                <div className="text-[10px] text-slate-400 uppercase font-semibold">GMB Status</div>
+              <div className="p-4 rounded-none bg-[var(--surface-container)]/40 border border-[var(--hud-border-bright)]/60 space-y-2">
+                <div className="text-[10px] text-[var(--outline)] uppercase font-semibold">GMB Status</div>
                 <div className={`text-sm font-bold ${(!lead.gmb_status || lead.gmb_status === 'No GMB' || lead.gmb_status === 'Missing') ? 'text-rose-400' : 'text-emerald-400'}`}>
                   {lead.gmb_status || 'No GMB'}
                 </div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-[var(--outline)]">
                   {lead.gmb_rating
                     ? `${lead.gmb_rating} Stars across ${lead.gmb_review_count || 0} reviews.`
                     : 'No Google Business Profile — primary gap.'}
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/60 space-y-2">
-                <div className="text-[10px] text-slate-400 uppercase font-semibold">Coordinates</div>
-                <div className="text-xs font-mono text-slate-300">
+              <div className="p-4 rounded-none bg-[var(--surface-container)]/40 border border-[var(--hud-border-bright)]/60 space-y-2">
+                <div className="text-[10px] text-[var(--outline)] uppercase font-semibold">Coordinates</div>
+                <div className="text-xs font-mono text-[var(--on-surface-variant)]">
                   Lat: {lead.latitude || 45.5152}
                 </div>
-                <div className="text-xs font-mono text-slate-300">
+                <div className="text-xs font-mono text-[var(--on-surface-variant)]">
                   Lng: {lead.longitude || -122.6784}
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/60 space-y-2">
-                <div className="text-[10px] text-slate-400 uppercase font-semibold">Local Search Opportunity</div>
+              <div className="p-4 rounded-none bg-[var(--surface-container)]/40 border border-[var(--hud-border-bright)]/60 space-y-2">
+                <div className="text-[10px] text-[var(--outline)] uppercase font-semibold">Local Search Opportunity</div>
                 <div className="text-xs font-bold text-emerald-400">
                   {lead.gmb_review_count && lead.gmb_review_count < 10
                     ? 'Review Booster Campaign'
                     : 'Local SEO & Citation Sync'}
                 </div>
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-[var(--outline)]">
                   Map Pack prominence in {lead.city || 'Portland'}, {lead.state || 'OR'}.
                 </p>
               </div>
@@ -935,7 +935,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
       {/* TAB 2: Marketing Gaps & Offer */}
       {activeTab === 'gaps' && (
         <div className="space-y-6">
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
+          <div className="p-6 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-4">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-400" />
               <span>Identified Marketing &amp; Conversion Gaps</span>
@@ -951,7 +951,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                     <span className="w-2 h-2 rounded-full bg-rose-400" />
                     <span>{gap}</span>
                   </div>
-                  <p className="text-xs text-slate-300">
+                  <p className="text-xs text-[var(--on-surface-variant)]">
                     {gap === 'No Website'
                       ? 'Zero branded landing asset leads to total competitor leakage.'
                       : gap === 'Slow / Unreachable Server'
@@ -974,36 +974,36 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                   <Sparkles className="w-4 h-4 text-indigo-400" />
                   <span>Recommended Agency Offer</span>
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-[var(--outline)]">
                   Custom-tailored services based on verified digital gaps
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-lg font-extrabold text-emerald-400 font-mono">
+                <div className="text-lg font-extrabold text-[var(--primary-container)] font-mono">
                   ${lead.estimated_retainer?.toLocaleString()}/mo
                 </div>
-                <div className="text-[10px] text-slate-400">Target Monthly Retainer</div>
+                <div className="text-[10px] text-[var(--outline)]">Target Monthly Retainer</div>
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700 space-y-2">
+            <div className="p-4 rounded-none bg-[var(--surface-container)]/40 border border-[var(--hud-border-bright)] space-y-2">
               <div className="text-xs font-bold text-indigo-300">
                 Primary: {lead.recommended_service}
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <p className="text-xs text-[var(--on-surface-variant)] leading-relaxed">
                 Opportunity Angle: <span className="font-semibold text-white">{lead.opportunity_angle}</span>
               </p>
             </div>
 
             <div className="pt-2">
-              <div className="text-xs font-semibold text-slate-400 mb-2">
+              <div className="text-xs font-semibold text-[var(--outline)] mb-2">
                 Secondary Service Upsells:
               </div>
               <div className="flex flex-wrap gap-2">
                 {lead.secondary_services?.map((s, i) => (
                   <span
                     key={i}
-                    className="px-3 py-1 rounded-lg text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300"
+                    className="px-3 py-1 rounded-lg text-xs font-medium bg-slate-800 border border-slate-700 text-[var(--on-surface-variant)]"
                   >
                     {s}
                   </span>
@@ -1027,7 +1027,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                   <h3 className="text-sm font-bold text-white">
                     Gemini 3.8 Flash • Lead Intelligence Record
                   </h3>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-[var(--outline)]">
                     Confidence: {lead.ai_enrichment?.confidence_score || 95}% • Synthesized by Sophia
                   </p>
                 </div>
@@ -1036,7 +1036,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
               <button
                 onClick={handleRunAIAnalysis}
                 disabled={isAnalyzing}
-                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-[var(--on-surface-variant)] text-xs font-semibold flex items-center gap-1.5"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${isAnalyzing ? 'animate-spin' : ''}`} />
                 <span>Re-Analyze</span>
@@ -1045,7 +1045,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
 
             {/* AI Summary */}
             <div className="space-y-2">
-              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <div className="text-xs font-bold uppercase tracking-wider text-[var(--outline)]">
                 Executive Assessment
               </div>
               <p className="text-xs text-slate-200 leading-relaxed bg-slate-800/40 p-4 rounded-xl border border-slate-800">
@@ -1097,22 +1097,22 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
 
       {/* TAB 4: Score Breakdown (0–100 Explainability) */}
       {activeTab === 'scoring' && (
-        <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-6">
+        <div className="p-6 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-6">
           <div className="flex items-center justify-between border-b border-slate-800 pb-4">
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <Award className="w-4 h-4 text-purple-400" />
                 <span>Deterministic 0–100 Lead Scoring Matrix</span>
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[var(--outline)]">
                 Transparent and explainable point allocation based on verified business indicators
               </p>
             </div>
             <div className="text-right">
-              <span className="text-2xl font-extrabold text-emerald-400 font-mono">
+              <span className="text-2xl font-extrabold text-[var(--primary-container)] font-mono">
                 {lead.lead_score}/100
               </span>
-              <div className="text-[10px] text-slate-400">Total Score</div>
+              <div className="text-[10px] text-[var(--outline)]">Total Score</div>
             </div>
           </div>
 
@@ -1169,7 +1169,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
             ].map((item, idx) => (
               <div
                 key={idx}
-                className="p-4 rounded-xl bg-slate-800/40 border border-slate-700/60 space-y-2"
+                className="p-4 rounded-none bg-[var(--surface-container)]/40 border border-[var(--hud-border-bright)]/60 space-y-2"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-white">{item.category}</span>
@@ -1183,7 +1183,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                     style={{ width: `${(item.earned / item.max) * 100}%` }}
                   />
                 </div>
-                <p className="text-[11px] text-slate-400 mt-1">{item.reason}</p>
+                <p className="text-[11px] text-[var(--outline)] mt-1">{item.reason}</p>
               </div>
             ))}
           </div>
@@ -1194,7 +1194,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
       {activeTab === 'notes' && (
         <div className="space-y-6">
           {/* Add Note Form */}
-          <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
+          <div className="p-6 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-4">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <Plus className="w-4 h-4 text-indigo-400" />
               <span>Add Note or Call Log</span>
@@ -1213,7 +1213,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                   <option value="Email">Email Communication</option>
                   <option value="Meeting">Meeting Record</option>
                 </select>
-                <span className="text-xs text-slate-400">Author: Sophia (AI Sales Rep)</span>
+                <span className="text-xs text-[var(--outline)]">Author: Sophia (AI Sales Rep)</span>
               </div>
 
               <textarea
@@ -1251,11 +1251,11 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                       <span className="text-[10px] px-2 py-0.5 rounded bg-indigo-950/60 text-indigo-300 font-semibold border border-indigo-500/20">
                         {note.activity_type}
                       </span>
-                      <span className="text-[11px] text-slate-400 font-mono">
+                      <span className="text-[11px] text-[var(--outline)] font-mono">
                         {new Date(note.timestamp).toLocaleString()}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-300 leading-relaxed mt-1">{note.content}</p>
+                    <p className="text-xs text-[var(--on-surface-variant)] leading-relaxed mt-1">{note.content}</p>
                   </div>
 
                   <button
@@ -1277,14 +1277,14 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
 
       {/* TAB 6: Original Data Preservation */}
       {activeTab === 'original_data' && (
-        <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
+        <div className="p-6 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <FileText className="w-4 h-4 text-emerald-400" />
                 <span>Original Preserved Import Data</span>
               </h3>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[var(--outline)]">
                 Unaltered spreadsheet columns captured during original ingestion (Zero Data Overwrite)
               </p>
             </div>

@@ -363,11 +363,11 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-extrabold text-white tracking-tight">Leads</h1>
-            <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-semibold">
+            <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-[var(--surface-container)] text-[var(--on-surface-variant)] font-semibold">
               {filteredLeads.length} of {leads.length} records
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[var(--outline)] mt-1">
             Production CRM — 0–100 explainable scoring, detected gaps, verified contacts.
           </p>
         </div>
@@ -376,7 +376,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           {onOpenAddLead && (
             <button
               onClick={onOpenAddLead}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[var(--secondary-container)] hover:bg-indigo-500 text-xs font-bold text-white shadow-md shadow-none transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Add Lead</span>
@@ -387,18 +387,18 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             href="https://drive.google.com/drive/folders/13CDyT2NXYzZtZ-2Jj-TX3Fh6pQz9Dvi7?usp=sharing"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/50 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition-colors cursor-pointer shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-none bg-emerald-950/40 hover:bg-emerald-900/50 text-[var(--primary-fixed-dim)] border border-[rgba(0,255,157,0.15)] text-xs font-semibold transition-colors cursor-pointer shadow-sm"
           >
-            <FolderOpen className="w-3.5 h-3.5 text-emerald-400" />
+            <FolderOpen className="w-3.5 h-3.5 text-[var(--primary-container)]" />
             <span>Go to Excel Sheet</span>
-            <ExternalLink className="w-3 h-3 text-emerald-400/80" />
+            <ExternalLink className="w-3 h-3 text-[var(--primary-container)]/80" />
           </a>
 
           <button
             onClick={() => setShowColumnConverter(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700/80 hover:border-slate-600 hover:bg-slate-800 text-xs font-semibold text-slate-200 hover:text-white transition-colors cursor-pointer shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-bright)]/80 hover:border-slate-600 hover:bg-[var(--surface-container)] text-xs font-semibold text-[var(--on-surface)] hover:text-[var(--on-surface)] transition-colors cursor-pointer shadow-sm"
           >
-            <Table className="w-3.5 h-3.5 text-indigo-400" />
+            <Table className="w-3.5 h-3.5 text-[var(--secondary)]" />
             <span>Convert Columns</span>
           </button>
 
@@ -407,50 +407,50 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               <div className="flex items-center rounded-lg bg-slate-900 border border-slate-700/80 hover:border-slate-600 shadow-sm overflow-hidden">
                 <button
                   onClick={() => onOpenImport('upload')}
-                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[var(--on-surface)] hover:text-[var(--on-surface)] hover:bg-slate-800 transition-colors cursor-pointer"
                 >
-                  <Upload className="w-3.5 h-3.5 text-indigo-400" />
+                  <Upload className="w-3.5 h-3.5 text-[var(--secondary)]" />
                   <span>Import Leads</span>
                 </button>
                 <button
                   onClick={() => setIsImportMenuOpen(!isImportMenuOpen)}
-                  className="px-2 py-2 border-l border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+                  className="px-2 py-2 border-l border-[var(--hud-border-base)] text-[var(--outline)] hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
                 >
                   <ChevronDown className="w-3.5 h-3.5" />
                 </button>
               </div>
 
               {isImportMenuOpen && (
-                <div className="absolute right-0 mt-1.5 w-72 bg-[#0e1322] border border-slate-700 rounded-xl shadow-2xl p-1.5 z-40 space-y-1 text-xs">
-                  <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800/80">
+                <div className="absolute right-0 mt-1.5 w-72 bg-[#0e1322] border border-[var(--hud-border-bright)] rounded-none shadow-2xl p-1.5 z-40 space-y-1 text-xs">
+                  <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--outline)] border-b border-[var(--hud-border-base)]">
                     Select Import Source
                   </div>
                   <button
                     onClick={() => { setIsImportMenuOpen(false); setShowColumnConverter(true); }}
                     className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-emerald-300 hover:bg-emerald-950/40 hover:text-emerald-200 transition-colors text-left cursor-pointer border border-emerald-500/20 bg-emerald-500/5"
                   >
-                    <Table className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <Table className="w-4 h-4 text-[var(--primary-container)] shrink-0" />
                     <div>
                       <div className="font-semibold text-emerald-300">Convert Columns &amp; Paste Data</div>
-                      <div className="text-[10px] text-emerald-400/80">Convert any Excel columns for Suite</div>
+                      <div className="text-[10px] text-[var(--primary-container)]/80">Convert any Excel columns for Suite</div>
                     </div>
                   </button>
-                  <button onClick={() => { setIsImportMenuOpen(false); onOpenImport('upload'); }} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer">
-                    <FileSpreadsheet className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <div><div className="font-semibold text-white">CSV or Excel (.csv, .xlsx)</div><div className="text-[10px] text-slate-400">Spreadsheet file upload</div></div>
+                  <button onClick={() => { setIsImportMenuOpen(false); onOpenImport('upload'); }} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[var(--on-surface)] hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer">
+                    <FileSpreadsheet className="w-4 h-4 text-[var(--primary-container)] shrink-0" />
+                    <div><div className="font-semibold text-white">CSV or Excel (.csv, .xlsx)</div><div className="text-[10px] text-[var(--outline)]">Spreadsheet file upload</div></div>
                   </button>
-                  <button onClick={() => { setIsImportMenuOpen(false); onOpenImport('sheets'); }} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer">
-                    <LinkIcon className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <div><div className="font-semibold text-white">Google Sheet Link</div><div className="text-[10px] text-slate-400">Live fetch via shared link or ID</div></div>
+                  <button onClick={() => { setIsImportMenuOpen(false); onOpenImport('sheets'); }} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[var(--on-surface)] hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer">
+                    <LinkIcon className="w-4 h-4 text-[var(--primary-container)] shrink-0" />
+                    <div><div className="font-semibold text-white">Google Sheet Link</div><div className="text-[10px] text-[var(--outline)]">Live fetch via shared link or ID</div></div>
                   </button>
-                  <button onClick={() => { setIsImportMenuOpen(false); onOpenImport('paste'); }} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-200 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer">
-                    <Sparkles className="w-4 h-4 text-indigo-400 shrink-0" />
-                    <div><div className="font-semibold text-white">Paste Raw Data</div><div className="text-[10px] text-slate-400">Copy &amp; paste CSV, TSV, JSON</div></div>
+                  <button onClick={() => { setIsImportMenuOpen(false); onOpenImport('paste'); }} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[var(--on-surface)] hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer">
+                    <Sparkles className="w-4 h-4 text-[var(--secondary)] shrink-0" />
+                    <div><div className="font-semibold text-white">Paste Raw Data</div><div className="text-[10px] text-[var(--outline)]">Copy &amp; paste CSV, TSV, JSON</div></div>
                   </button>
-                  <div className="border-t border-slate-800/80 my-1 pt-1">
+                  <div className="border-t border-[var(--hud-border-base)] my-1 pt-1">
                     <a href="/suite_leads_template.xlsx" download="suite_leads_template.xlsx" className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer">
-                      <Download className="w-4 h-4 text-emerald-400 shrink-0" />
-                      <div><div className="font-semibold">Download Template (.xlsx)</div><div className="text-[10px] text-slate-400">28-column database schema</div></div>
+                      <Download className="w-4 h-4 text-[var(--primary-container)] shrink-0" />
+                      <div><div className="font-semibold">Download Template (.xlsx)</div><div className="text-[10px] text-[var(--outline)]">28-column database schema</div></div>
                     </a>
                   </div>
                 </div>
@@ -460,9 +460,9 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
           <button
             onClick={() => handleExport('xlsx')}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300 hover:text-white hover:border-slate-700 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] text-xs font-semibold text-slate-300 hover:text-white hover:border-slate-700 transition-all cursor-pointer"
           >
-            <Download className="w-3.5 h-3.5 text-slate-400" />
+            <Download className="w-3.5 h-3.5 text-[var(--outline)]" />
             <span>Export</span>
           </button>
 
@@ -483,15 +483,15 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       </div>
 
       {/* Saved Views Tabs */}
-      <div className="flex items-center gap-1 overflow-x-auto pb-1 border-b border-slate-800/80">
+      <div className="flex items-center gap-1 overflow-x-auto pb-1 border-b border-[var(--hud-border-base)]">
         {(['All Leads','Hot Leads','No Website','No GMB','No Google Ads','No Meta Pixel','High Value','Needs Follow-Up','New Leads'] as ViewFilterType[]).map((view) => (
           <button
             key={view}
             onClick={() => { setCurrentView(view); setCurrentPage(1); }}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
               currentView === view
-                ? 'bg-indigo-600/20 text-indigo-300 border border-indigo-500/30'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                ? 'bg-indigo-600/20 text-[var(--secondary)] border border-indigo-500/30'
+                : 'text-[var(--outline)] hover:text-[var(--on-surface)] hover:bg-slate-800/40'
             }`}
           >
             {view}
@@ -503,21 +503,21 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-1 max-w-md">
           <div className="relative w-full">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-[var(--outline)] absolute left-3 top-2.5" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               placeholder="Search by name, owner, niche, gaps..."
-              className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 transition-all placeholder:text-slate-500"
+              className="w-full bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] rounded-none pl-9 pr-4 py-2 text-xs text-[var(--on-surface)] focus:outline-none focus:border-indigo-500 transition-all placeholder:text-slate-500"
             />
           </div>
           <button
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
             className={`p-2 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-colors ${
               showAdvancedFilters || stageFilter !== 'All' || nicheFilter !== 'All' || ownerFilter !== 'All'
-                ? 'bg-indigo-600/20 border-indigo-500/40 text-indigo-300'
-                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
+                ? 'bg-indigo-600/20 border-indigo-500/40 text-[var(--secondary)]'
+                : 'bg-slate-900 border-slate-800 text-[var(--outline)] hover:text-white'
             }`}
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
@@ -528,10 +528,10 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
       {/* Advanced Filters */}
       {showAdvancedFilters && (
-        <div className="p-4 rounded-xl bg-slate-900/90 border border-slate-800 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+        <div className="p-4 rounded-xl bg-[var(--surface-container-lowest)]/90 border border-[var(--hud-border-base)] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
           <div>
-            <label className="block text-slate-400 font-semibold mb-1.5">Pipeline Stage</label>
-            <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-200">
+            <label className="block text-[var(--outline)] font-semibold mb-1.5">Pipeline Stage</label>
+            <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-none p-2 text-[var(--on-surface)]">
               <option value="All">All Stages</option>
               <option value="New Lead">New Lead</option>
               <option value="Contacted">Contacted</option>
@@ -543,35 +543,35 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             </select>
           </div>
           <div>
-            <label className="block text-slate-400 font-semibold mb-1.5">Niche / Industry</label>
-            <select value={nicheFilter} onChange={(e) => setNicheFilter(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-200">
+            <label className="block text-[var(--outline)] font-semibold mb-1.5">Niche / Industry</label>
+            <select value={nicheFilter} onChange={(e) => setNicheFilter(e.target.value)} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-none p-2 text-[var(--on-surface)]">
               <option value="All">All Niches</option>
               {uniqueNiches.map((n) => <option key={n} value={n}>{n}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-slate-400 font-semibold mb-1.5">Assigned To</label>
-            <select value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-200">
+            <label className="block text-[var(--outline)] font-semibold mb-1.5">Assigned To</label>
+            <select value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-none p-2 text-[var(--on-surface)]">
               <option value="All">All Owners</option>
               {uniqueOwners.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-slate-400 font-semibold mb-1.5">Country</label>
-            <select value={countryFilter} onChange={(e) => setCountryFilter(e.target.value)} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-200">
+            <label className="block text-[var(--outline)] font-semibold mb-1.5">Country</label>
+            <select value={countryFilter} onChange={(e) => setCountryFilter(e.target.value)} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-none p-2 text-[var(--on-surface)]">
               <option value="All">All Countries</option>
               {uniqueCountries.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-slate-400 font-semibold mb-1.5">Score Range</label>
+            <label className="block text-[var(--outline)] font-semibold mb-1.5">Score Range</label>
             <div className="flex gap-2">
-              <input type="number" value={scoreRange[0]} onChange={(e) => setScoreRange([Number(e.target.value), scoreRange[1]])} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-200" min="0" max="100" />
-              <input type="number" value={scoreRange[1]} onChange={(e) => setScoreRange([scoreRange[0], Number(e.target.value)])} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2 text-slate-200" min="0" max="100" />
+              <input type="number" value={scoreRange[0]} onChange={(e) => setScoreRange([Number(e.target.value), scoreRange[1]])} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-none p-2 text-[var(--on-surface)]" min="0" max="100" />
+              <input type="number" value={scoreRange[1]} onChange={(e) => setScoreRange([scoreRange[0], Number(e.target.value)])} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-none p-2 text-[var(--on-surface)]" min="0" max="100" />
             </div>
           </div>
           <div className="flex items-end">
-            <button onClick={() => { setStageFilter('All'); setNicheFilter('All'); setCountryFilter('All'); setOwnerFilter('All'); setScoreRange([0, 100]); setSearchQuery(''); }} className="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold">
+            <button onClick={() => { setStageFilter('All'); setNicheFilter('All'); setCountryFilter('All'); setOwnerFilter('All'); setScoreRange([0, 100]); setSearchQuery(''); }} className="px-3 py-2 rounded-lg bg-[var(--surface-container)] hover:bg-[var(--surface-container-high)] text-slate-300 font-semibold">
               Reset Filters
             </button>
           </div>
@@ -579,11 +579,11 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       )}
 
       {/* CRM Table */}
-      <div className="rounded-xl border border-slate-800 bg-[#0d121f] overflow-hidden shadow-xl flex-1 min-h-0 overflow-y-auto">
+      <div className="rounded-none border border-[var(--hud-border-base)] bg-[var(--hud-graphite)] overflow-hidden shadow-xl flex-1 min-h-0 overflow-y-auto">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-900/60 text-slate-400 font-semibold text-[11px] uppercase tracking-wider">
+              <tr className="border-b border-[var(--hud-border-base)] bg-[var(--surface-container)] text-[var(--outline)] font-bold text-[9px] uppercase tracking-[0.12em]">
                 <th className="p-2.5 w-8 text-center"></th>
                 <th className="p-2.5 w-8 text-center">
                   <input
@@ -616,10 +616,10 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 <th className="p-2.5 text-center min-w-[60px]">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-[var(--hud-border-dim)]">
               {paginatedLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={14} className="p-12 text-center text-slate-400">
+                  <td colSpan={14} className="p-12 text-center text-[var(--outline)]">
                     <div className="flex flex-col items-center gap-3">
                       <Search className="w-10 h-10 text-slate-600" />
                       <p className="font-semibold">No leads match your current filters.</p>
@@ -633,10 +633,10 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   const isExpanded = expandedLeadId === lead.lead_id;
                   return (
                     <React.Fragment key={lead.lead_id}>
-                      <tr className={`hover:bg-slate-800/40 transition-colors group ${isSelected ? 'bg-indigo-950/20' : ''}`}>
+                      <tr className={`hover:bg-[var(--surface-container)]/40 transition-colors group ${isSelected ? 'bg-[rgba(0,255,157,0.04)]' : ''}`}>
                         <td className="p-2.5 text-center">
                           <button onClick={() => setExpandedLeadId(isExpanded ? null : lead.lead_id)}>
-                            {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-slate-400" /> : <ChevronDown className="w-3.5 h-3.5 text-slate-400" />}
+                            {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-[var(--outline)]" /> : <ChevronDown className="w-3.5 h-3.5 text-[var(--outline)]" />}
                           </button>
                         </td>
                         <td className="p-2.5 text-center">
@@ -648,13 +648,13 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                           />
                         </td>
                         <td className="p-2.5 min-w-[160px]">
-                          <div onClick={(e) => { e.stopPropagation(); onSelectLead(lead); }} className="cursor-pointer group-hover:text-indigo-300 font-bold text-slate-100 flex items-center gap-1.5">
+                          <div onClick={(e) => { e.stopPropagation(); onSelectLead(lead); }} className="cursor-pointer group-hover:text-[var(--secondary)] font-bold text-slate-100 flex items-center gap-1.5">
                             <span className="truncate max-w-[140px]">{lead.business_name}</span>
                             {lead.is_hot_target && <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400 flex-shrink-0" />}
                           </div>
                         </td>
-                        <td className="p-2.5 text-slate-300 whitespace-nowrap">{lead.city || '—'}</td>
-                        <td className="p-2.5 whitespace-nowrap text-slate-300">{lead.phone || '—'}</td>
+                        <td className="p-2.5 text-[var(--on-surface-variant)] whitespace-nowrap">{lead.city || '—'}</td>
+                        <td className="p-2.5 whitespace-nowrap text-[var(--on-surface-variant)]">{lead.phone || '—'}</td>
                         <td className="p-2.5 whitespace-nowrap">
                           <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
                             (!lead.gmb_status || lead.gmb_status === 'No GMB' || lead.gmb_status === 'Missing')
@@ -667,22 +667,22 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                           </span>
                         </td>
                         <td className="p-2.5 whitespace-nowrap">
-                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${lead.website_status === 'No Website' ? 'bg-rose-900/40 text-rose-300' : 'text-slate-400'}`}>
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${lead.website_status === 'No Website' ? 'bg-rose-900/40 text-rose-300' : 'text-[var(--outline)]'}`}>
                             {lead.website_status || 'Active'}
                           </span>
                         </td>
                         <td className="p-2.5 min-w-[120px]">
-                          <span className="text-slate-300 text-[11px] leading-tight">{lead.gaps?.slice(0, 2).join(', ') || '—'}{lead.gaps?.length > 2 ? ` +${lead.gaps.length - 2}` : ''}</span>
+                          <span className="text-[var(--on-surface-variant)] text-[11px] leading-tight">{lead.gaps?.slice(0, 2).join(', ') || '—'}{lead.gaps?.length > 2 ? ` +${lead.gaps.length - 2}` : ''}</span>
                         </td>
                         <td className="p-2.5 min-w-[120px]">
-                          <span className="text-slate-300 text-[11px]">{lead.recommended_service || '—'}</span>
+                          <span className="text-[var(--on-surface-variant)] text-[11px]">{lead.recommended_service || '—'}</span>
                         </td>
-                        <td className="p-2.5 text-center font-mono font-bold text-slate-200">
+                        <td className="p-2.5 text-center font-mono font-bold text-[var(--on-surface)]">
                           <span className={`inline-block px-1.5 py-0.5 rounded text-xs font-bold ${lead.lead_score >= 80 ? 'text-emerald-300' : lead.lead_score >= 60 ? 'text-amber-300' : 'text-slate-300'}`}>
                             {lead.lead_score}
                           </span>
                         </td>
-                        <td className="p-2.5 text-right whitespace-nowrap font-mono text-emerald-400 text-xs">
+                        <td className="p-2.5 text-right whitespace-nowrap font-mono text-[var(--primary-container)] text-xs">
                           ${(lead.estimated_retainer || 0).toLocaleString()}/mo
                         </td>
                         <td className="p-2.5 text-center min-w-[90px]">
@@ -697,7 +697,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                           </span>
                         </td>
                         <td className="p-2.5 text-center min-w-[60px]">
-                          <button onClick={(e) => { e.stopPropagation(); onSelectLead(lead); }} className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">View</button>
+                          <button onClick={(e) => { e.stopPropagation(); onSelectLead(lead); }} className="text-xs text-[var(--secondary)] hover:text-[var(--secondary)] font-semibold">View</button>
                         </td>
                       </tr>
                       {isExpanded && (
@@ -732,16 +732,16 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         </div>
 
         {/* Pagination */}
-        <div className="p-3.5 border-t border-slate-800 bg-slate-900/40 flex items-center justify-between text-xs text-slate-400">
+        <div className="p-3.5 border-t border-slate-800 bg-slate-900/40 flex items-center justify-between text-xs text-[var(--outline)]">
           <div>
             Showing {sortedLeads.length === 0 ? 0 : (currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, sortedLeads.length)} of {sortedLeads.length} leads
           </div>
           <div className="flex items-center gap-2">
-            <button disabled={currentPage <= 1} onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} className="p-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed">
+            <button disabled={currentPage <= 1} onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} className="p-1 rounded bg-[var(--surface-container)] hover:bg-[var(--surface-container-high)] disabled:opacity-30 disabled:cursor-not-allowed">
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <span className="font-mono text-slate-300">Page {currentPage} of {totalPages}</span>
-            <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} className="p-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 disabled:cursor-not-allowed">
+            <span className="font-mono text-[var(--on-surface-variant)]">Page {currentPage} of {totalPages}</span>
+            <button disabled={currentPage >= totalPages} onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} className="p-1 rounded bg-[var(--surface-container)] hover:bg-[var(--surface-container-high)] disabled:opacity-30 disabled:cursor-not-allowed">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
@@ -755,20 +755,20 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div>
                 <h3 className="text-sm font-bold text-white">Bulk Assign {selectedLeadIds.size} Leads</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Reassign selected leads to a sales team member</p>
+                <p className="text-xs text-[var(--outline)] mt-0.5">Reassign selected leads to a sales team member</p>
               </div>
-              <button onClick={() => setShowBulkReassignModal(false)} className="text-slate-400 hover:text-white"><X className="w-4 h-4" /></button>
+              <button onClick={() => setShowBulkReassignModal(false)} className="text-[var(--outline)] hover:text-white"><X className="w-4 h-4" /></button>
             </div>
 
             <div className="space-y-2">
               <label className="text-xs text-slate-300 font-semibold block">Select Sales Team Member:</label>
               {teamMembers.length === 0 ? (
-                <p className="text-xs text-slate-400 italic">Loading team members…</p>
+                <p className="text-xs text-[var(--outline)] italic">Loading team members…</p>
               ) : (
                 <select
                   value={selectedMemberId}
                   onChange={(e) => setSelectedMemberId(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-none p-2.5 text-xs text-[var(--on-surface)] focus:outline-none focus:border-indigo-500"
                 >
                   <option value="">— Select a team member —</option>
                   {teamMembers.map((m) => (
@@ -811,9 +811,9 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <h3 className="text-sm font-bold text-white">Bulk Update Stage ({selectedLeadIds.size} Leads)</h3>
-              <button onClick={() => setShowBulkStageModal(false)} className="text-slate-400 hover:text-white"><X className="w-4 h-4" /></button>
+              <button onClick={() => setShowBulkStageModal(false)} className="text-[var(--outline)] hover:text-white"><X className="w-4 h-4" /></button>
             </div>
-            <select value={bulkStageTarget} onChange={(e) => setBulkStageTarget(e.target.value as PipelineStage)} className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-xs text-slate-200">
+            <select value={bulkStageTarget} onChange={(e) => setBulkStageTarget(e.target.value as PipelineStage)} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-none p-2.5 text-xs text-[var(--on-surface)]">
               <option value="New Lead">New Lead</option>
               <option value="Contacted">Contacted</option>
               <option value="Audit Sent">Audit Sent</option>
