@@ -61,6 +61,7 @@ import {
   mapDbLeadToModel,
 } from './services/leadService';
 import { analyzeLeadWithAI, batchAnalyzeLeads } from './services/geminiService';
+import type { BulkProgress } from './services/bulkQueueService';
 import { Lead, ActivityEvent, PipelineStage, CallRecord } from './types';
 import { AppRole } from './constants.js';
 import { normalizeAppRole } from './utils/roleUtils';
@@ -185,21 +186,26 @@ export function App() {
 
   if (authLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#090d16] text-slate-100">
-        <p className="text-slate-400 animate-pulse">Loading MCA Lead Suite…</p>
+      <div className="flex h-screen items-center justify-center bg-[#050608] text-slate-100">
+        <p className="font-mono text-xs uppercase tracking-[0.12em] text-emerald-400 animate-pulse">Loading MCA Lead Suite…</p>
       </div>
     );
   }
 
   if (!firebaseUser) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#090d16] text-slate-100">
-        <div className="text-center space-y-4">
-          <h1 className="text-2xl font-bold">MCA Lead Agency Suite</h1>
-          <p className="text-slate-400">Sign in to continue</p>
+      <div className="flex h-screen items-center justify-center bg-[#050608] text-slate-100">
+        <div className="w-full max-w-sm bg-[#0d0f17] border border-white/10 border-t-2 border-t-emerald-400 p-8 text-center space-y-5">
+          <div className="mx-auto w-12 h-12 border border-emerald-400/40 flex items-center justify-center font-mono font-bold text-emerald-400">
+            MCA
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">MCA Lead Agency Suite</h1>
+            <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-slate-400 mt-1">Sign in to continue</p>
+          </div>
           <button
             onClick={() => signInWithPopup(auth, googleAuthProvider)}
-            className="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-medium"
+            className="w-full px-6 py-3 bg-emerald-400 text-slate-950 font-mono text-xs font-bold uppercase tracking-[0.08em] hover:shadow-[0_0_14px_rgba(0,255,157,0.55)] transition-shadow"
           >
             Sign in with Google
           </button>
@@ -287,7 +293,7 @@ export function App() {
     activityType: any
   ) => {
     addNoteToLead(leadId, content, activityType);
-    setLeads(getLeads());
+    getLeads().then((fresh) => setLeads(fresh));
     setActivities(getActivities());
     // Refresh selected lead
     const current = leads.find((l) => l.lead_id === leadId);
@@ -335,7 +341,7 @@ export function App() {
         }
       }
     }
-    setLeads(getLeads());
+    getLeads().then((fresh) => setLeads(fresh));
     setActivities(getActivities());
   };
 
@@ -424,8 +430,7 @@ export function App() {
       alert('All leads have been deleted.');
       // Force re-fetch from Neon to ensure UI reflects database state
       setTimeout(() => {
-        const freshLeads = getLeads();
-        setLeads(freshLeads);
+        getLeads().then((freshLeads) => setLeads(freshLeads));
       }, 500);
     } catch (e: any) {
       console.error('Failed to clear leads:', e);
@@ -467,7 +472,7 @@ export function App() {
   }
 
   return (
-    <div id="mca-app-root" className="flex h-screen bg-[#090d16] text-slate-100 antialiased overflow-hidden font-sans">
+    <div id="mca-app-root" className="flex h-screen bg-[#050608] text-slate-100 antialiased overflow-hidden font-sans">
       {/* Sidebar */}
       <Sidebar
         currentTab={currentTab}
@@ -502,7 +507,7 @@ export function App() {
         />
 
         {/* View Routing */}
-        <main className="flex-1 overflow-y-auto bg-[#090d16]">
+        <main className="flex-1 overflow-y-auto bg-[#050608]">
           {selectedLead ? (
             <LeadDetail
               lead={selectedLead}
@@ -557,7 +562,7 @@ export function App() {
                   setCurrentTab('pipeline');
                 }}
                 onRefreshData={() => {
-                  setLeads(getLeads());
+                  getLeads().then((fresh) => setLeads(fresh));
                   setActivities(getActivities());
                 }}
               />
@@ -699,7 +704,7 @@ export function App() {
                 leads={leads}
                 onSelectLead={(lead) => setSelectedLead(lead)}
                 onRefreshLeads={() => {
-                  setLeads(getLeads());
+                  getLeads().then((fresh) => setLeads(fresh));
                   setActivities(getActivities());
                 }}
                 onLaunchClientPortal={(user) => {
@@ -814,7 +819,7 @@ export function App() {
           onClose={() => setComposerLead(null)}
           onEmailPrepared={() => {
             setActivities(getActivities());
-            setLeads(getLeads());
+            getLeads().then((fresh) => setLeads(fresh));
           }}
           onDraftSaved={() => {
             setActivities(getActivities());
@@ -852,7 +857,7 @@ export function App() {
           lead={sophiaAICallLead}
           onClose={() => {
             setSophiaAICallLead(null);
-            setLeads(getLeads());
+            getLeads().then((fresh) => setLeads(fresh));
             setActivities(getActivities());
           }}
           onLeadUpdated={(leadId, updates) => {
@@ -872,7 +877,7 @@ export function App() {
           onClose={() => setSmsComposerLead(null)}
           onSMSSent={() => {
             setActivities(getActivities());
-            setLeads(getLeads());
+            getLeads().then((fresh) => setLeads(fresh));
           }}
         />
       )}
