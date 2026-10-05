@@ -303,7 +303,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       }
       setShowBulkReassignModal(false);
       setSelectedMemberId('');
-      setSelectedLeadIds(new Set());
+      onSelectionChange(new Set());
     } catch (e: any) {
       setAssignError(e.message || 'Network error during reassignment');
     } finally {
@@ -797,7 +797,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 {isAssigning ? (
                   <><span className="animate-spin inline-block w-3 h-3 border-2 border-white/30 border-t-white rounded-full" /> Assigning…</>
                 ) : (
-                  <><UserCheck className="w-3.5 h-3.5" /> Assign {selectedLeadIds.length} Leads</>
+                  <><UserCheck className="w-3.5 h-3.5" /> Assign {selectedLeadIds.size} Leads</>
                 )}
               </button>
             </div>
@@ -829,7 +829,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 onClick={async () => {
                   setIsBulkUpdating(true);
                   await onBulkUpdateStage(Array.from(selectedLeadIds), bulkStageTarget);
-                  setSelectedLeadIds(new Set());
+                  onSelectionChange(new Set());
                   setShowBulkStageModal(false);
                   setIsBulkUpdating(false);
                 }}
@@ -853,7 +853,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             <p className="text-xs text-slate-300 leading-relaxed">This cannot be undone. {selectedLeadIds.size} lead records will be permanently removed.</p>
             <div className="flex justify-end gap-2 pt-2">
               <button onClick={() => setShowConfirmDelete(false)} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs font-semibold">Cancel</button>
-              <button onClick={() => { onBulkDelete(Array.from(selectedLeadIds)); setSelectedLeadIds(new Set()); setShowConfirmDelete(false); }} className="px-4 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-semibold hover:bg-rose-500">
+              <button onClick={() => { onBulkDelete(Array.from(selectedLeadIds)); onSelectionChange(new Set()); setShowConfirmDelete(false); }} className="px-4 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-semibold hover:bg-rose-500">
                 Confirm Delete
               </button>
             </div>

@@ -257,14 +257,16 @@ export async function getLeads(): Promise<Lead[]> {
     if (token) headers['Authorization'] = `Bearer ${token}`;
     console.log('Fetching leads from /api/leads...');
     const res = await fetch('/api/leads?limit=1000', { headers });
-    console.log('Fetch response status:', res.status);
+    console.log('Fetch response status:', res.status, 'ok:', res.ok);
     if (res.ok) {
       const data = await res.json();
       if (data && Array.isArray(data.leads)) {
         return data.leads.map((l: any) => mapDbLeadToModel(l));
       }
+      console.error('Fetch success but unexpected data format:', data);
     } else {
-      console.error('Fetch failed with status:', res.status, await res.text());
+      const errorText = await res.text();
+      console.error('Fetch failed with status:', res.status, errorText);
     }
   } catch (err) {
     console.error('Error fetching leads:', err);

@@ -69,6 +69,19 @@ interface SidebarProps {
   currentUserRole?: string;
 }
 
+/**
+ * Sidebar (Unified-Shell Architecture)
+ *
+ * The Sidebar acts as the canonical navigation anchor for the Marketing Charm Agency suite.
+ * It maintains a fixed width and viewport height to ensure a consistent, non-shrinking,
+ * non-expanding navigation experience across all modules (Command Center, Leads, etc.).
+ *
+ * - Width: Locked to 288px (w-72)
+ * - Height: Locked to full viewport height (h-screen)
+ * - Behavior: Non-shrinking/expanding (flex-shrink-0)
+ *
+ * Note: The Client Portal module is intentionally isolated from this shell to maintain white-label integrity.
+ */
 export const Sidebar: React.FC<SidebarProps> = ({
   currentTab,
   onNavigate,
@@ -89,7 +102,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       id="mca-sidebar"
-      className="hud-sidebar w-72 h-screen flex flex-col flex-shrink-0 select-none z-20" style={{ width: "288px" }}
+      className="hud-sidebar w-72 h-screen flex flex-col flex-shrink-0 select-none z-20"
+      style={{ width: "288px", flexShrink: 0 }}
     >
       {/* Brand Header */}
       <div className="hud-sidebar-brand">
