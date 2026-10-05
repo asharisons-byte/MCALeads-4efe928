@@ -472,7 +472,7 @@ export function App() {
   }
 
   return (
-    <div id="mca-app-root" className="flex h-screen bg-[#050608] text-slate-100 antialiased overflow-hidden font-sans">
+    <div id="mca-app-root" className="hud-app-shell flex h-screen text-slate-100 antialiased overflow-hidden font-sans">
       {/* Sidebar */}
       <Sidebar
         currentTab={currentTab}
@@ -492,7 +492,7 @@ export function App() {
       />
       
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="hud-main-shell flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Header */}
         <Header
           searchQuery={searchQuery}
@@ -507,7 +507,7 @@ export function App() {
         />
 
         {/* View Routing */}
-        <main className="flex-1 overflow-y-auto bg-[#050608]">
+        <main className="hud-main-content flex-1 overflow-y-auto">
           {selectedLead ? (
             <LeadDetail
               lead={selectedLead}

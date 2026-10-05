@@ -122,64 +122,64 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
       case 'call_completed':
       case 'call_outcome_set':
         return {
-          icon: <Phone className="w-4 h-4 text-emerald-400" />,
-          bg: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400',
+          icon: <Phone className="w-4 h-4 text-[var(--primary-container)]" />,
+          bg: 'bg-emerald-500/15 border-emerald-500/30 text-[var(--primary-container)]',
         };
       case 'call_failed':
         return {
-          icon: <PhoneOff className="w-4 h-4 text-rose-400" />,
-          bg: 'bg-rose-500/15 border-rose-500/30 text-rose-400',
+          icon: <PhoneOff className="w-4 h-4 text-[var(--error)]" />,
+          bg: 'bg-rose-500/15 border-rose-500/30 text-[var(--error)]',
         };
       case 'call_note_added':
         return {
-          icon: <FileText className="w-4 h-4 text-sky-400" />,
-          bg: 'bg-sky-500/15 border-sky-500/30 text-sky-400',
+          icon: <FileText className="w-4 h-4 text-[var(--tertiary-fixed-dim)]" />,
+          bg: 'bg-sky-500/15 border-sky-500/30 text-[var(--tertiary-fixed-dim)]',
         };
       case 'contact_do_not_contact':
         return {
-          icon: <ShieldAlert className="w-4 h-4 text-rose-400" />,
-          bg: 'bg-rose-500/15 border-rose-500/30 text-rose-400',
+          icon: <ShieldAlert className="w-4 h-4 text-[var(--error)]" />,
+          bg: 'bg-rose-500/15 border-rose-500/30 text-[var(--error)]',
         };
       case 'ai_call_made':
         return {
-          icon: <Bot className="w-4 h-4 text-purple-400" />,
-          bg: 'bg-purple-500/15 border-purple-500/30 text-purple-400',
+          icon: <Bot className="w-4 h-4 text-[var(--secondary)]" />,
+          bg: 'bg-purple-500/15 border-[rgba(139,92,246,0.2)] text-[var(--secondary)]',
         };
       case 'sms_sent':
       case 'sms_delivered':
       case 'sms_draft_created':
         return {
-          icon: <MessageSquare className="w-4 h-4 text-emerald-400" />,
-          bg: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400',
+          icon: <MessageSquare className="w-4 h-4 text-[var(--primary-container)]" />,
+          bg: 'bg-emerald-500/15 border-emerald-500/30 text-[var(--primary-container)]',
         };
       case 'sms_received':
         return {
-          icon: <MessageSquare className="w-4 h-4 text-sky-400" />,
-          bg: 'bg-sky-500/15 border-sky-500/30 text-sky-400',
+          icon: <MessageSquare className="w-4 h-4 text-[var(--tertiary-fixed-dim)]" />,
+          bg: 'bg-sky-500/15 border-sky-500/30 text-[var(--tertiary-fixed-dim)]',
         };
       case 'contact_opted_out':
         return {
-          icon: <ShieldAlert className="w-4 h-4 text-rose-400" />,
-          bg: 'bg-rose-500/15 border-rose-500/30 text-rose-400',
+          icon: <ShieldAlert className="w-4 h-4 text-[var(--error)]" />,
+          bg: 'bg-rose-500/15 border-rose-500/30 text-[var(--error)]',
         };
       case 'email_sent':
       case 'email_received':
       case 'email_prepared':
       case 'email_draft_created':
         return {
-          icon: <Mail className="w-4 h-4 text-blue-400" />,
-          bg: 'bg-blue-500/15 border-blue-500/30 text-blue-400',
+          icon: <Mail className="w-4 h-4 text-[var(--tertiary-fixed-dim)]" />,
+          bg: 'bg-blue-500/15 border-blue-500/30 text-[var(--tertiary-fixed-dim)]',
         };
       case 'note_added':
         return {
-          icon: <FileText className="w-4 h-4 text-indigo-400" />,
-          bg: 'bg-indigo-500/15 border-indigo-500/30 text-indigo-400',
+          icon: <FileText className="w-4 h-4 text-[var(--secondary)]" />,
+          bg: 'bg-indigo-500/15 border-[rgba(139,92,246,0.2)] text-[var(--secondary)]',
         };
       case 'follow_up_created':
       case 'follow_up_completed':
         return {
-          icon: <Calendar className="w-4 h-4 text-amber-400" />,
-          bg: 'bg-amber-500/15 border-amber-500/30 text-amber-400',
+          icon: <Calendar className="w-4 h-4 text-[var(--hud-amber)]" />,
+          bg: 'bg-amber-500/15 border-amber-500/30 text-[var(--hud-amber)]',
         };
       case 'pipeline_stage_changed':
       case 'stage_changed':
@@ -203,8 +203,8 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
       case 'lead_imported':
       default:
         return {
-          icon: <ShieldCheck className="w-4 h-4 text-emerald-400" />,
-          bg: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400',
+          icon: <ShieldCheck className="w-4 h-4 text-[var(--primary-container)]" />,
+          bg: 'bg-emerald-500/15 border-emerald-500/30 text-[var(--primary-container)]',
         };
     }
   };
@@ -228,14 +228,14 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
   return (
     <div id="mca-activity-timeline-container" className="space-y-6">
       {/* Top Header & Sub-navigation (Timeline / Stage History / Comms Log) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-[var(--hud-border-base)]">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveSubView('timeline')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`px-3.5 py-1.5 rounded-none text-xs font-bold transition-all ${
               activeSubView === 'timeline'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
+                ? 'bg-[var(--secondary-container)] text-white shadow-sm'
+                : 'bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] text-[var(--outline)] hover:text-slate-200'
             }`}
           >
             Unified Activity Feed ({activities.length})
@@ -243,10 +243,10 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
 
           <button
             onClick={() => setActiveSubView('stage_history')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`px-3.5 py-1.5 rounded-none text-xs font-bold transition-all ${
               activeSubView === 'stage_history'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
+                ? 'bg-[var(--secondary-container)] text-white shadow-sm'
+                : 'bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] text-[var(--outline)] hover:text-slate-200'
             }`}
           >
             Stage History ({lead.stage_history?.length || 1})
@@ -254,10 +254,10 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
 
           <button
             onClick={() => setActiveSubView('comms_log')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`px-3.5 py-1.5 rounded-none text-xs font-bold transition-all ${
               activeSubView === 'comms_log'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
+                ? 'bg-[var(--secondary-container)] text-white shadow-sm'
+                : 'bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] text-[var(--outline)] hover:text-slate-200'
             }`}
           >
             Comms Records ({communications.length})
@@ -267,9 +267,9 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
         {onAddNoteClick && (
           <button
             onClick={onAddNoteClick}
-            className="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-xs font-semibold text-slate-200 flex items-center gap-1.5 self-start sm:self-auto"
+            className="px-3 py-1.5 rounded-none bg-[var(--surface-container)] hover:bg-slate-700/80 border border-[var(--hud-border-bright)] text-xs font-semibold text-slate-200 flex items-center gap-1.5 self-start sm:self-auto"
           >
-            <FileText className="w-3.5 h-3.5 text-indigo-400" />
+            <FileText className="w-3.5 h-3.5 text-[var(--secondary)]" />
             <span>Write Quick Note</span>
           </button>
         )}
@@ -280,8 +280,8 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
         <div className="space-y-4">
           {/* Category Filter Pills */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
-            <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1 mr-1">
-              <Filter className="w-3 h-3 text-slate-500" />
+            <span className="text-[11px] font-semibold text-[var(--outline)] flex items-center gap-1 mr-1">
+              <Filter className="w-3 h-3 text-[var(--outline)]" />
               <span>Filter:</span>
             </span>
 
@@ -299,8 +299,8 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                 onClick={() => setFilter(tab.id as TimelineFilter)}
                 className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                   filter === tab.id
-                    ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/40'
-                    : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                    ? 'bg-[var(--secondary-container)]/30 text-[var(--secondary)] border border-indigo-500/40'
+                    : 'bg-[var(--surface-container-lowest)] text-[var(--outline)] hover:text-slate-200 border border-[var(--hud-border-base)]'
                 }`}
               >
                 {tab.label}
@@ -309,7 +309,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
           </div>
 
           {/* Timeline Stream */}
-          <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-3 sm:before:left-4 before:top-3 before:bottom-3 before:w-px before:bg-slate-800">
+          <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-3 sm:before:left-4 before:top-3 before:bottom-3 before:w-px before:bg-[var(--surface-container)]">
             {filteredActivities.length > 0 ? (
               filteredActivities.map((act) => {
                 const { icon, bg } = getActivityIcon(act);
@@ -327,7 +327,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                     </div>
 
                     {/* Event Card */}
-                    <div className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 hover:border-slate-700/80 transition-all space-y-2">
+                    <div className="p-4 rounded-none bg-[var(--surface-container-lowest)]/70 border border-[var(--hud-border-base)] hover:border-[var(--hud-border-bright)]/80 transition-all space-y-2">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-xs font-bold text-white tracking-tight">
@@ -338,29 +338,29 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                           <span
                             className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
                               isSophia
-                                ? 'bg-purple-950/40 text-purple-300 border-purple-500/30'
-                                : 'bg-slate-800 text-slate-300 border-slate-700'
+                                ? 'bg-purple-950/40 text-[var(--secondary)] border-[rgba(139,92,246,0.2)]'
+                                : 'bg-[var(--surface-container)] text-[var(--on-surface-variant)] border-[var(--hud-border-bright)]'
                             }`}
                           >
                             {author}
                           </span>
 
                           {act.channel && (
-                            <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-slate-800/80 text-slate-400">
+                            <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-[var(--surface-container)] text-[var(--outline)]">
                               {act.channel}
                             </span>
                           )}
                         </div>
 
                         {/* Timestamp */}
-                        <div className="flex items-center gap-1 text-[11px] text-slate-400 font-mono">
-                          <Clock className="w-3 h-3 text-slate-500" />
+                        <div className="flex items-center gap-1 text-[11px] text-[var(--outline)] font-mono">
+                          <Clock className="w-3 h-3 text-[var(--outline)]" />
                           <span>{formatTimestamp(act.timestamp)}</span>
                         </div>
                       </div>
 
                       {/* Content Description */}
-                      <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-line">
+                      <p className="text-xs text-[var(--on-surface-variant)] leading-relaxed whitespace-pre-line">
                         {act.description}
                       </p>
 
@@ -369,7 +369,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                         <div className="pt-2">
                           <button
                             onClick={() => toggleExpand(act.id)}
-                            className="text-[11px] text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1.5 transition-colors"
+                            className="text-[11px] text-[var(--tertiary-fixed-dim)] hover:text-blue-300 font-semibold flex items-center gap-1.5 transition-colors"
                           >
                             <Mail className="w-3.5 h-3.5" />
                             {isExpanded ? (
@@ -386,16 +386,16 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                           </button>
 
                           {isExpanded && (
-                            <div className="mt-2.5 p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
-                              <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-800 text-xs">
+                            <div className="mt-2.5 p-4 rounded-none bg-slate-950 border border-[var(--hud-border-base)] space-y-3">
+                              <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[var(--hud-border-base)] text-xs">
                                 <div>
-                                  <span className="text-slate-400">Recipient: </span>
+                                  <span className="text-[var(--outline)]">Recipient: </span>
                                   <span className="text-white font-mono font-semibold">
                                     {act.metadata?.recipient || lead.email || 'None provided'}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                  <span className="text-slate-400">Status:</span>
+                                  <span className="text-[var(--outline)]">Status:</span>
                                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
                                     {act.metadata?.status || 'PREPARED'}
                                   </span>
@@ -403,7 +403,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                               </div>
 
                               <div>
-                                <span className="text-slate-400 text-xs font-semibold">Subject: </span>
+                                <span className="text-[var(--outline)] text-xs font-semibold">Subject: </span>
                                 <span className="text-slate-200 text-xs font-medium">
                                   {act.metadata?.subject || act.title}
                                 </span>
@@ -411,10 +411,10 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
 
                               {act.metadata?.email_body && (
                                 <div>
-                                  <span className="text-slate-400 text-xs font-semibold block mb-1">
+                                  <span className="text-[var(--outline)] text-xs font-semibold block mb-1">
                                     Email Body:
                                   </span>
-                                  <div className="p-3 rounded-lg bg-slate-900 border border-slate-800/80 text-xs text-slate-300 whitespace-pre-wrap font-sans leading-relaxed">
+                                  <div className="p-3 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] text-xs text-[var(--on-surface-variant)] whitespace-pre-wrap font-sans leading-relaxed">
                                     {act.metadata.email_body}
                                   </div>
                                 </div>
@@ -430,7 +430,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                                     )}&body=${encodeURIComponent(act.metadata.email_body || '')}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                                    className="px-3 py-1.5 rounded-none bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm"
                                   >
                                     <ExternalLink className="w-3.5 h-3.5" />
                                     <span>Open in Gmail</span>
@@ -444,10 +444,10 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
 
                       {/* Generic Metadata Expansion (for non-email or additional technical metadata) */}
                       {act.channel !== 'EMAIL' && act.activity_type !== 'email_prepared' && act.metadata && Object.keys(act.metadata).length > 0 && (
-                        <div className="pt-2 border-t border-slate-800/60">
+                        <div className="pt-2 border-t border-[var(--hud-border-base)]/60">
                           <button
                             onClick={() => toggleExpand(act.id)}
-                            className="text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1 transition-colors"
+                            className="text-[11px] text-[var(--secondary)] hover:text-[var(--secondary)] font-semibold flex items-center gap-1 transition-colors"
                           >
                             {isExpanded ? (
                               <>
@@ -463,10 +463,10 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                           </button>
 
                           {isExpanded && (
-                            <div className="mt-2 p-3 rounded-lg bg-slate-950 border border-slate-800/80 text-[11px] font-mono text-slate-300 space-y-1">
+                            <div className="mt-2 p-3 rounded-none bg-slate-950 border border-[var(--hud-border-base)] text-[11px] font-mono text-[var(--on-surface-variant)] space-y-1">
                               {Object.entries(act.metadata ?? {}).map(([key, val]) => (
                                 <div key={key} className="flex gap-2">
-                                  <span className="text-slate-500 capitalize">{key.replace(/_/g, ' ')}:</span>
+                                  <span className="text-[var(--outline)] capitalize">{key.replace(/_/g, ' ')}:</span>
                                   <span className="text-slate-200">
                                     {typeof val === 'object' ? JSON.stringify(val) : String(val)}
                                   </span>
@@ -481,7 +481,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                 );
               })
             ) : (
-              <div className="p-8 text-center text-xs text-slate-500 rounded-xl bg-slate-900/30 border border-slate-800/60">
+              <div className="p-8 text-center text-xs text-[var(--outline)] rounded-none bg-[var(--surface-container-lowest)]/30 border border-[var(--hud-border-base)]/60">
                 No activities recorded in this filter category.
               </div>
             )}
@@ -492,11 +492,11 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
       {/* VIEW 2: PIPELINE STAGE HISTORY */}
       {activeSubView === 'stage_history' && (
         <div className="space-y-4">
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
+          <div className="p-4 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)]">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)] mb-1">
               Historical Stage Transition Audit Log
             </h4>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-[var(--outline)]">
               Immutable log of every pipeline progression, timestamps, and actors.
             </p>
           </div>
@@ -506,24 +506,24 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
               lead.stage_history.map((entry, idx) => (
                 <div
                   key={entry.id || idx}
-                  className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  className="p-4 rounded-none bg-[var(--surface-container-lowest)]/70 border border-[var(--hud-border-base)] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-300">
+                      <span className="text-xs font-bold text-[var(--on-surface-variant)]">
                         {entry.previous_stage}
                       </span>
-                      <span className="text-slate-500">→</span>
-                      <span className="text-xs font-bold text-emerald-400 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+                      <span className="text-[var(--outline)]">→</span>
+                      <span className="text-xs font-bold text-[var(--primary-container)] px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
                         {entry.new_stage}
                       </span>
                     </div>
                     {entry.reason && (
-                      <p className="text-xs text-slate-400">{entry.reason}</p>
+                      <p className="text-xs text-[var(--outline)]">{entry.reason}</p>
                     )}
                   </div>
 
-                  <div className="text-left sm:text-right text-[11px] text-slate-400 space-y-0.5">
+                  <div className="text-left sm:text-right text-[11px] text-[var(--outline)] space-y-0.5">
                     <div className="font-mono">{formatTimestamp(entry.timestamp)}</div>
                     <div>
                       Actor: <strong className="text-slate-200">{entry.changed_by}</strong>
@@ -532,8 +532,8 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                 </div>
               ))
             ) : (
-              <div className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 text-xs text-slate-400">
-                Stage set to <strong className="text-emerald-400">{lead.pipeline_stage}</strong> on import.
+              <div className="p-4 rounded-none bg-[var(--surface-container-lowest)]/50 border border-[var(--hud-border-base)] text-xs text-[var(--outline)]">
+                Stage set to <strong className="text-[var(--primary-container)]">{lead.pipeline_stage}</strong> on import.
               </div>
             )}
           </div>
@@ -543,16 +543,16 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
       {/* VIEW 3: COMMUNICATION RECORDS */}
       {activeSubView === 'comms_log' && (
         <div className="space-y-4">
-          <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between">
+          <div className="p-4 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] flex items-center justify-between">
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-1">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)] mb-1">
                 Communication Entity Records
               </h4>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-[var(--outline)]">
                 Multi-channel communication data model tracking Call, AI Call, SMS, and Email dispatches.
               </p>
             </div>
-            <span className="text-xs font-mono px-2.5 py-1 rounded bg-indigo-500/20 text-indigo-300 font-bold">
+            <span className="text-xs font-mono px-2.5 py-1 rounded bg-indigo-500/20 text-[var(--secondary)] font-bold">
               {communications.length} Logged
             </span>
           </div>
@@ -562,35 +562,35 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
               communications.map((comm) => (
                 <div
                   key={comm.communication_id}
-                  className="p-4 rounded-xl bg-slate-900/70 border border-slate-800 space-y-2"
+                  className="p-4 rounded-none bg-[var(--surface-container-lowest)]/70 border border-[var(--hud-border-base)] space-y-2"
                 >
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-white">
                         {comm.channel} ({comm.direction})
                       </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold bg-slate-800 text-emerald-400 border border-slate-700">
+                      <span className="text-[10px] px-2 py-0.5 rounded font-mono font-bold bg-[var(--surface-container)] text-[var(--primary-container)] border border-[var(--hud-border-bright)]">
                         {comm.status}
                       </span>
                     </div>
-                    <span className="text-[11px] font-mono text-slate-400">
+                    <span className="text-[11px] font-mono text-[var(--outline)]">
                       {formatTimestamp(comm.timestamp)}
                     </span>
                   </div>
 
                   {comm.subject && (
-                    <div className="text-xs font-semibold text-indigo-300">
+                    <div className="text-xs font-semibold text-[var(--secondary)]">
                       Subject: {comm.subject}
                     </div>
                   )}
 
-                  <p className="text-xs text-slate-300 leading-relaxed font-mono bg-slate-950 p-3 rounded-lg border border-slate-800/80">
+                  <p className="text-xs text-[var(--on-surface-variant)] leading-relaxed font-mono bg-slate-950 p-3 rounded-none border border-[var(--hud-border-base)]">
                     {comm.content}
                   </p>
                 </div>
               ))
             ) : (
-              <div className="p-8 text-center text-xs text-slate-500 rounded-xl bg-slate-900/30 border border-slate-800/60">
+              <div className="p-8 text-center text-xs text-[var(--outline)] rounded-none bg-[var(--surface-container-lowest)]/30 border border-[var(--hud-border-base)]/60">
                 No direct communications logged for this lead yet. Use the Action Bar above (Call, AI Call, SMS, Email) to dispatch or log.
               </div>
             )}
