@@ -72,7 +72,7 @@ export const ExecutiveTelemetryGrid: React.FC<ExecutiveTelemetryGridProps> = ({ 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
         {/* Card 1: Total Leads (Neon Cyan) */}
         <div
-          onClick={click('pipeline')}
+          onClick={click('leads')}
           className="glass-panel p-3.5 rounded-xl hud-border-cyan hover:border-cyan-500/40 transition group cursor-pointer"
         >
           <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
@@ -87,7 +87,7 @@ export const ExecutiveTelemetryGrid: React.FC<ExecutiveTelemetryGridProps> = ({ 
 
         {/* Card 2: Hot Leads (Laser Emerald) */}
         <div
-          onClick={click('pipeline')}
+          onClick={click('leads')}
           className="glass-panel p-3.5 rounded-xl hud-border-green hover:border-mca-neonGreen transition group cursor-pointer"
         >
           <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
@@ -100,7 +100,7 @@ export const ExecutiveTelemetryGrid: React.FC<ExecutiveTelemetryGridProps> = ({ 
 
         {/* Card 3: Qualified Opps (Electric Purple) */}
         <div
-          onClick={click('pipeline')}
+          onClick={click('leads')}
           className="glass-panel p-3.5 rounded-xl hud-border-purple hover:border-purple-500/40 transition group cursor-pointer"
         >
           <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">

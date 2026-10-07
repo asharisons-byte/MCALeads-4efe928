@@ -637,7 +637,7 @@ export function App() {
               onOpenSophia={() => setSophiaModalOpen(true)}
               onNavigateToLeads={() => setCurrentTab('leads')}
               onNavigateToPipeline={() => setCurrentTab('pipeline')}
-              onNavigateTab={(t) => setCurrentTab(t === 'revenue' ? 'revenue' : t === 'ai_workforce' ? 'ai_workforce' : 'command_center')}
+              onNavigateTab={(t) => setCurrentTab(t === 'leads' ? 'leads' : t === 'revenue' ? 'revenue' : t === 'ai_workforce' ? 'ai_workforce' : 'command_center')}
             />
           ) : currentTab === 'lead_intelligence' ? (
             <LeadIntelligenceView
