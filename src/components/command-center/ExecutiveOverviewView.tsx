@@ -326,143 +326,153 @@ export const ExecutiveOverviewView: React.FC<ExecutiveOverviewViewProps> = ({
           <span className="text-xs text-slate-500">Separating Confirmed from Pipeline</span>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5">
-          {/* 1. Total Leads */}
-          <div
-            onClick={() => onNavigateTab('pipeline')}
-            className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs group"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500">Total Leads</span>
-              <Users className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
-            </div>
-            <div className="text-2xl font-black text-slate-900 mt-2">{totalLeads}</div>
-            <div className="text-[10px] text-emerald-600 font-semibold mt-1">Discovered in OR</div>
+          {/* 3. TOP-LEVEL 10 EXECUTIVE METRICS CARDS */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">
+              Agency Executive Telemetry
+            </h3>
+            <span className="text-xs text-slate-500">Separating Confirmed from Pipeline</span>
           </div>
 
-          {/* 2. Hot Leads */}
-          <div
-            onClick={() => onNavigateTab('pipeline')}
-            className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs group"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500">Hot Leads</span>
-              <Flame className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3.5">
+            {/* 1. Total Leads */}
+            <div
+              onClick={() => onNavigateTab('leads')}
+              className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-500">Total Leads</span>
+                <Users className="w-4 h-4 text-slate-400 group-hover:text-indigo-600" />
+              </div>
+              <div className="text-2xl font-black text-slate-900 mt-2">{totalLeads}</div>
+              <div className="text-[10px] text-emerald-600 font-semibold mt-1">Discovered in OR</div>
             </div>
-            <div className="text-2xl font-black text-slate-900 mt-2">{hotLeads.length}</div>
-            <div className="text-[10px] text-amber-600 font-semibold mt-1">High Intent &gt;80</div>
-          </div>
 
-          {/* 3. Qualified Opportunities */}
-          <div
-            onClick={() => onNavigateTab('pipeline')}
-            className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs group"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500">Qualified Opps</span>
-              <Target className="w-4 h-4 text-indigo-500" />
+            {/* 2. Hot Leads */}
+            <div
+              onClick={() => onNavigateTab('leads')}
+              className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-500">Hot Leads</span>
+                <Flame className="w-4 h-4 text-amber-500 group-hover:scale-110 transition-transform" />
+              </div>
+              <div className="text-2xl font-black text-slate-900 mt-2">{hotLeads.length}</div>
+              <div className="text-[10px] text-amber-600 font-semibold mt-1">High Intent &gt;80</div>
             </div>
-            <div className="text-2xl font-black text-slate-900 mt-2">{qualifiedOpps.length}</div>
-            <div className="text-[10px] text-indigo-600 font-semibold mt-1">Score ≥ 60</div>
-          </div>
 
-          {/* 4. Active Clients */}
-          <div
-            onClick={() => onNavigateTab('clients')}
-            className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs group"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500">Active Clients</span>
-              <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+            {/* 3. Qualified Opportunities */}
+            <div
+              onClick={() => onNavigateTab('leads')}
+              className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-500">Qualified Opps</span>
+                <Target className="w-4 h-4 text-indigo-500" />
+              </div>
+              <div className="text-2xl font-black text-slate-900 mt-2">{qualifiedOpps.length}</div>
+              <div className="text-[10px] text-indigo-600 font-semibold mt-1">Score ≥ 60</div>
             </div>
-            <div className="text-2xl font-black text-slate-900 mt-2">{activeClients.length}</div>
-            <div className="text-[10px] text-emerald-600 font-semibold mt-1">100% Retention</div>
-          </div>
 
-          {/* 5. Won MRR (Confirmed) */}
-          <div
-            onClick={() => onNavigateTab('revenue')}
-            className="p-4 bg-gradient-to-br from-emerald-50/50 to-white rounded-2xl border border-emerald-200 hover:border-emerald-300 transition-all cursor-pointer shadow-2xs group"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-emerald-900">Won MRR</span>
-              <DollarSign className="w-4 h-4 text-emerald-600" />
+            {/* 4. Active Clients */}
+            <div
+              onClick={() => onNavigateTab('clients')}
+              className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-500">Active Clients</span>
+                <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+              </div>
+              <div className="text-2xl font-black text-slate-900 mt-2">{activeClients.length}</div>
+              <div className="text-[10px] text-emerald-600 font-semibold mt-1">100% Retention</div>
             </div>
-            <div className="text-2xl font-black text-emerald-700 mt-2">
-              ${confirmedMRR.toLocaleString()}
-            </div>
-            <div className="text-[10px] text-emerald-700 font-semibold mt-1">CONFIRMED Retainers</div>
-          </div>
 
-          {/* 6. Pipeline MRR */}
-          <div
-            onClick={() => onNavigateTab('revenue')}
-            className="p-4 bg-gradient-to-br from-indigo-50/50 to-white rounded-2xl border border-indigo-200 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs group"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-indigo-900">Pipeline MRR</span>
-              <TrendingUp className="w-4 h-4 text-indigo-600" />
+            {/* 5. Won MRR (Confirmed) */}
+            <div
+              onClick={() => onNavigateTab('revenue')}
+              className="p-4 bg-gradient-to-br from-emerald-50/50 to-white rounded-2xl border border-emerald-200 hover:border-emerald-300 transition-all cursor-pointer shadow-2xs group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-emerald-900">Won MRR</span>
+                <DollarSign className="w-4 h-4 text-emerald-600" />
+              </div>
+              <div className="text-2xl font-black text-emerald-700 mt-2">
+                ${confirmedMRR.toLocaleString()}
+              </div>
+              <div className="text-[10px] text-emerald-700 font-semibold mt-1">CONFIRMED Retainers</div>
             </div>
-            <div className="text-2xl font-black text-indigo-700 mt-2">
-              ${pipelineMRR.toLocaleString()}
-            </div>
-            <div className="text-[10px] text-indigo-600 font-semibold mt-1">Active Pipeline Deals</div>
-          </div>
 
-          {/* 7. At-Risk Revenue */}
-          <div
-            onClick={() => onNavigateTab('clients')}
-            className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-rose-300 transition-all cursor-pointer shadow-2xs group"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500">At-Risk MRR</span>
-              <AlertTriangle className="w-4 h-4 text-rose-500" />
+            {/* 6. Pipeline MRR */}
+            <div
+              onClick={() => onNavigateTab('revenue')}
+              className="p-4 bg-gradient-to-br from-indigo-50/50 to-white rounded-2xl border border-indigo-200 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-indigo-900">Pipeline MRR</span>
+                <TrendingUp className="w-4 h-4 text-indigo-600" />
+              </div>
+              <div className="text-2xl font-black text-indigo-700 mt-2">
+                ${pipelineMRR.toLocaleString()}
+              </div>
+              <div className="text-[10px] text-indigo-600 font-semibold mt-1">Active Pipeline Deals</div>
             </div>
-            <div className="text-2xl font-black text-rose-600 mt-2">
-              ${atRiskRevenue.toLocaleString()}
-            </div>
-            <div className="text-[10px] text-rose-500 font-semibold mt-1">
-              {atRiskClients.length} account flagged
-            </div>
-          </div>
 
-          {/* 8. Upcoming Renewals */}
-          <div
-            onClick={() => onNavigateTab('clients')}
-            className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-amber-300 transition-all cursor-pointer shadow-2xs group"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500">Renewals &lt;90d</span>
-              <Clock className="w-4 h-4 text-amber-500" />
+            {/* 7. At-Risk Revenue */}
+            <div
+              onClick={() => onNavigateTab('clients')}
+              className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-rose-300 transition-all cursor-pointer shadow-2xs group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-500">At-Risk MRR</span>
+                <AlertTriangle className="w-4 h-4 text-rose-500" />
+              </div>
+              <div className="text-2xl font-black text-rose-600 mt-2">
+                ${atRiskRevenue.toLocaleString()}
+              </div>
+              <div className="text-[10px] text-rose-500 font-semibold mt-1">
+                {atRiskClients.length} account flagged
+              </div>
             </div>
-            <div className="text-2xl font-black text-slate-900 mt-2">{upcomingRenewals.length}</div>
-            <div className="text-[10px] text-amber-600 font-semibold mt-1">Apex Roofing (24d)</div>
-          </div>
 
-          {/* 9. AI Tasks Today */}
-          <div
-            onClick={() => onNavigateTab('ai_workforce')}
-            className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs group"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500">AI Tasks Today</span>
-              <Zap className="w-4 h-4 text-indigo-500" />
+            {/* 8. Upcoming Renewals */}
+            <div
+              onClick={() => onNavigateTab('clients')}
+              className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-amber-300 transition-all cursor-pointer shadow-2xs group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-500">Renewals &lt;90d</span>
+                <Clock className="w-4 h-4 text-amber-500" />
+              </div>
+              <div className="text-2xl font-black text-slate-900 mt-2">{upcomingRenewals.length}</div>
+              <div className="text-[10px] text-amber-600 font-semibold mt-1">Apex Roofing (24d)</div>
             </div>
-            <div className="text-2xl font-black text-slate-900 mt-2">{aiTasksToday}</div>
-            <div className="text-[10px] text-indigo-600 font-semibold mt-1">7 Autonomous Agents</div>
-          </div>
 
-          {/* 10. Pending Approvals */}
-          <div
-            onClick={() => onNavigateTab('ai_workforce')}
-            className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs group"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500">Pending Approvals</span>
-              <FileCheck className="w-4 h-4 text-slate-400" />
+            {/* 9. AI Tasks Today */}
+            <div
+              onClick={() => onNavigateTab('ai_workforce')}
+              className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-500">AI Tasks Today</span>
+                <Zap className="w-4 h-4 text-indigo-500" />
+              </div>
+              <div className="text-2xl font-black text-slate-900 mt-2">{aiTasksToday}</div>
+              <div className="text-[10px] text-indigo-600 font-semibold mt-1">7 Autonomous Agents</div>
             </div>
-            <div className="text-2xl font-black text-slate-900 mt-2">{pendingApprovals}</div>
-            <div className="text-[10px] text-slate-500 font-semibold mt-1">Human-in-the-Loop</div>
+
+            {/* 10. Pending Approvals */}
+            <div
+              onClick={() => onNavigateTab('ai_workforce')}
+              className="p-4 bg-white rounded-2xl border border-slate-200 hover:border-indigo-300 transition-all cursor-pointer shadow-2xs group"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-500">Pending Approvals</span>
+                <FileCheck className="w-4 h-4 text-slate-400" />
+              </div>
+              <div className="text-2xl font-black text-slate-900 mt-2">{pendingApprovals}</div>
+              <div className="text-[10px] text-slate-500 font-semibold mt-1">Human-in-the-Loop</div>
+            </div>
           </div>
         </div>
       </div>
