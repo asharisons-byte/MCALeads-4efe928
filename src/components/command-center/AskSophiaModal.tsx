@@ -100,12 +100,12 @@ export const AskSophiaModal: React.FC<AskSophiaModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-      <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-mca-hover/60 backdrop-blur-xs p-4">
+      <div className="bg-mca-card w-full max-w-2xl rounded-xl shadow-2xl border border-white/10 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="p-4 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-md">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-md">
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -122,16 +122,16 @@ export const AskSophiaModal: React.FC<AskSophiaModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+            className="p-1.5 rounded-lg text-slate-500 hover:text-white hover:bg-mca-card/10 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Preset Prompt Pills */}
-        <div className="p-3 bg-slate-50 border-b border-slate-200 overflow-x-auto flex items-center gap-2 text-xs no-scrollbar">
-          <span className="text-slate-400 font-semibold uppercase text-[10px] flex items-center gap-1 shrink-0">
-            <HelpCircle className="w-3 h-3 text-indigo-500" /> Presets:
+        <div className="p-3 bg-mca-void/40 border-b border-white/10 overflow-x-auto flex items-center gap-2 text-xs no-scrollbar">
+          <span className="text-slate-500 font-semibold uppercase text-[10px] flex items-center gap-1 shrink-0">
+            <HelpCircle className="w-3 h-3 text-indigo-400" /> Presets:
           </span>
           {PRESET_QUESTIONS.map((item, idx) => {
             const Icon = item.icon;
@@ -140,9 +140,9 @@ export const AskSophiaModal: React.FC<AskSophiaModalProps> = ({
                 key={idx}
                 onClick={() => handleAsk(item.label)}
                 disabled={isLoading}
-                className="px-2.5 py-1 rounded-lg bg-white hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-300 border border-slate-200 text-slate-700 whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 shadow-2xs font-medium"
+                className="px-2.5 py-1 rounded-lg bg-mca-card hover:bg-indigo-950/50 hover:text-indigo-300 hover:border-indigo-700/60 border border-white/10 text-slate-200 whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 font-medium"
               >
-                <Icon className="w-3 h-3 text-indigo-600" />
+                <Icon className="w-3 h-3 text-indigo-400" />
                 <span>{item.label}</span>
               </button>
             );
@@ -150,29 +150,29 @@ export const AskSophiaModal: React.FC<AskSophiaModalProps> = ({
         </div>
 
         {/* Chat Stream */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50">
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-mca-void/50">
           {messages.map((m, idx) => (
             <div
               key={idx}
               className={`flex gap-3 ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {m.sender === 'sophia' && (
-                <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shrink-0 mt-0.5 shadow-xs">
+                <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shrink-0 mt-0.5">
                   <Bot className="w-4 h-4" />
                 </div>
               )}
               <div
-                className={`max-w-[85%] rounded-2xl p-3.5 text-xs leading-relaxed ${
+                className={`max-w-[85%] rounded-xl p-3.5 text-xs leading-relaxed ${
                   m.sender === 'user'
-                    ? 'bg-indigo-600 text-white rounded-br-none shadow-sm'
-                    : 'bg-white text-slate-800 border border-slate-200 rounded-bl-none shadow-xs whitespace-pre-line'
+                    ? 'bg-blue-600 text-white rounded-br-none shadow-sm'
+                    : 'bg-mca-card text-slate-100 border border-white/10 rounded-bl-none whitespace-pre-line'
                 }`}
               >
                 <div className="font-sans">{m.text}</div>
                 <div className="mt-2 flex items-center justify-between gap-3 text-[10px] opacity-70">
                   <span>{m.time}</span>
                   {m.source && (
-                    <span className="text-indigo-600 font-medium">Grounded • {m.source}</span>
+                    <span className="text-indigo-400 font-medium">Grounded • {m.source}</span>
                   )}
                 </div>
               </div>
@@ -180,12 +180,12 @@ export const AskSophiaModal: React.FC<AskSophiaModalProps> = ({
           ))}
 
           {isLoading && (
-            <div className="flex gap-3 items-center text-slate-500 text-xs">
-              <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shrink-0 shadow-xs">
+            <div className="flex gap-3 items-center text-slate-400 text-xs">
+              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shrink-0">
                 <Bot className="w-4 h-4" />
               </div>
-              <div className="bg-white px-3.5 py-2.5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-indigo-600 animate-ping" />
+              <div className="bg-mca-card px-3.5 py-2.5 rounded-xl border border-white/10 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-600 animate-ping" />
                 <span>Sophia is analyzing live agency data...</span>
               </div>
             </div>
@@ -193,19 +193,19 @@ export const AskSophiaModal: React.FC<AskSophiaModalProps> = ({
         </div>
 
         {/* Input Bar */}
-        <div className="p-3 bg-white border-t border-slate-200 flex items-center gap-2">
+        <div className="p-3 bg-mca-card border-t border-white/10 flex items-center gap-2">
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleAsk()}
             placeholder="Ask Sophia anything: revenue, renewals, hot targets, bottleneck analysis..."
-            className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+            className="flex-1 px-3.5 py-2.5 rounded-xl border border-white/10 text-xs text-slate-100 placeholder-slate-500 focus:outline-hidden focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
           />
           <button
             onClick={() => handleAsk()}
             disabled={!query.trim() || isLoading}
-            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+            className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
           >
             <Send className="w-3.5 h-3.5" />
             <span>Ask</span>

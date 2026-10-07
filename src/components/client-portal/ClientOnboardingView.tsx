@@ -47,15 +47,15 @@ export const ClientOnboardingView: React.FC<ClientOnboardingViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-mca-card dark:bg-slate-900 p-6 rounded-xl border border-white/10 dark:border-slate-800 shadow-sm">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1.5">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-950/50 dark:bg-indigo-950/40 text-indigo-300 dark:text-indigo-400 border border-indigo-800/50 dark:border-indigo-800 flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5 text-indigo-500" />
               Onboarding Command Center
             </span>
           </div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+          <h2 className="text-xl font-bold text-white dark:text-white">
             Client Launch & Technical Access
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -75,7 +75,7 @@ export const ClientOnboardingView: React.FC<ClientOnboardingViewProps> = ({
       </div>
 
       {/* Progress Bar */}
-      <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
+      <div className="w-full bg-mca-hover dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
         <div
           className="bg-gradient-to-r from-indigo-600 to-emerald-500 h-2.5 rounded-full transition-all duration-500"
           style={{ width: `${progressPct}%` }}
@@ -83,8 +83,8 @@ export const ClientOnboardingView: React.FC<ClientOnboardingViewProps> = ({
       </div>
 
       {/* Onboarding Checklist Steps */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 space-y-4">
-        <h3 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-mca-card dark:bg-slate-900 rounded-xl border border-white/10 dark:border-slate-800 shadow-sm p-6 space-y-4">
+        <h3 className="text-sm font-bold text-white dark:text-white uppercase tracking-wider flex items-center gap-2">
           <FileCheck className="w-4 h-4 text-indigo-500" />
           Onboarding Roadmap Milestones
         </h3>
@@ -96,15 +96,15 @@ export const ClientOnboardingView: React.FC<ClientOnboardingViewProps> = ({
               onClick={() => handleToggleStep(step.id)}
               className={`p-4 rounded-xl border transition-all cursor-pointer flex items-start gap-3.5 ${
                 step.completed
-                  ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/60'
-                  : 'bg-slate-50/80 dark:bg-slate-850 border-slate-200 dark:border-slate-700/80 hover:border-indigo-300'
+                  ? 'bg-emerald-950/40 dark:bg-emerald-950/20 border-emerald-800/50 dark:border-emerald-800/60'
+                  : 'bg-mca-void/80 dark:bg-slate-850 border-white/10 dark:border-slate-700/80 hover:border-indigo-700/60'
               }`}
             >
               <div
                 className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
                   step.completed
                     ? 'bg-emerald-600 text-white'
-                    : 'border-2 border-slate-300 dark:border-slate-600 text-transparent'
+                    : 'border-2 border-white/15 dark:border-slate-600 text-transparent'
                 }`}
               >
                 <CheckCircle2 className="w-4 h-4" />
@@ -118,14 +118,14 @@ export const ClientOnboardingView: React.FC<ClientOnboardingViewProps> = ({
                   <span
                     className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                       step.completed
-                        ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300'
-                        : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                        ? 'bg-emerald-950 dark:bg-emerald-900/60 text-emerald-300 dark:text-emerald-300'
+                        : 'bg-slate-700 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                     }`}
                   >
                     {step.action_label || (step.completed ? 'Completed' : 'Pending')}
                   </span>
                 </div>
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                <h4 className="text-xs font-bold text-white dark:text-white">
                   {step.title}
                 </h4>
                 <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
@@ -138,14 +138,14 @@ export const ClientOnboardingView: React.FC<ClientOnboardingViewProps> = ({
       </div>
 
       {/* Access Requirements Management */}
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-6 space-y-4">
+      <div className="bg-mca-card dark:bg-slate-900 rounded-xl border border-white/10 dark:border-slate-800 shadow-sm p-6 space-y-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
               Technical Platform Access
             </span>
           </div>
-          <h3 className="text-base font-bold text-slate-900 dark:text-white">
+          <h3 className="text-base font-bold text-white dark:text-white">
             Zero-Password Platform Delegation
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
@@ -161,24 +161,24 @@ export const ClientOnboardingView: React.FC<ClientOnboardingViewProps> = ({
             return (
               <div
                 key={req.access_id}
-                className="border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden transition-all"
+                className="border border-white/10 dark:border-slate-800 rounded-xl overflow-hidden transition-all"
               >
                 <div
                   onClick={() => setExpandedAccessId(isExpanded ? null : req.access_id)}
-                  className="p-4 bg-slate-50/50 dark:bg-slate-850/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-slate-100/60 dark:hover:bg-slate-800"
+                  className="p-4 bg-mca-void/50 dark:bg-slate-850/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 cursor-pointer hover:bg-mca-hover/60 dark:hover:bg-slate-800"
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
                         isGranted
-                          ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'
-                          : 'bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400'
+                          ? 'bg-emerald-950 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'
+                          : 'bg-amber-950 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400'
                       }`}
                     >
                       <Key className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                      <h4 className="text-xs font-bold text-white dark:text-white">
                         {req.platform}
                       </h4>
                       <p className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -191,8 +191,8 @@ export const ClientOnboardingView: React.FC<ClientOnboardingViewProps> = ({
                     <span
                       className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
                         isGranted
-                          ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800'
-                          : 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 animate-pulse'
+                          ? 'bg-emerald-950/50 dark:bg-emerald-950/40 text-emerald-300 dark:text-emerald-400 border border-emerald-800/50 dark:border-emerald-800'
+                          : 'bg-amber-950/50 dark:bg-amber-950/40 text-amber-300 dark:text-amber-400 border border-amber-800/50 dark:border-amber-800 animate-pulse'
                       }`}
                     >
                       {req.status}
@@ -208,12 +208,12 @@ export const ClientOnboardingView: React.FC<ClientOnboardingViewProps> = ({
                 </div>
 
                 {isExpanded && (
-                  <div className="p-5 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 space-y-3">
-                    <h5 className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <div className="p-5 bg-mca-card dark:bg-slate-900 border-t border-white/10 dark:border-slate-800 space-y-3">
+                    <h5 className="text-xs font-bold text-slate-100 dark:text-slate-200 flex items-center gap-1.5">
                       <HelpCircle className="w-3.5 h-3.5 text-indigo-500" />
                       Step-by-Step Delegation Instructions (Zero Passwords Required):
                     </h5>
-                    <ol className="space-y-2 text-xs text-slate-600 dark:text-slate-300 list-decimal list-inside bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <ol className="space-y-2 text-xs text-slate-600 dark:text-slate-300 list-decimal list-inside bg-mca-void/40 dark:bg-slate-800/40 p-4 rounded-xl border border-white/5 dark:border-slate-800">
                       {req.instructions.map((stepText, sIdx) => (
                         <li key={sIdx} className="leading-relaxed">
                           {stepText}

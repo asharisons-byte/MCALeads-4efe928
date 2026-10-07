@@ -61,26 +61,26 @@ export const DashboardCustomizerModal: React.FC<DashboardCustomizerModalProps> =
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-      <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-xl border border-slate-200 space-y-4 max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-mca-hover/50 backdrop-blur-xs p-4">
+      <div className="bg-mca-card rounded-xl max-w-xl w-full p-6 shadow-xl border border-white/10 space-y-4 max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 shrink-0">
+        <div className="flex items-center justify-between pb-3 border-b border-white/5 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200/80 flex items-center justify-center text-indigo-600">
+            <div className="w-8 h-8 rounded-lg bg-indigo-950/50 border border-indigo-800/50 flex items-center justify-center text-indigo-400">
               <Sliders className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-bold text-base text-slate-900">
+              <h3 className="font-bold text-base text-white">
                 Customize Command Center Layout
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-400">
                 Toggle widgets and reorder sections to prioritize your daily executive workflow
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            className="p-1 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-mca-hover transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -93,8 +93,8 @@ export const DashboardCustomizerModal: React.FC<DashboardCustomizerModalProps> =
               key={cfg.id}
               className={`p-3 rounded-xl border flex items-center justify-between transition-all ${
                 cfg.visible
-                  ? 'bg-white border-slate-200 shadow-2xs'
-                  : 'bg-slate-50 border-slate-200/60 opacity-60'
+                  ? 'bg-mca-card border-white/10'
+                  : 'bg-mca-void/40 border-white/10 opacity-60'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -102,16 +102,16 @@ export const DashboardCustomizerModal: React.FC<DashboardCustomizerModalProps> =
                   onClick={() => toggleVisibility(cfg.id)}
                   className={`p-1.5 rounded-lg border transition-colors ${
                     cfg.visible
-                      ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                      : 'bg-slate-100 border-slate-200 text-slate-400'
+                      ? 'bg-indigo-950/50 border-indigo-800/50 text-indigo-300'
+                      : 'bg-mca-hover border-white/10 text-slate-500'
                   }`}
                   title={cfg.visible ? 'Hide widget' : 'Show widget'}
                 >
                   {cfg.visible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                 </button>
                 <div>
-                  <div className="text-xs font-bold text-slate-800">{cfg.label}</div>
-                  <div className="text-[10px] text-slate-400 uppercase tracking-wide">
+                  <div className="text-xs font-bold text-slate-100">{cfg.label}</div>
+                  <div className="text-[10px] text-slate-500 uppercase tracking-wide">
                     {cfg.category}
                   </div>
                 </div>
@@ -121,7 +121,7 @@ export const DashboardCustomizerModal: React.FC<DashboardCustomizerModalProps> =
                 <button
                   disabled={idx === 0}
                   onClick={() => moveItem(idx, 'up')}
-                  className="p-1 rounded hover:bg-slate-100 text-slate-500 disabled:opacity-30"
+                  className="p-1 rounded hover:bg-mca-hover text-slate-400 disabled:opacity-30"
                   title="Move up"
                 >
                   <MoveUp className="w-4 h-4" />
@@ -129,7 +129,7 @@ export const DashboardCustomizerModal: React.FC<DashboardCustomizerModalProps> =
                 <button
                   disabled={idx === localConfigs.length - 1}
                   onClick={() => moveItem(idx, 'down')}
-                  className="p-1 rounded hover:bg-slate-100 text-slate-500 disabled:opacity-30"
+                  className="p-1 rounded hover:bg-mca-hover text-slate-400 disabled:opacity-30"
                   title="Move down"
                 >
                   <MoveDown className="w-4 h-4" />
@@ -140,10 +140,10 @@ export const DashboardCustomizerModal: React.FC<DashboardCustomizerModalProps> =
         </div>
 
         {/* Footer actions */}
-        <div className="pt-3 border-t border-slate-100 flex items-center justify-between shrink-0">
+        <div className="pt-3 border-t border-white/5 flex items-center justify-between shrink-0">
           <button
             onClick={handleReset}
-            className="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-medium flex items-center gap-1.5 transition-colors"
+            className="px-3 py-1.5 rounded-lg border border-white/10 hover:bg-mca-void/40 text-slate-300 text-xs font-medium flex items-center gap-1.5 transition-colors"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             Reset Defaults
@@ -152,13 +152,13 @@ export const DashboardCustomizerModal: React.FC<DashboardCustomizerModalProps> =
           <div className="flex items-center gap-2">
             <button
               onClick={onClose}
-              className="px-4 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium transition-colors"
+              className="px-4 py-1.5 rounded-lg border border-white/10 hover:bg-mca-void/40 text-slate-200 text-xs font-medium transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleSave}
-              className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
+              className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
               <Check className="w-3.5 h-3.5" />
               Save Layout

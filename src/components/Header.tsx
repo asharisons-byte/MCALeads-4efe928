@@ -1,11 +1,4 @@
-import React, { useState } from 'react';
-import {
-  Search,
-  Sparkles,
-  Bell,
-  CheckCircle2,
-  X,
-} from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Lead } from '../types';
 
 interface HeaderProps {
@@ -17,6 +10,10 @@ interface HeaderProps {
   notificationsCount: number;
 }
 
+/**
+ * Header — Stitch "TopBar" (executive-header).
+ * Left: omnibox search with Ctrl K chip. Right: glowing "Ask Sophia" action + agency identity.
+ */
 export const Header: React.FC<HeaderProps> = ({
   searchQuery,
   onSearchChange,
@@ -27,103 +24,73 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const onDown = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setShowSearchDropdown(false);
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => document.removeEventListener('mousedown', onDown);
+  }, []);
 
   return (
     <header
       id="mca-top-header"
-      className="hud-header h-16 px-6 flex items-center justify-between z-10 sticky top-0"
+      ref={wrapRef}
+      className="h-14 border-b border-mca-border bg-mca-surface/80 backdrop-blur px-6 flex items-center justify-between z-20 flex-shrink-0 sticky top-0"
+      data-purpose="executive-header"
     >
-      {/* Search Input */}
-      <div className="relative" style={{ width: 440 }}>
-        <div className="relative flex items-center">
-          <Search
-            size={15}
-            style={{
-              position: 'absolute',
-              left: '0.625rem',
-              color: 'var(--outline)',
-              pointerEvents: 'none',
+      {/* Left: Omnibox Search */}
+      <div className="w-96 relative">
+        <i className="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+        <input
+          id="global-search-input"
+          type="text"
+          value={searchQuery}
+          onChange={(e) => {
+            onSearchChange(e.target.value);
+            setShowSearchDropdown(e.target.value.trim().length > 0);
+          }}
+          onFocus={() => {
+            if (searchQuery.trim().length > 0) setShowSearchDropdown(true);
+          }}
+          placeholder="Search business, phone, email, niche, GMB... [Ctrl+K]"
+          className="w-full bg-mca-void/80 border border-mca-border rounded-lg pl-9 pr-14 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition"
+        />
+        {searchQuery ? (
+          <button
+            onClick={() => {
+              onSearchChange('');
+              setShowSearchDropdown(false);
             }}
-          />
-          <input
-            id="global-search-input"
-            type="text"
-            value={searchQuery}
-            onChange={(e) => {
-              onSearchChange(e.target.value);
-              setShowSearchDropdown(e.target.value.trim().length > 0);
-            }}
-            onFocus={() => {
-              if (searchQuery.trim().length > 0) setShowSearchDropdown(true);
-            }}
-            placeholder="Search business, phone, email, niche, GMB..."
-            className="hud-search-input"
-            style={{ paddingLeft: '2.25rem', paddingRight: searchQuery ? '4rem' : '3.5rem', width: '100%' }}
-          />
-          <div
-            className="absolute flex items-center gap-0.5 px-1.5 py-0.5"
-            style={{
-              right: '0.5rem',
-              background: 'var(--surface-container)',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 9,
-              color: 'var(--outline)',
-              letterSpacing: '0.04em',
-            }}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white text-xs"
+            aria-label="Clear search"
           >
-            <span style={{ fontSize: 10 }}>⌘</span>
-            <span>K</span>
-          </div>
-
-          {searchQuery && (
-            <button
-              onClick={() => {
-                onSearchChange('');
-                setShowSearchDropdown(false);
-              }}
-              style={{
-                position: 'absolute',
-                right: '3.5rem',
-                color: 'var(--outline)',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'flex',
-              }}
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
+            <i className="fa-solid fa-xmark"></i>
+          </button>
+        ) : (
+          <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-slate-500 border border-slate-700/60 px-1.5 py-0.5 rounded pointer-events-none">
+            Ctrl K
+          </span>
+        )}
 
         {/* Global Search Results Dropdown */}
         {showSearchDropdown && (
-          <div className="hud-search-results absolute top-full left-0 z-50 overflow-y-auto"
-            style={{ width: "100%", maxHeight: 320, padding: "0.5rem" }}>
-            <div style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                color: 'var(--outline)',
-                padding: '0.25rem 0.5rem',
-                marginBottom: '0.25rem',
-              }}>
+          <div className="hud-search-results absolute top-full left-0 z-50 w-full max-h-80 overflow-y-auto p-2">
+            <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500 font-semibold px-2 py-1">
               Matching CRM Leads ({searchResults.length})
             </div>
             {searchResults.length === 0 ? (
-              <div style={{
-                  padding: '1rem',
-                  textAlign: 'center',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 12,
-                  color: 'var(--on-surface-variant)',
-                }}>
+              <div className="p-4 text-center text-xs font-mono text-slate-400">
                 No matching leads found for "{searchQuery}"
               </div>
             ) : (
-              <div className="space-y-1 mt-1">
+              <div className="space-y-0.5 mt-1">
                 {searchResults.slice(0, 6).map((lead) => (
                   <button
                     key={lead.lead_id}
@@ -131,63 +98,22 @@ export const Header: React.FC<HeaderProps> = ({
                       onSelectLead(lead);
                       setShowSearchDropdown(false);
                     }}
-                    className="w-full text-left flex items-center justify-between px-2 py-2 transition-colors"
-                    style={{
-                      borderBottom: '1px solid var(--hud-border-dim)',
-                      background: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                      borderRadius: 0,
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-container-high)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                    className="w-full text-left flex items-center justify-between px-2.5 py-2 rounded-md hover:bg-mca-hover transition"
                   >
-                    <div>
-                      <div style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 12,
-                        fontWeight: 700,
-                        color: 'var(--on-surface)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                      }}>
-                        <span>{lead.business_name}</span>
-                        <span style={{
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: 9,
-                            padding: '0 4px',
-                            background: 'var(--surface-container)',
-                            color: 'var(--on-surface-variant)',
-                          }}>
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-white flex items-center gap-1.5">
+                        <span className="truncate">{lead.business_name}</span>
+                        <span className="text-[9px] font-mono px-1 rounded bg-slate-800 text-slate-400">
                           {lead.lead_id}
                         </span>
                       </div>
-                      <div style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 10,
-                        color: 'var(--on-surface-variant)',
-                        marginTop: 2,
-                      }}>
-                        <span>{lead.niche}</span>
-                        <span>·</span>
-                        <span>{lead.city}, {lead.state}</span>
+                      <div className="text-[10px] font-mono text-slate-400 mt-0.5">
+                        {lead.niche} · {lead.city}, {lead.state}
                       </div>
                     </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 12,
-                        fontWeight: 700,
-                        color: 'var(--primary-container)',
-                      }}>
-                        {lead.lead_score}/100
-                      </div>
-                      <div style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 10,
-                        color: 'var(--on-surface-variant)',
-                      }}>
+                    <div className="text-right shrink-0 pl-3">
+                      <div className="text-xs font-mono font-bold text-mca-neonGreen">{lead.lead_score}/100</div>
+                      <div className="text-[10px] font-mono text-slate-400">
                         ${lead.estimated_retainer?.toLocaleString()}/mo
                       </div>
                     </div>
@@ -199,119 +125,52 @@ export const Header: React.FC<HeaderProps> = ({
         )}
       </div>
 
-      {/* Header Actions */}
-      <div className="flex items-center gap-3">
-        {/* AI Assistant (Sophia) Button */}
+      {/* Right: Sophia AI Action & User Indicator */}
+      <div className="flex items-center gap-4">
         <button
           id="header-btn-sophia"
           onClick={onOpenSophia}
-          className="hud-btn-sophia"
+          className="relative px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-purple-700 via-indigo-600 to-purple-600 hover:from-purple-600 hover:to-indigo-500 text-white text-xs font-semibold flex items-center gap-2 shadow-neon-purple transition transform active:scale-95 border border-purple-400/40"
         >
-          <Sparkles
-            size={14}
-            style={{
-              color: 'var(--primary-container)',
-              animation: 'hud-blink 1.4s ease-in-out infinite',
-            }}
-          />
+          <i className="fa-solid fa-wand-magic-sparkles text-cyan-300"></i>
           <span>Ask Sophia</span>
-          <span
-            style={{
-              background: 'var(--primary-container)',
-              color: '#002110',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              padding: '0.125rem 0.375rem',
-              marginLeft: 2,
-            }}
-          >
-            AI
-          </span>
+          <span className="w-2 h-2 rounded-full bg-mca-neonGreen animate-ping"></span>
         </button>
-
-        <div style={{ width: 1, height: 20, background: "var(--hud-border-base)" }} />
 
         {/* Notifications */}
         <div className="relative">
           <button
             id="header-btn-notifications"
-            onClick={() => setShowNotifications(!showNotifications)}
-            style={{
-              padding: '0.5rem',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--on-surface-variant)',
-              position: 'relative',
-              display: 'flex',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--on-surface)')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--on-surface-variant)')}
+            onClick={() => setShowNotifications((v) => !v)}
+            className="relative w-8 h-8 rounded-lg bg-mca-card hover:bg-mca-hover border border-white/10 text-slate-400 hover:text-white flex items-center justify-center transition"
+            aria-label="Notifications"
           >
-            <Bell size={16} />
+            <i className="fa-regular fa-bell text-xs"></i>
             {notificationsCount > 0 && (
-              <span style={{
-                  position: 'absolute',
-                  top: 6,
-                  right: 6,
-                  width: 6,
-                  height: 6,
-                  borderRadius: '50%',
-                  background: 'var(--primary-container)',
-                  border: '2px solid var(--hud-obsidian)',
-                }} />
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-mca-neonGreen ring-2 ring-mca-surface"></span>
             )}
           </button>
 
           {showNotifications && (
-            <div className="hud-panel absolute right-0 top-full z-50"
-              style={{ width: 320, marginTop: 8, padding: "0.75rem" }}>
-              <div className="flex items-center justify-between pb-2"
-                style={{ borderBottom: '1px solid var(--hud-border-base)', marginBottom: '0.5rem' }}>
-                <span style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: 'var(--on-surface)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.06em',
-                }}>Lead Intelligence Feed</span>
-                <span style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 9,
-                  color: 'var(--primary-container)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                }}>
-                  <CheckCircle2 size={10} /> System Active
+            <div className="hud-search-results absolute right-0 top-full z-50 w-80 p-3">
+              <div className="flex items-center justify-between pb-2 mb-2 border-b border-mca-border">
+                <span className="text-[11px] font-mono font-bold text-white uppercase tracking-wider">
+                  Lead Intelligence Feed
+                </span>
+                <span className="text-[10px] font-mono text-mca-neonGreen flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-mca-neonGreen animate-pulse"></span>
+                  System Active
                 </span>
               </div>
-              <div className="py-2 space-y-2 text-xs">
-                <div style={{
-                    padding: '0.5rem',
-                    background: 'var(--surface-container)',
-                    borderLeft: '2px solid var(--primary-container)',
-                  }}>
-                  <div style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: 'var(--on-surface)',
-                    }}>West Coast Plumbing Audit</div>
-                  <div style={{
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 10,
-                      color: 'var(--on-surface-variant)',
-                      marginTop: 2,
-                    }}>
+              <div className="space-y-2">
+                <div className="p-2.5 rounded-lg bg-mca-card hud-border-green">
+                  <div className="text-xs font-bold text-white">West Coast Plumbing Audit</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">
                     PageSpeed latency 28/100 flagged. $2,400/mo retainer pitch ready.
                   </div>
                 </div>
-                <div className="p-2 rounded-lg bg-slate-800/50 border border-slate-800">
-                  <div className="font-semibold text-slate-200">Crown Plumbing PDX</div>
+                <div className="p-2.5 rounded-lg bg-mca-card hud-border-cyan">
+                  <div className="text-xs font-bold text-white">Crown Plumbing PDX</div>
                   <div className="text-[11px] text-slate-400 mt-0.5">
                     No website detected despite 18 5-star Google reviews.
                   </div>
@@ -321,40 +180,15 @@ export const Header: React.FC<HeaderProps> = ({
           )}
         </div>
 
-        {/* Agency Profile */}
-        <div className="flex items-center gap-2 pl-1">
-          <div style={{
-              width: 32,
-              height: 32,
-              background: 'var(--secondary-container)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 11,
-              fontWeight: 700,
-              color: 'var(--secondary)',
-              flexShrink: 0,
-            }}>
+        <div className="h-4 w-px bg-mca-border"></div>
+
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-full bg-slate-800 border border-mca-border flex items-center justify-center font-mono text-xs font-bold text-cyan-400">
             MC
           </div>
-          <div className="hidden lg:block">
-            <div style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 11,
-                fontWeight: 700,
-                color: 'var(--on-surface)',
-                lineHeight: 1.2,
-              }}>
-              Marketing Charm
-            </div>
-            <div style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 9,
-                color: 'var(--outline)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-              }}>Sophia • AI Sales Rep</div>
+          <div className="text-right hidden sm:block">
+            <div className="text-xs font-bold text-white leading-none">Marketing Charm</div>
+            <div className="text-[10px] font-mono text-slate-400">Sophia • AI Sales Rep</div>
           </div>
         </div>
       </div>

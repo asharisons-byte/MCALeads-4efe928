@@ -3,6 +3,8 @@ import { onAuthStateChanged, signInWithPopup, User } from 'firebase/auth';
 import { auth, googleAuthProvider } from './lib/firebase';
 import { Sidebar, NavigationItem } from './components/Sidebar';
 import { Header } from './components/Header';
+import { QuickActionDock } from './components/QuickActionDock';
+import { generateAgencyAlerts, getCampaigns } from './services/commandCenterService';
 import { Dashboard } from './components/Dashboard';
 import { LeadsPage } from './components/LeadsPage';
 import { LeadsTable } from './components/LeadsTable';
@@ -109,6 +111,15 @@ export function App() {
         l.opportunity_angle?.toLowerCase().includes(q)
     );
   }, [leads, searchQuery]);
+
+  // Open agency action alerts (drives the footer dock badge)
+  const agencyAlertsCount = useMemo(() => {
+    try {
+      return generateAgencyAlerts(leads || [], getFollowUpTasks(), getCampaigns()).length;
+    } catch {
+      return 0;
+    }
+  }, [leads]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -472,7 +483,7 @@ export function App() {
   }
 
   return (
-    <div id="mca-app-root" className="hud-app-shell flex h-screen text-slate-100 antialiased overflow-hidden font-sans">
+    <div id="mca-app-root" className="flex h-screen text-slate-300 antialiased overflow-hidden font-sans selection:bg-mca-neonGreen selection:text-black">
       {/* Sidebar */}
       <Sidebar
         currentTab={currentTab}
@@ -492,7 +503,7 @@ export function App() {
       />
       
       {/* Main Content Area */}
-      <div className="hud-main-shell flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-mca-bg">
         {/* Header */}
         <Header
           searchQuery={searchQuery}
@@ -518,7 +529,7 @@ export function App() {
               onDeleteNote={handleDeleteNote}
             />
           ) : currentTab === 'command_center' ? (
-            <div className="p-6 max-w-7xl mx-auto">
+            <div className="p-5">
               <CommandCenter
                 leads={leads}
                 activities={activities}
@@ -609,7 +620,7 @@ export function App() {
               }}
             />
           ) : currentTab === 'ai_workforce' || currentTab === 'ai_approvals' ? (
-            <div className="p-6 max-w-7xl mx-auto">
+            <div className="p-5">
               <AIWorkforceCenter
                 leads={leads}
                 onOpenEmailComposer={(lead) => setComposerLead(lead)}
@@ -626,6 +637,7 @@ export function App() {
               onOpenSophia={() => setSophiaModalOpen(true)}
               onNavigateToLeads={() => setCurrentTab('leads')}
               onNavigateToPipeline={() => setCurrentTab('pipeline')}
+              onNavigateTab={(t) => setCurrentTab(t === 'revenue' ? 'revenue' : t === 'ai_workforce' ? 'ai_workforce' : 'command_center')}
             />
           ) : currentTab === 'lead_intelligence' ? (
             <LeadIntelligenceView
@@ -699,7 +711,7 @@ export function App() {
               onUpdateStage={(leadId, stage) => handleUpdateLead(leadId, { pipeline_stage: stage })}
             />
           ) : currentTab === 'audits_proposals' ? (
-            <div className="p-6 max-w-7xl mx-auto">
+            <div className="p-5">
               <AuditsProposalsView
                 leads={leads}
                 onSelectLead={(lead) => setSelectedLead(lead)}
@@ -783,6 +795,48 @@ export function App() {
             />
           )}
         </main>
+
+        {/* Quick Action Dock (Stitch footer) */}
+        <QuickActionDock
+          alertsCount={agencyAlertsCount}
+          onNewLead={() => setAddLeadModalOpen(true)}
+          onSophiaCall={() => {
+            const normalizedRole = normalizeAppRole(currentUserRole || '') || currentUserRole;
+            if (['SDR', 'APPOINTMENT_SETTER', 'OUTREACH_SPECIALIST'].includes(normalizedRole as string)) {
+              alert('AI calling is not available for your role. Please use the manual dialer.');
+              return;
+            }
+            const target = selectedLead || leads.find((l) => l.is_hot_target) || leads[0];
+            if (target) setSophiaAICallLead(target);
+            else setAddLeadModalOpen(true);
+          }}
+          onOpenDialer={() => {
+            setDialerLead(selectedLead || null);
+            setDialerPhoneNumber(selectedLead?.phone || '');
+            setDialerModalOpen(true);
+          }}
+          onEmail={() => {
+            const target = selectedLead || leads[0];
+            if (target) setComposerLead(target);
+          }}
+          onSMS={() => {
+            const target = selectedLead || leads[0];
+            if (target) setSmsComposerLead(target);
+          }}
+          onDataQuality={() => {
+            setSelectedLead(null);
+            setCurrentTab('command_center');
+          }}
+          onExport={() => {
+            setSelectedLead(null);
+            setCurrentTab('leads');
+          }}
+          onSearchCRM={() => document.getElementById('global-search-input')?.focus()}
+          onAlerts={() => {
+            setSelectedLead(null);
+            setCurrentTab('command_center');
+          }}
+        />
       </div>
 
       {/* Import Modal */}

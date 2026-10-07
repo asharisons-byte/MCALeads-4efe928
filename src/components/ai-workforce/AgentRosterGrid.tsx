@@ -134,7 +134,7 @@ export const AgentRosterGrid: React.FC<AgentRosterGridProps> = ({
                 <button
                   onClick={() => onLaunchTask(agent)}
                   disabled={agent.is_paused}
-                  className="px-2.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-xs font-semibold flex items-center space-x-1 transition-colors shadow-sm"
+                  className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg text-xs font-semibold flex items-center space-x-1 transition-colors shadow-sm"
                 >
                   <Zap className="w-3 h-3" />
                   <span>Run Task</span>

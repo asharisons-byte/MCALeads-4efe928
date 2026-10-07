@@ -306,7 +306,7 @@ export const ImportLeadsPage: React.FC<ImportLeadsPageProps> = ({
               onClick={() => setInputMode('upload')}
               className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2 ${
                 inputMode === 'upload'
-                  ? 'bg-indigo-600 text-white shadow-sm'
+                  ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -318,7 +318,7 @@ export const ImportLeadsPage: React.FC<ImportLeadsPageProps> = ({
               onClick={() => setInputMode('paste')}
               className={`px-4 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2 ${
                 inputMode === 'paste'
-                  ? 'bg-indigo-600 text-white shadow-sm'
+                  ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -361,7 +361,7 @@ export const ImportLeadsPage: React.FC<ImportLeadsPageProps> = ({
               </p>
               <button
                 type="button"
-                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30"
+                className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-indigo-600/30"
               >
                 Browse Computer (.csv, .xlsx)
               </button>
@@ -397,7 +397,7 @@ export const ImportLeadsPage: React.FC<ImportLeadsPageProps> = ({
                   type="button"
                   disabled={!pastedContent.trim() || isProcessing}
                   onClick={handleProcessPastedData}
-                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-2 shadow-md"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-2 shadow-md"
                 >
                   <span>Process &amp; Map CSV Data</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -436,7 +436,7 @@ export const ImportLeadsPage: React.FC<ImportLeadsPageProps> = ({
                 </button>
                 <button
                   onClick={handleLoadAttachedCCBLeads}
-                  className="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                  className="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm"
                 >
                   <CheckCircle2 className="w-3.5 h-3.5" />
                   <span>Load 202 CCB Leads</span>
@@ -571,7 +571,7 @@ export const ImportLeadsPage: React.FC<ImportLeadsPageProps> = ({
             </button>
             <button
               onClick={handleProceedToPreview}
-              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-indigo-600/30"
+              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-indigo-600/30"
             >
               <span>Preview &amp; Dedupe</span>
               <ArrowRight className="w-4 h-4" />
@@ -678,7 +678,7 @@ export const ImportLeadsPage: React.FC<ImportLeadsPageProps> = ({
             </button>
             <button
               onClick={() => setStep(4)}
-              className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-indigo-600/30"
+              className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-indigo-600/30"
             >
               <span>Continue to Pre-Flight Check</span>
               <ArrowRight className="w-4 h-4" />
@@ -764,7 +764,7 @@ export const ImportLeadsPage: React.FC<ImportLeadsPageProps> = ({
           </div>
           <div className="w-full max-w-md mx-auto bg-slate-800 rounded-full h-3 overflow-hidden">
             <div
-              className="bg-indigo-600 h-full rounded-full transition-all duration-300 ease-out"
+              className="bg-blue-600 h-full rounded-full transition-all duration-300 ease-out"
               style={{ width: `${importProgress}%` }}
             />
           </div>
@@ -795,7 +795,7 @@ export const ImportLeadsPage: React.FC<ImportLeadsPageProps> = ({
             </button>
             <button
               onClick={onNavigateToLeads}
-              className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-indigo-600/30"
+              className="px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-indigo-600/30"
             >
               <span>View All Leads in CRM</span>
               <ArrowRight className="w-4 h-4" />

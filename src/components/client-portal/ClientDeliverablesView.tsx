@@ -104,31 +104,31 @@ export const ClientDeliverablesView: React.FC<ClientDeliverablesViewProps> = ({
     switch (status) {
       case 'Approved':
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-950/50 dark:bg-emerald-950/40 text-emerald-300 dark:text-emerald-400 border border-emerald-800/50 dark:border-emerald-800 flex items-center gap-1">
             <CheckCircle className="w-3 h-3" /> Approved
           </span>
         );
       case 'Ready for Review':
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center gap-1 animate-pulse">
+          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-950/50 dark:bg-amber-950/40 text-amber-300 dark:text-amber-400 border border-amber-800/50 dark:border-amber-800 flex items-center gap-1 animate-pulse">
             <Clock className="w-3 h-3" /> Ready for Review
           </span>
         );
       case 'Revision Requested':
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-400 border border-purple-200 dark:border-purple-800 flex items-center gap-1">
+          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-purple-950/50 dark:bg-purple-950/40 text-purple-300 dark:text-purple-400 border border-purple-800/50 dark:border-purple-800 flex items-center gap-1">
             <RotateCcw className="w-3 h-3" /> Revision Requested
           </span>
         );
       case 'Delivered':
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center gap-1">
+          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-950/50 dark:bg-blue-950/40 text-blue-300 dark:text-blue-400 border border-blue-800/50 dark:border-blue-800 flex items-center gap-1">
             <CheckCircle className="w-3 h-3" /> Delivered
           </span>
         );
       default:
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center gap-1">
+          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-mca-hover dark:bg-slate-800 text-slate-200 dark:text-slate-300 border border-white/10 dark:border-slate-700 flex items-center gap-1">
             <Clock className="w-3 h-3" /> In Progress
           </span>
         );
@@ -138,9 +138,9 @@ export const ClientDeliverablesView: React.FC<ClientDeliverablesViewProps> = ({
   return (
     <div className="space-y-6">
       {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-mca-card dark:bg-slate-900 p-6 rounded-xl border border-white/10 dark:border-slate-800 shadow-sm">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+          <h2 className="text-xl font-bold text-white dark:text-white">
             Client Deliverables Center
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -156,8 +156,8 @@ export const ClientDeliverablesView: React.FC<ClientDeliverablesViewProps> = ({
               onClick={() => setFilterStatus(status)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
                 filterStatus === status
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'bg-mca-hover dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-700 dark:hover:bg-slate-700'
               }`}
             >
               {status}
@@ -167,7 +167,7 @@ export const ClientDeliverablesView: React.FC<ClientDeliverablesViewProps> = ({
       </div>
 
       {downloadNotice && (
-        <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs flex items-center justify-between shadow-sm animate-fadeIn">
+        <div className="p-4 rounded-xl bg-emerald-950/50 dark:bg-emerald-950/40 border border-emerald-800/50 dark:border-emerald-800 text-emerald-300 dark:text-emerald-300 text-xs flex items-center justify-between shadow-sm animate-fadeIn">
           <span className="flex items-center gap-2">
             <CheckCircle className="w-4 h-4 text-emerald-600" />
             {downloadNotice}
@@ -183,7 +183,7 @@ export const ClientDeliverablesView: React.FC<ClientDeliverablesViewProps> = ({
         {filteredDeliverables.map((del) => (
           <div
             key={del.deliverable_id}
-            className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm hover:border-indigo-200 dark:hover:border-indigo-900/60 transition-all flex flex-col justify-between space-y-4"
+            className="bg-mca-card dark:bg-slate-900 rounded-xl border border-white/10 dark:border-slate-800 p-6 shadow-sm hover:border-indigo-800/50 dark:hover:border-indigo-900/60 transition-all flex flex-col justify-between space-y-4"
           >
             <div>
               <div className="flex items-start justify-between gap-3 mb-2">
@@ -193,14 +193,14 @@ export const ClientDeliverablesView: React.FC<ClientDeliverablesViewProps> = ({
                 {getStatusBadge(del.status)}
               </div>
 
-              <h3 className="text-base font-bold text-slate-900 dark:text-white leading-snug">
+              <h3 className="text-base font-bold text-white dark:text-white leading-snug">
                 {del.title}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
                 {del.summary}
               </p>
 
-              <div className="flex items-center gap-3 text-[11px] text-slate-400 dark:text-slate-500 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-3 text-[11px] text-slate-400 dark:text-slate-500 mt-3 pt-3 border-t border-white/5 dark:border-slate-800">
                 <span className="flex items-center gap-1 font-mono">
                   <FileText className="w-3.5 h-3.5" />
                   {del.file_type} ({del.file_size})
@@ -220,18 +220,18 @@ export const ClientDeliverablesView: React.FC<ClientDeliverablesViewProps> = ({
             </div>
 
             {/* Action Bar */}
-            <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800/80">
+            <div className="pt-2 flex flex-wrap items-center justify-between gap-2 border-t border-white/5 dark:border-slate-800/80">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setSelectedDeliverable(del)}
-                  className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                  className="px-3 py-1.5 rounded-lg bg-mca-hover dark:bg-slate-800 hover:bg-slate-700 dark:hover:bg-slate-700 text-slate-200 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
                 >
                   <Eye className="w-3.5 h-3.5 text-slate-500" />
                   <span>View Details</span>
                 </button>
                 <button
                   onClick={() => handleDownload(del)}
-                  className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+                  className="px-3 py-1.5 rounded-lg border border-white/10 dark:border-slate-700 hover:bg-mca-void/40 dark:hover:bg-slate-800 text-slate-200 dark:text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors"
                 >
                   <Download className="w-3.5 h-3.5 text-indigo-500" />
                   <span>Download</span>
@@ -246,7 +246,7 @@ export const ClientDeliverablesView: React.FC<ClientDeliverablesViewProps> = ({
                       setSelectedDeliverable(del);
                       setShowRevisionModal(true);
                     }}
-                    className="px-3 py-1.5 rounded-lg border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/40 text-xs font-semibold transition-colors"
+                    className="px-3 py-1.5 rounded-lg border border-purple-800/50 dark:border-purple-800 text-purple-300 dark:text-purple-300 hover:bg-purple-950/50 dark:hover:bg-purple-950/40 text-xs font-semibold transition-colors"
                   >
                     Request Revision
                   </button>
@@ -267,9 +267,9 @@ export const ClientDeliverablesView: React.FC<ClientDeliverablesViewProps> = ({
       {/* Deliverable Details Modal */}
       {selectedDeliverable && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+          <div className="bg-mca-card dark:bg-slate-900 border border-white/10 dark:border-slate-800 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-start justify-between bg-slate-50 dark:bg-slate-800/50">
+            <div className="px-6 py-4 border-b border-white/10 dark:border-slate-800 flex items-start justify-between bg-mca-void/40 dark:bg-slate-800/50">
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
@@ -278,7 +278,7 @@ export const ClientDeliverablesView: React.FC<ClientDeliverablesViewProps> = ({
                   <span>•</span>
                   {getStatusBadge(selectedDeliverable.status)}
                 </div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                <h3 className="text-base font-bold text-white dark:text-white">
                   {selectedDeliverable.title}
                 </h3>
               </div>
@@ -297,19 +297,19 @@ export const ClientDeliverablesView: React.FC<ClientDeliverablesViewProps> = ({
                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">
                   Deliverable Summary
                 </h4>
-                <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-800/40 p-3.5 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                <p className="text-xs text-slate-200 dark:text-slate-300 leading-relaxed bg-mca-void/40 dark:bg-slate-800/40 p-3.5 rounded-xl border border-white/10 dark:border-slate-700/60">
                   {selectedDeliverable.summary}
                 </p>
               </div>
 
               {/* File Specs & Download */}
-              <div className="flex items-center justify-between p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/30">
+              <div className="flex items-center justify-between p-4 rounded-xl border border-white/10 dark:border-slate-800 bg-mca-void/50 dark:bg-slate-800/30">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-950/50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
                     <FileText className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-slate-900 dark:text-white">
+                    <div className="text-xs font-bold text-white dark:text-white">
                       {selectedDeliverable.file_type}
                     </div>
                     <div className="text-[11px] text-slate-400">
@@ -319,7 +319,7 @@ export const ClientDeliverablesView: React.FC<ClientDeliverablesViewProps> = ({
                 </div>
                 <button
                   onClick={() => handleDownload(selectedDeliverable)}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Download Document</span>
@@ -339,19 +339,19 @@ export const ClientDeliverablesView: React.FC<ClientDeliverablesViewProps> = ({
                       key={comment.id}
                       className={`p-3.5 rounded-xl text-xs ${
                         comment.author_role === 'Client'
-                          ? 'bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 ml-4'
-                          : 'bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 mr-4'
+                          ? 'bg-indigo-950/50 dark:bg-indigo-950/30 border border-indigo-900/40 dark:border-indigo-900/40 ml-4'
+                          : 'bg-mca-hover dark:bg-slate-800/80 border border-white/10 dark:border-slate-700 mr-4'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-bold text-slate-900 dark:text-slate-100">
+                        <span className="font-bold text-white dark:text-slate-100">
                           {comment.author_name} ({comment.author_role})
                         </span>
                         <span className="text-[10px] text-slate-400 font-mono">
                           {new Date(comment.timestamp).toLocaleDateString()}
                         </span>
                       </div>
-                      <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                      <p className="text-slate-200 dark:text-slate-300 leading-relaxed">
                         {comment.message}
                       </p>
                     </div>
@@ -373,12 +373,12 @@ export const ClientDeliverablesView: React.FC<ClientDeliverablesViewProps> = ({
                       if (e.key === 'Enter') handleAddComment();
                     }}
                     placeholder="Add feedback or question regarding this deliverable..."
-                    className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-xl px-4 py-2.5 focus:outline-none focus:border-indigo-500"
+                    className="flex-1 bg-mca-void/40 dark:bg-slate-800 border border-white/10 dark:border-slate-700 text-xs rounded-xl px-4 py-2.5 focus:outline-none focus:border-indigo-500"
                   />
                   <button
                     onClick={handleAddComment}
                     disabled={!commentText.trim()}
-                    className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold flex items-center gap-1"
+                    className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-semibold flex items-center gap-1"
                   >
                     <span>Post</span>
                     <Send className="w-3 h-3" />
@@ -389,10 +389,10 @@ export const ClientDeliverablesView: React.FC<ClientDeliverablesViewProps> = ({
 
             {/* Modal Footer Review Controls */}
             {selectedDeliverable.status === 'Ready for Review' && (
-              <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 flex items-center justify-end gap-3">
+              <div className="p-4 border-t border-white/10 dark:border-slate-800 bg-mca-void/40 dark:bg-slate-800/40 flex items-center justify-end gap-3">
                 <button
                   onClick={() => setShowRevisionModal(true)}
-                  className="px-4 py-2 rounded-xl border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 text-xs font-semibold"
+                  className="px-4 py-2 rounded-xl border border-purple-800/50 dark:border-purple-800 text-purple-300 dark:text-purple-300 hover:bg-purple-950/50 text-xs font-semibold"
                 >
                   Request Revision
                 </button>
@@ -412,8 +412,8 @@ export const ClientDeliverablesView: React.FC<ClientDeliverablesViewProps> = ({
       {/* Revision Request Modal */}
       {showRevisionModal && selectedDeliverable && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-lg p-6 space-y-4">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <div className="bg-mca-card dark:bg-slate-900 border border-white/10 dark:border-slate-800 rounded-xl shadow-2xl w-full max-w-lg p-6 space-y-4">
+            <h3 className="text-base font-bold text-white dark:text-white flex items-center gap-2">
               <RotateCcw className="w-4 h-4 text-purple-600" />
               Request Revision on Deliverable
             </h3>
@@ -427,13 +427,13 @@ export const ClientDeliverablesView: React.FC<ClientDeliverablesViewProps> = ({
               value={revisionNotes}
               onChange={(e) => setRevisionNotes(e.target.value)}
               placeholder="Detail the adjustments required (e.g., update phone number, add Beaverton zip codes, refine headline copy)..."
-              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs rounded-xl p-3 focus:outline-none focus:border-indigo-500"
+              className="w-full bg-mca-void/40 dark:bg-slate-800 border border-white/10 dark:border-slate-700 text-xs rounded-xl p-3 focus:outline-none focus:border-indigo-500"
             />
 
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 onClick={() => setShowRevisionModal(false)}
-                className="px-3 py-2 text-xs font-semibold text-slate-500 hover:text-slate-700"
+                className="px-3 py-2 text-xs font-semibold text-slate-500 hover:text-slate-200"
               >
                 Cancel
               </button>

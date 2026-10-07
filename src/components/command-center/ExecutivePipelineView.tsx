@@ -101,9 +101,9 @@ export const ExecutivePipelineView: React.FC<ExecutivePipelineViewProps> = ({
     <div className="space-y-6">
       {/* 1. PIPELINE BOTTLENECK DETECTION BANNER */}
       {bottlenecks.length > 0 && (
-        <div className="p-5 bg-amber-500/10 border border-amber-200 rounded-3xl space-y-3">
-          <div className="flex items-center gap-2 text-amber-900 font-black text-sm">
-            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+        <div className="p-5 bg-amber-500/10 border border-amber-800/50 rounded-xl space-y-3">
+          <div className="flex items-center gap-2 text-amber-300 font-black text-sm">
+            <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
             <span>Sophia Pipeline Bottleneck Detection</span>
           </div>
 
@@ -111,21 +111,21 @@ export const ExecutivePipelineView: React.FC<ExecutivePipelineViewProps> = ({
             {bottlenecks.map((b, idx) => (
               <div
                 key={idx}
-                className="p-3.5 bg-white rounded-2xl border border-amber-200 shadow-2xs space-y-1.5 text-xs"
+                className="p-3.5 bg-mca-card rounded-xl border border-amber-800/50 space-y-1.5 text-xs"
               >
                 <div className="flex items-center justify-between font-bold">
-                  <span className="text-amber-900">{b.stage} Stage Stalled</span>
-                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                  <span className="text-amber-300">{b.stage} Stage Stalled</span>
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-950 text-amber-300">
                     {b.stalled_count} Leads Stuck
                   </span>
                 </div>
-                <p className="text-slate-600 text-[11px]">
+                <p className="text-slate-300 text-[11px]">
                   <strong>Issue:</strong> {b.potential_issue}
                 </p>
-                <p className="text-indigo-900 font-semibold text-[11px]">
+                <p className="text-indigo-300 font-semibold text-[11px]">
                   <strong>Action:</strong> {b.recommended_action}
                 </p>
-                <div className="pt-1 text-[10px] text-slate-400">
+                <div className="pt-1 text-[10px] text-slate-500">
                   Stalled prospects: {b.stalled_lead_names.join(', ')}
                 </div>
               </div>
@@ -135,15 +135,15 @@ export const ExecutivePipelineView: React.FC<ExecutivePipelineViewProps> = ({
       )}
 
       {/* 2. VISUAL LEAD CONVERSION FUNNEL */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+      <div className="bg-mca-card rounded-xl p-6 border border-white/10">
+        <div className="flex items-center justify-between pb-4 border-b border-white/5">
           <div>
-            <h3 className="text-base font-black text-slate-900">Visual Lead Conversion Funnel</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h3 className="text-base font-black text-white">Visual Lead Conversion Funnel</h3>
+            <p className="text-xs text-slate-400 mt-0.5">
               End-to-end progression from Oregon discovery to confirmed won client retainer
             </p>
           </div>
-          <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
+          <span className="text-xs font-bold text-indigo-400 bg-indigo-950/50 px-3 py-1 rounded-full">
             Full Agency Funnel
           </span>
         </div>
@@ -152,18 +152,18 @@ export const ExecutivePipelineView: React.FC<ExecutivePipelineViewProps> = ({
           {funnelSteps.map((step, idx) => (
             <div
               key={idx}
-              className="p-3.5 bg-slate-50/70 rounded-2xl border border-slate-200 text-center space-y-1.5 relative overflow-hidden"
+              className="p-3.5 bg-mca-void/70 rounded-xl border border-white/10 text-center space-y-1.5 relative overflow-hidden"
             >
-              <div className="text-[11px] font-bold text-slate-600">{step.name}</div>
-              <div className="text-2xl font-black text-slate-900">{step.count}</div>
-              <div className="text-[10px] text-indigo-600 font-semibold">{step.pct}% of top</div>
+              <div className="text-[11px] font-bold text-slate-300">{step.name}</div>
+              <div className="text-2xl font-black text-white">{step.count}</div>
+              <div className="text-[10px] text-indigo-400 font-semibold">{step.pct}% of top</div>
               {idx > 0 && step.dropOff > 0 && (
-                <div className="text-[9px] text-slate-400">-{step.dropOff}% drop-off</div>
+                <div className="text-[9px] text-slate-500">-{step.dropOff}% drop-off</div>
               )}
               {/* Colored bottom bar */}
               <div
                 className={`absolute bottom-0 left-0 right-0 h-1 ${
-                  idx === 5 ? 'bg-emerald-500' : 'bg-indigo-500'
+                  idx === 5 ? 'bg-emerald-500' : 'bg-blue-500'
                 }`}
               />
             </div>
@@ -172,21 +172,21 @@ export const ExecutivePipelineView: React.FC<ExecutivePipelineViewProps> = ({
       </div>
 
       {/* 3. STAGE PERFORMANCE & PIPELINE VOLUME TABLE */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+      <div className="bg-mca-card rounded-xl p-6 border border-white/10">
+        <div className="flex items-center justify-between pb-4 border-b border-white/5">
           <div>
-            <h3 className="text-base font-black text-slate-900">Pipeline Stage Health & Volume</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h3 className="text-base font-black text-white">Pipeline Stage Health & Volume</h3>
+            <p className="text-xs text-slate-400 mt-0.5">
               Lead counts, pipeline dollar values, and velocity benchmarks across active stages
             </p>
           </div>
-          <span className="text-xs text-slate-400">Total Pipeline: {totalLeads} Records</span>
+          <span className="text-xs text-slate-500">Total Pipeline: {totalLeads} Records</span>
         </div>
 
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-100 text-slate-400 uppercase text-[10px] tracking-wider">
+              <tr className="border-b border-white/5 text-slate-500 uppercase text-[10px] tracking-wider">
                 <th className="pb-3 font-semibold">Stage</th>
                 <th className="pb-3 font-semibold text-right">Lead Count</th>
                 <th className="pb-3 font-semibold text-right">Pipeline Value</th>
@@ -195,7 +195,7 @@ export const ExecutivePipelineView: React.FC<ExecutivePipelineViewProps> = ({
                 <th className="pb-3 font-semibold text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-white/5">
               {stages.map((st, idx) => {
                 const stageLeads = leads.filter((l) => {
                   if (st.stage === 'Won') return l.pipeline_stage === 'Won' || l.pipeline_stage === 'Retainer';
@@ -206,19 +206,19 @@ export const ExecutivePipelineView: React.FC<ExecutivePipelineViewProps> = ({
                 const avgRetainer = count > 0 ? Math.round(value / count) : 0;
 
                 return (
-                  <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3 font-bold text-slate-900 flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-indigo-600" />
+                  <tr key={idx} className="hover:bg-mca-void/80 transition-colors">
+                    <td className="py-3 font-bold text-white flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-blue-600" />
                       <span>{st.label}</span>
                     </td>
-                    <td className="py-3 text-right font-bold text-slate-800">{count}</td>
-                    <td className="py-3 text-right font-black text-slate-900">
+                    <td className="py-3 text-right font-bold text-slate-100">{count}</td>
+                    <td className="py-3 text-right font-black text-white">
                       ${value.toLocaleString()}
                     </td>
-                    <td className="py-3 text-right text-slate-600">
+                    <td className="py-3 text-right text-slate-300">
                       ${avgRetainer.toLocaleString()}/mo
                     </td>
-                    <td className="py-3 text-right text-slate-500">
+                    <td className="py-3 text-right text-slate-400">
                       {st.stage === 'New Lead'
                         ? '1.2d'
                         : st.stage === 'Contacted'
@@ -232,7 +232,7 @@ export const ExecutivePipelineView: React.FC<ExecutivePipelineViewProps> = ({
                     <td className="py-3 text-right">
                       <button
                         onClick={() => onFilterByStage && onFilterByStage(st.stage)}
-                        className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-600 text-slate-700 font-semibold text-[11px] transition-colors"
+                        className="px-2.5 py-1 rounded-lg bg-mca-hover hover:bg-indigo-950/50 hover:text-indigo-400 text-slate-200 font-semibold text-[11px] transition-colors"
                       >
                         Filter Leads
                       </button>
@@ -246,39 +246,39 @@ export const ExecutivePipelineView: React.FC<ExecutivePipelineViewProps> = ({
       </div>
 
       {/* 4. LEAD SOURCE ANALYTICS */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+      <div className="bg-mca-card rounded-xl p-6 border border-white/10">
+        <div className="flex items-center justify-between pb-4 border-b border-white/5">
           <div>
-            <h3 className="text-base font-black text-slate-900">Lead Source Analytics</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h3 className="text-base font-black text-white">Lead Source Analytics</h3>
+            <p className="text-xs text-slate-400 mt-0.5">
               Evaluating discovery channel quality, qualification yield, and won revenue attribution
             </p>
           </div>
-          <span className="text-xs font-bold text-indigo-600">4 Discovery Channels</span>
+          <span className="text-xs font-bold text-indigo-400">4 Discovery Channels</span>
         </div>
 
         <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {leadSources.map((source, idx) => (
             <div
               key={idx}
-              className="p-4 bg-slate-50/60 rounded-2xl border border-slate-200 space-y-2 text-xs"
+              className="p-4 bg-mca-void/60 rounded-xl border border-white/10 space-y-2 text-xs"
             >
-              <div className="font-bold text-slate-900 text-sm">{source.source_name}</div>
-              <div className="flex justify-between text-slate-600 pt-1">
+              <div className="font-bold text-white text-sm">{source.source_name}</div>
+              <div className="flex justify-between text-slate-300 pt-1">
                 <span>Leads Generated:</span>
-                <span className="font-bold text-slate-800">{source.leads_generated}</span>
+                <span className="font-bold text-slate-100">{source.leads_generated}</span>
               </div>
-              <div className="flex justify-between text-slate-600">
+              <div className="flex justify-between text-slate-300">
                 <span>Qualified Leads:</span>
-                <span className="font-bold text-indigo-600">{source.qualified_leads}</span>
+                <span className="font-bold text-indigo-400">{source.qualified_leads}</span>
               </div>
-              <div className="flex justify-between text-slate-600">
+              <div className="flex justify-between text-slate-300">
                 <span>Conversion Rate:</span>
-                <span className="font-bold text-emerald-600">{source.conversion_rate}%</span>
+                <span className="font-bold text-emerald-400">{source.conversion_rate}%</span>
               </div>
-              <div className="flex justify-between text-slate-900 pt-1 border-t border-slate-200 font-black">
+              <div className="flex justify-between text-white pt-1 border-t border-white/10 font-black">
                 <span>Won Retainers:</span>
-                <span className="text-emerald-700">${source.revenue.toLocaleString()}/mo</span>
+                <span className="text-emerald-300">${source.revenue.toLocaleString()}/mo</span>
               </div>
             </div>
           ))}

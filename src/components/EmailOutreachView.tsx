@@ -196,7 +196,7 @@ export const EmailOutreachView: React.FC<EmailOutreachViewProps> = ({
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
+    <div className="p-5 space-y-6 animate-in fade-in duration-200">
       {/* TOP HEADER */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -215,7 +215,7 @@ export const EmailOutreachView: React.FC<EmailOutreachViewProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsBulkModalOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-2"
+            className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-2"
           >
             <Layers className="w-4 h-4" />
             <span>Bulk Prepare Drafts</span>
@@ -316,7 +316,7 @@ export const EmailOutreachView: React.FC<EmailOutreachViewProps> = ({
           </p>
           <button
             onClick={() => setIsBulkModalOpen(true)}
-            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-all inline-flex items-center gap-1.5"
+            className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-all inline-flex items-center gap-1.5"
           >
             <Sparkles className="w-4 h-4" />
             <span>Generate Drafts with Sophia</span>
@@ -546,7 +546,7 @@ export const EmailOutreachView: React.FC<EmailOutreachViewProps> = ({
                   </div>
                   <div className="w-full bg-slate-800 rounded-full h-2 overflow-hidden">
                     <div
-                      className="bg-indigo-600 h-2 transition-all duration-300"
+                      className="bg-blue-600 h-2 transition-all duration-300"
                       style={{
                         width: `${(bulkProgress.current / Math.max(bulkProgress.total, 1)) * 100}%`,
                       }}
@@ -633,7 +633,7 @@ export const EmailOutreachView: React.FC<EmailOutreachViewProps> = ({
                   <button
                     onClick={handleStartBulkGeneration}
                     disabled={bulkSelectedLeadIds.length === 0}
-                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-indigo-600/20"
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-indigo-600/20"
                   >
                     <Sparkles className="w-4 h-4" />
                     <span>Generate {bulkSelectedLeadIds.length} Drafts</span>

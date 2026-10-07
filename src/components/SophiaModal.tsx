@@ -174,7 +174,7 @@ export const SophiaModal: React.FC<SophiaModalProps> = ({
               }`}
             >
               {msg.sender === 'sophia' && (
-                <div className="w-7 h-7 rounded-lg bg-indigo-600 flex-shrink-0 flex items-center justify-center text-white text-xs mt-0.5">
+                <div className="w-7 h-7 rounded-lg bg-blue-600 flex-shrink-0 flex items-center justify-center text-white text-xs mt-0.5">
                   <Bot className="w-4 h-4" />
                 </div>
               )}
@@ -182,7 +182,7 @@ export const SophiaModal: React.FC<SophiaModalProps> = ({
               <div
                 className={`p-3.5 rounded-2xl max-w-[85%] space-y-1 ${
                   msg.sender === 'user'
-                    ? 'bg-indigo-600 text-white rounded-br-none shadow-sm'
+                    ? 'bg-blue-600 text-white rounded-br-none shadow-sm'
                     : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-bl-none shadow-sm'
                 }`}
               >
@@ -206,7 +206,7 @@ export const SophiaModal: React.FC<SophiaModalProps> = ({
 
           {isTyping && (
             <div className="flex gap-3 text-xs justify-start">
-              <div className="w-7 h-7 rounded-lg bg-indigo-600 flex-shrink-0 flex items-center justify-center text-white">
+              <div className="w-7 h-7 rounded-lg bg-blue-600 flex-shrink-0 flex items-center justify-center text-white">
                 <Bot className="w-4 h-4" />
               </div>
               <div className="p-3.5 rounded-2xl bg-slate-900 border border-slate-800 text-slate-400 rounded-bl-none flex items-center gap-1.5">
@@ -253,7 +253,7 @@ export const SophiaModal: React.FC<SophiaModalProps> = ({
             <button
               type="submit"
               disabled={!inputMessage.trim() || isTyping}
-              className="p-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white transition-colors"
+              className="p-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white transition-colors"
             >
               <Send className="w-4 h-4" />
             </button>

@@ -58,17 +58,17 @@ export const AuditGenerationModal: React.FC<AuditGenerationModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full flex flex-col overflow-hidden my-4">
+    <div className="fixed inset-0 z-50 bg-mca-hover/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-mca-card rounded-xl border border-white/10 shadow-2xl max-w-2xl w-full flex flex-col overflow-hidden my-4">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
+        <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-mca-void/80">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-slate-900">Generate AI Digital Audit</h2>
-              <p className="text-xs text-slate-500">
+              <h2 className="text-base font-bold text-white">Generate AI Digital Audit</h2>
+              <p className="text-xs text-slate-400">
                 Sophia AI evidence-based local growth scorecard and gap analysis
               </p>
             </div>
@@ -76,7 +76,7 @@ export const AuditGenerationModal: React.FC<AuditGenerationModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-1.5 text-slate-500 hover:text-slate-200 hover:bg-mca-hover rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -86,22 +86,22 @@ export const AuditGenerationModal: React.FC<AuditGenerationModalProps> = ({
         <div className="p-6 space-y-5 overflow-y-auto max-h-[75vh]">
           {/* Target Lead Selector */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-semibold text-slate-200 uppercase tracking-wider mb-2">
               Select Target Prospect
             </label>
 
             <div className="relative mb-2">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search leads by business name, city, or niche..."
-                className="w-full pl-9 pr-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                className="w-full pl-9 pr-3.5 py-2 text-xs bg-mca-void/40 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
               />
             </div>
 
-            <div className="max-h-40 overflow-y-auto space-y-1.5 border border-slate-200 rounded-xl p-2 bg-slate-50/50">
+            <div className="max-h-40 overflow-y-auto space-y-1.5 border border-white/10 rounded-xl p-2 bg-mca-void/50">
               {filteredLeads.map((lead) => (
                 <div
                   key={lead.lead_id}
@@ -109,20 +109,20 @@ export const AuditGenerationModal: React.FC<AuditGenerationModalProps> = ({
                   className={`p-2.5 rounded-lg text-xs cursor-pointer flex items-center justify-between transition-colors ${
                     selectedLeadId === lead.lead_id
                       ? 'bg-amber-500/10 border border-amber-500/30 text-amber-950 font-bold'
-                      : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-100'
+                      : 'bg-mca-card border border-white/10 text-slate-200 hover:bg-mca-hover'
                   }`}
                 >
                   <div className="flex items-center gap-2">
-                    <Building className="w-3.5 h-3.5 text-slate-400" />
+                    <Building className="w-3.5 h-3.5 text-slate-500" />
                     <span>{lead.business_name}</span>
-                    <span className="text-slate-400">({lead.city || 'Oregon'})</span>
+                    <span className="text-slate-500">({lead.city || 'Oregon'})</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded text-[10px] bg-slate-100 text-slate-600">
+                    <span className="px-2 py-0.5 rounded text-[10px] bg-mca-hover text-slate-300">
                       Score: {lead.lead_score || 0}
                     </span>
                     {selectedLeadId === lead.lead_id && (
-                      <CheckCircle2 className="w-4 h-4 text-amber-600" />
+                      <CheckCircle2 className="w-4 h-4 text-amber-400" />
                     )}
                   </div>
                 </div>
@@ -132,16 +132,16 @@ export const AuditGenerationModal: React.FC<AuditGenerationModalProps> = ({
 
           {/* Selected Lead Verified Facts Snapshot */}
           {selectedLead && (
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+            <div className="p-4 rounded-xl bg-mca-void/40 border border-white/10 space-y-2 text-xs">
               <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-800 uppercase tracking-wider">
+                <span className="font-bold text-slate-100 uppercase tracking-wider">
                   Verified Data Available for Audit
                 </span>
-                <span className="text-[11px] text-slate-500">
+                <span className="text-[11px] text-slate-400">
                   Pipeline: {selectedLead.pipeline_stage}
                 </span>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-slate-600">
+              <div className="grid grid-cols-2 gap-2 text-slate-300">
                 <div>
                   <strong>Website: </strong>
                   {selectedLead.website || 'No website found'} ({selectedLead.website_status || 'Unverified'})
@@ -166,7 +166,7 @@ export const AuditGenerationModal: React.FC<AuditGenerationModalProps> = ({
 
           {/* Custom Audit Focus Notes */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+            <label className="block text-xs font-semibold text-slate-200 uppercase tracking-wider mb-1">
               Custom Focus or Lead Context (Optional)
             </label>
             <textarea
@@ -174,12 +174,12 @@ export const AuditGenerationModal: React.FC<AuditGenerationModalProps> = ({
               value={customNotes}
               onChange={(e) => setCustomNotes(e.target.value)}
               placeholder="e.g. Prospect mentioned during call they are losing emergency jobs to local 3-pack competitors."
-              className="w-full px-3.5 py-2 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+              className="w-full px-3.5 py-2 text-xs bg-mca-void/40 border border-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
             />
           </div>
 
           {errorMsg && (
-            <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
+            <div className="p-3 rounded-lg bg-rose-950/50 border border-rose-800/50 text-rose-300 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{errorMsg}</span>
             </div>
@@ -187,10 +187,10 @@ export const AuditGenerationModal: React.FC<AuditGenerationModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+        <div className="px-6 py-4 border-t border-white/10 bg-mca-void/40 flex items-center justify-between">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:text-slate-800"
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-slate-100"
           >
             Cancel
           </button>

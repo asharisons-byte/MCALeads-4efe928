@@ -26,7 +26,7 @@ export const ExecutiveAIWorkforceView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* 1. AUTOMATION HEALTH MONITOR BANNER */}
-      <div className="bg-slate-900 rounded-3xl p-6 text-white border border-slate-800 shadow-xl">
+      <div className="bg-slate-900 rounded-xl p-6 text-white border border-slate-800 shadow-xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase tracking-wider">
@@ -50,25 +50,25 @@ export const ExecutiveAIWorkforceView: React.FC = () => {
 
         {/* High-level metrics strip */}
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-          <div className="p-3 bg-slate-800/60 rounded-2xl border border-slate-700/50">
+          <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/50">
             <span className="text-slate-400 text-[10px] uppercase font-bold">Tasks Executed Today</span>
             <div className="text-2xl font-black text-white mt-1">{totalTasksToday}</div>
             <span className="text-[10px] text-emerald-400 font-semibold">{completedTasks} Completed</span>
           </div>
 
-          <div className="p-3 bg-slate-800/60 rounded-2xl border border-slate-700/50">
+          <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/50">
             <span className="text-slate-400 text-[10px] uppercase font-bold">Pending Approvals</span>
             <div className="text-2xl font-black text-amber-400 mt-1">{pendingApprovalsCount}</div>
             <span className="text-[10px] text-slate-400">Human-in-the-Loop Safe</span>
           </div>
 
-          <div className="p-3 bg-slate-800/60 rounded-2xl border border-slate-700/50">
+          <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/50">
             <span className="text-slate-400 text-[10px] uppercase font-bold">Average Task Latency</span>
             <div className="text-2xl font-black text-indigo-400 mt-1">1.8s</div>
             <span className="text-[10px] text-indigo-300">Gemini Flash Fast Tier</span>
           </div>
 
-          <div className="p-3 bg-slate-800/60 rounded-2xl border border-slate-700/50">
+          <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/50">
             <span className="text-slate-400 text-[10px] uppercase font-bold">Autonomous Error Rate</span>
             <div className="text-2xl font-black text-emerald-400 mt-1">0.6%</div>
             <span className="text-[10px] text-emerald-300">Self-Healing Enabled</span>
@@ -84,15 +84,15 @@ export const ExecutiveAIWorkforceView: React.FC = () => {
           return (
             <div
               key={agentKey}
-              className="p-5 bg-white rounded-3xl border border-slate-200 shadow-2xs space-y-3 hover:border-indigo-300 transition-colors"
+              className="p-5 bg-mca-card rounded-xl border border-white/10 space-y-3 hover:border-indigo-700/60 transition-colors"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-950/50 border border-indigo-900/40 flex items-center justify-center text-indigo-600 font-bold">
                     <Bot className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-black text-slate-900">{agent.name}</h4>
+                    <h4 className="text-sm font-black text-white">{agent.name}</h4>
                     <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">
                       {agent.role}
                     </span>
@@ -102,8 +102,8 @@ export const ExecutiveAIWorkforceView: React.FC = () => {
                 <span
                   className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                     agent.status === 'Active' || agent.status === 'active' || agent.status === 'idle'
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : 'bg-amber-100 text-amber-800'
+                      ? 'bg-emerald-950 text-emerald-300'
+                      : 'bg-amber-950 text-amber-300'
                   }`}
                 >
                   {agent.status}
@@ -115,11 +115,11 @@ export const ExecutiveAIWorkforceView: React.FC = () => {
               </p>
 
               {/* Current Objective */}
-              <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-[11px] space-y-1">
+              <div className="p-2.5 rounded-xl bg-mca-void/40 border border-white/5 text-[11px] space-y-1">
                 <div className="text-slate-400 font-bold uppercase text-[9px] tracking-wider">
                   Current Operational Objective
                 </div>
-                <div className="text-slate-800 font-medium">
+                <div className="text-slate-100 font-medium">
                   {agentKey === 'sophia'
                     ? 'Analyzing hot leads & conducting owner briefings'
                     : agentKey === 'atlas'
@@ -136,9 +136,9 @@ export const ExecutiveAIWorkforceView: React.FC = () => {
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+              <div className="pt-2 border-t border-white/5 flex items-center justify-between text-xs text-slate-500">
                 <span>Approval Req: {requiresApproval ? 'Yes (Strict)' : 'Autonomous'}</span>
-                <span className="font-bold text-slate-700">Level: Senior AI</span>
+                <span className="font-bold text-slate-200">Level: Senior AI</span>
               </div>
             </div>
           );

@@ -45,21 +45,21 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ activities }) => {
 
   const getActivityIcon = (act: ActivityEvent) => {
     const type = act.activity_type || act.type;
-    if (type.includes('call')) return <Phone className="w-4 h-4 text-emerald-500" />;
-    if (type.includes('email')) return <Mail className="w-4 h-4 text-blue-500" />;
-    if (type.includes('sms')) return <MessageSquare className="w-4 h-4 text-sky-500" />;
-    if (type === 'note_added') return <FileText className="w-4 h-4 text-indigo-500" />;
-    return <GitCommit className="w-4 h-4 text-slate-500" />;
+    if (type.includes('call')) return <Phone className="w-4 h-4 text-emerald-400" />;
+    if (type.includes('email')) return <Mail className="w-4 h-4 text-blue-400" />;
+    if (type.includes('sms')) return <MessageSquare className="w-4 h-4 text-sky-400" />;
+    if (type === 'note_added') return <FileText className="w-4 h-4 text-indigo-400" />;
+    return <GitCommit className="w-4 h-4 text-slate-400" />;
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 pb-2 border-b border-slate-100">
-        <Filter className="w-4 h-4 text-slate-400" />
+      <div className="flex items-center gap-2 pb-2 border-b border-white/5">
+        <Filter className="w-4 h-4 text-slate-500" />
         <select
           value={filter}
           onChange={(e) => setFilter(e.target.value as LogFilter)}
-          className="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-indigo-500"
+          className="bg-mca-void/40 border border-white/10 text-slate-200 text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:border-indigo-500"
         >
           <option value="all">All Activities</option>
           <option value="calls">Calls</option>
@@ -69,13 +69,13 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ activities }) => {
         </select>
         
         <div className="relative flex-1">
-          <Search className="absolute left-2 top-2 w-3 h-3 text-slate-400" />
+          <Search className="absolute left-2 top-2 w-3 h-3 text-slate-500" />
           <input
             type="text"
             placeholder="Search activities..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg pl-7 pr-2 py-1.5 focus:outline-none focus:border-indigo-500"
+            className="w-full bg-mca-void/40 border border-white/10 text-slate-200 text-xs rounded-lg pl-7 pr-2 py-1.5 focus:outline-none focus:border-indigo-500"
           />
         </div>
       </div>
@@ -83,19 +83,19 @@ export const ActivityLog: React.FC<ActivityLogProps> = ({ activities }) => {
       <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
         {filteredActivities.length > 0 ? (
           filteredActivities.slice(0, 20).map((act) => (
-            <div key={act.id} className="flex gap-3 p-3 rounded-lg border border-slate-100 hover:bg-slate-50">
+            <div key={act.id} className="flex gap-3 p-3 rounded-lg border border-white/5 hover:bg-mca-void/40">
               <div className="mt-0.5">{getActivityIcon(act)}</div>
               <div className="flex-1">
-                <div className="text-xs font-semibold text-slate-900">{act.title}</div>
-                <div className="text-[11px] text-slate-500 mt-0.5">{act.description}</div>
+                <div className="text-xs font-semibold text-white">{act.title}</div>
+                <div className="text-[11px] text-slate-400 mt-0.5">{act.description}</div>
               </div>
-              <div className="text-[10px] text-slate-400 font-mono">
+              <div className="text-[10px] text-slate-500 font-mono">
                 {new Date(act.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
             </div>
           ))
         ) : (
-          <div className="p-4 text-center text-xs text-slate-400">No activities found for this filter.</div>
+          <div className="p-4 text-center text-xs text-slate-500">No activities found for this filter.</div>
         )}
       </div>
     </div>

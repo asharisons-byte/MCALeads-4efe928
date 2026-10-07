@@ -48,18 +48,18 @@ export const ExecutiveGoalsView: React.FC<ExecutiveGoalsViewProps> = ({ followUp
   return (
     <div className="space-y-6">
       {/* 1. AGENCY GOALS & TARGET PACING */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100">
+      <div className="bg-mca-card rounded-xl p-6 border border-white/10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-white/5">
           <div>
             <div className="flex items-center gap-2">
-              <Target className="w-5 h-5 text-indigo-600" />
-              <h3 className="text-base font-black text-slate-900">Agency Milestones & Goal Pacing</h3>
+              <Target className="w-5 h-5 text-indigo-400" />
+              <h3 className="text-base font-black text-white">Agency Milestones & Goal Pacing</h3>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-400 mt-0.5">
               Live tracking against Q3/Q4 executive benchmarks with Sophia pacing forecasts
             </p>
           </div>
-          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
+          <span className="text-xs font-bold text-emerald-400 bg-emerald-950/50 px-3 py-1 rounded-full">
             Autonomous Pacing Engine
           </span>
         </div>
@@ -70,22 +70,22 @@ export const ExecutiveGoalsView: React.FC<ExecutiveGoalsViewProps> = ({ followUp
             return (
               <div
                 key={goal.goal_id}
-                className="p-5 rounded-2xl border border-slate-200 bg-white shadow-2xs space-y-3"
+                className="p-5 rounded-xl border border-white/10 bg-mca-card space-y-3"
               >
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-400">
                       {goal.timeframe} Goal
                     </span>
-                    <h4 className="text-sm font-bold text-slate-900">{goal.title}</h4>
+                    <h4 className="text-sm font-bold text-white">{goal.title}</h4>
                   </div>
                   <span
                     className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                       goal.pacing_status === 'Ahead'
-                        ? 'bg-emerald-100 text-emerald-800'
+                        ? 'bg-emerald-950 text-emerald-300'
                         : goal.pacing_status === 'On Track'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-amber-100 text-amber-800'
+                        ? 'bg-blue-950 text-blue-300'
+                        : 'bg-amber-950 text-amber-300'
                     }`}
                   >
                     {goal.pacing_status}
@@ -95,14 +95,14 @@ export const ExecutiveGoalsView: React.FC<ExecutiveGoalsViewProps> = ({ followUp
                 {/* Values & Progress */}
                 <div className="space-y-1.5">
                   <div className="flex justify-between items-baseline text-xs">
-                    <span className="text-slate-500 font-medium">Current:</span>
+                    <span className="text-slate-400 font-medium">Current:</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-base font-black text-slate-900">
+                      <span className="text-base font-black text-white">
                         {goal.metric_unit === '$'
                           ? `$${goal.current_value.toLocaleString()}`
                           : `${goal.current_value} ${goal.metric_unit}`}
                       </span>
-                      <span className="text-slate-400">/</span>
+                      <span className="text-slate-500">/</span>
                       {isEditing ? (
                         <div className="flex items-center gap-1">
                           <input
@@ -119,7 +119,7 @@ export const ExecutiveGoalsView: React.FC<ExecutiveGoalsViewProps> = ({ followUp
                           </button>
                           <button
                             onClick={() => setEditingGoalId(null)}
-                            className="p-1 rounded bg-slate-200 text-slate-600 hover:bg-slate-300"
+                            className="p-1 rounded bg-slate-700 text-slate-300 hover:bg-slate-600"
                           >
                             <X className="w-3 h-3" />
                           </button>
@@ -127,7 +127,7 @@ export const ExecutiveGoalsView: React.FC<ExecutiveGoalsViewProps> = ({ followUp
                       ) : (
                         <button
                           onClick={() => handleStartEdit(goal)}
-                          className="text-slate-500 font-bold hover:text-indigo-600 flex items-center gap-1 group"
+                          className="text-slate-400 font-bold hover:text-indigo-400 flex items-center gap-1 group"
                         >
                           <span>
                             {goal.metric_unit === '$'
@@ -141,26 +141,26 @@ export const ExecutiveGoalsView: React.FC<ExecutiveGoalsViewProps> = ({ followUp
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                  <div className="w-full bg-mca-hover rounded-full h-2 overflow-hidden">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ${
                         goal.progress_pct >= 90
                           ? 'bg-emerald-500'
                           : goal.progress_pct >= 60
-                          ? 'bg-indigo-600'
+                          ? 'bg-blue-600'
                           : 'bg-amber-500'
                       }`}
                       style={{ width: `${Math.min(100, goal.progress_pct)}%` }}
                     />
                   </div>
-                  <div className="text-right text-[10px] text-slate-400 font-semibold">
+                  <div className="text-right text-[10px] text-slate-500 font-semibold">
                     {goal.progress_pct}% Accomplished
                   </div>
                 </div>
 
                 {/* Sophia Recommendation */}
-                <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-[11px] text-slate-600 space-y-1">
-                  <div className="flex items-center gap-1 font-bold text-indigo-700 text-[10px]">
+                <div className="p-2.5 rounded-xl bg-mca-void/40 border border-white/5 text-[11px] text-slate-300 space-y-1">
+                  <div className="flex items-center gap-1 font-bold text-indigo-300 text-[10px]">
                     <Sparkles className="w-3 h-3" /> Sophia Guidance:
                   </div>
                   <p className="leading-relaxed">{goal.sophia_recommendation}</p>
@@ -172,42 +172,42 @@ export const ExecutiveGoalsView: React.FC<ExecutiveGoalsViewProps> = ({ followUp
       </div>
 
       {/* 2. FOLLOW-UP COMPLIANCE & TEAM DISCIPLINE */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+      <div className="bg-mca-card rounded-xl p-6 border border-white/10">
+        <div className="flex items-center justify-between pb-4 border-b border-white/5">
           <div>
-            <h3 className="text-base font-black text-slate-900">Follow-Up Compliance & Sales Pacing</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h3 className="text-base font-black text-white">Follow-Up Compliance & Sales Pacing</h3>
+            <p className="text-xs text-slate-400 mt-0.5">
               Ensuring no Oregon contractor lead falls through the cracks
             </p>
           </div>
-          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">
+          <span className="text-xs font-bold text-emerald-400 bg-emerald-950/50 px-3 py-1 rounded-full">
             {compliance.compliance_rate}% Compliance Rate
           </span>
         </div>
 
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
-          <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
-            <span className="text-[10px] text-slate-500 uppercase font-bold">Total Tasks</span>
-            <div className="text-2xl font-black text-slate-900 mt-1">{compliance.total_tasks}</div>
-            <span className="text-[10px] text-slate-400">Scheduled in CRM</span>
+          <div className="p-3 bg-mca-void/40 rounded-xl border border-white/10">
+            <span className="text-[10px] text-slate-400 uppercase font-bold">Total Tasks</span>
+            <div className="text-2xl font-black text-white mt-1">{compliance.total_tasks}</div>
+            <span className="text-[10px] text-slate-500">Scheduled in CRM</span>
           </div>
 
-          <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
-            <span className="text-[10px] text-slate-500 uppercase font-bold">Completed On Time</span>
-            <div className="text-2xl font-black text-emerald-600 mt-1">{compliance.completed_on_time}</div>
-            <span className="text-[10px] text-emerald-600 font-semibold">{compliance.compliance_rate}% Compliance</span>
+          <div className="p-3 bg-mca-void/40 rounded-xl border border-white/10">
+            <span className="text-[10px] text-slate-400 uppercase font-bold">Completed On Time</span>
+            <div className="text-2xl font-black text-emerald-400 mt-1">{compliance.completed_on_time}</div>
+            <span className="text-[10px] text-emerald-400 font-semibold">{compliance.compliance_rate}% Compliance</span>
           </div>
 
-          <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
-            <span className="text-[10px] text-slate-500 uppercase font-bold">Overdue Follow-Ups</span>
-            <div className="text-2xl font-black text-rose-600 mt-1">{compliance.overdue_count}</div>
-            <span className="text-[10px] text-rose-600 font-semibold">Immediate Priority</span>
+          <div className="p-3 bg-mca-void/40 rounded-xl border border-white/10">
+            <span className="text-[10px] text-slate-400 uppercase font-bold">Overdue Follow-Ups</span>
+            <div className="text-2xl font-black text-rose-400 mt-1">{compliance.overdue_count}</div>
+            <span className="text-[10px] text-rose-400 font-semibold">Immediate Priority</span>
           </div>
 
-          <div className="p-3 bg-slate-50 rounded-2xl border border-slate-200">
-            <span className="text-[10px] text-slate-500 uppercase font-bold">Avg Response Time</span>
-            <div className="text-2xl font-black text-indigo-600 mt-1">{compliance.average_response_time}</div>
-            <span className="text-[10px] text-indigo-600 font-semibold">Under 4h target</span>
+          <div className="p-3 bg-mca-void/40 rounded-xl border border-white/10">
+            <span className="text-[10px] text-slate-400 uppercase font-bold">Avg Response Time</span>
+            <div className="text-2xl font-black text-indigo-400 mt-1">{compliance.average_response_time}</div>
+            <span className="text-[10px] text-indigo-400 font-semibold">Under 4h target</span>
           </div>
         </div>
       </div>

@@ -1,14 +1,4 @@
 import React from 'react';
-import {
-  Sparkles,
-  TrendingUp,
-  AlertTriangle,
-  Send,
-  Users,
-  Clock,
-  ArrowRight,
-  ShieldAlert,
-} from 'lucide-react';
 import { SophiaExecutiveInsight } from '../../types';
 
 interface SophiaExecutiveInsightsWidgetProps {
@@ -17,133 +7,94 @@ interface SophiaExecutiveInsightsWidgetProps {
   onRefreshInsights?: () => void;
 }
 
+/** Stitch palette per insight category (border / label / action colour + icon). */
+const meta = (category: SophiaExecutiveInsight['category']) => {
+  switch (category) {
+    case 'Follow-Up Risk':
+      return { icon: 'fa-clock', text: 'text-rose-400', border: 'border-rose-900/30', action: 'text-rose-400' };
+    case 'Sales Risk':
+      return { icon: 'fa-triangle-exclamation', text: 'text-rose-400', border: 'border-rose-900/30', action: 'text-rose-400' };
+    case 'Lead Opportunity':
+      return { icon: 'fa-bullseye', text: 'text-amber-400', border: 'border-amber-900/30', action: 'text-amber-400' };
+    case 'Revenue Opportunity':
+      return { icon: 'fa-arrow-trend-up', text: 'text-emerald-400', border: 'border-emerald-900/30', action: 'text-emerald-400' };
+    case 'Campaign Opportunity':
+      return { icon: 'fa-paper-plane', text: 'text-blue-400', border: 'border-blue-900/30', action: 'text-blue-400' };
+    default:
+      return { icon: 'fa-wand-magic-sparkles', text: 'text-purple-400', border: 'border-purple-900/30', action: 'text-purple-400' };
+  }
+};
+
+const priorityChip = (p: SophiaExecutiveInsight['priority']) =>
+  p === 'Critical'
+    ? 'bg-rose-950 text-rose-300'
+    : p === 'High'
+    ? 'bg-amber-950 text-amber-300'
+    : p === 'Medium'
+    ? 'bg-blue-950 text-blue-300'
+    : 'bg-slate-800 text-slate-300';
+
+/** Sophia Executive Insights — Stitch "SophiaExecutiveInsights" section. */
 export const SophiaExecutiveInsightsWidget: React.FC<SophiaExecutiveInsightsWidgetProps> = ({
   insights,
   onExecuteAction,
   onRefreshInsights,
-}) => {
-  const getCategoryMeta = (category: SophiaExecutiveInsight['category']) => {
-    switch (category) {
-      case 'Revenue Opportunity':
-        return {
-          icon: <TrendingUp className="w-4 h-4 text-emerald-600" />,
-          color: 'bg-emerald-50 text-emerald-800 border-emerald-200',
-        };
-      case 'Sales Risk':
-        return {
-          icon: <AlertTriangle className="w-4 h-4 text-rose-600" />,
-          color: 'bg-rose-50 text-rose-800 border-rose-200',
-        };
-      case 'Campaign Opportunity':
-        return {
-          icon: <Send className="w-4 h-4 text-indigo-600" />,
-          color: 'bg-indigo-50 text-indigo-800 border-indigo-200',
-        };
-      case 'Lead Opportunity':
-        return {
-          icon: <Users className="w-4 h-4 text-blue-600" />,
-          color: 'bg-blue-50 text-blue-800 border-blue-200',
-        };
-      case 'Follow-Up Risk':
-        return {
-          icon: <Clock className="w-4 h-4 text-amber-600" />,
-          color: 'bg-amber-50 text-amber-800 border-amber-200',
-        };
-      default:
-        return {
-          icon: <Sparkles className="w-4 h-4 text-slate-600" />,
-          color: 'bg-slate-50 text-slate-800 border-slate-200',
-        };
-    }
-  };
-
-  return (
-    <div id="sophia-executive-insights" className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs">
-      <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200/80 flex items-center justify-center text-indigo-600">
-            <Sparkles className="w-4 h-4" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-slate-900 text-sm sm:text-base flex items-center gap-2">
-              Sophia Executive Insights
-            </h3>
-            <p className="text-xs text-slate-500">
-              AI-synthesized strategic recommendations grounded strictly in current pipeline telemetry
-            </p>
-          </div>
+}) => (
+  <section id="sophia-executive-insights" className="glass-panel p-4 rounded-xl space-y-3" data-purpose="executive-insights">
+    <div className="flex items-center justify-between pb-2 border-b border-mca-border">
+      <div className="flex items-center gap-2">
+        <div className="w-6 h-6 rounded bg-purple-950 flex items-center justify-center text-purple-400 text-xs">
+          <i className="fa-solid fa-lightbulb"></i>
         </div>
-
-        {onRefreshInsights && (
-          <button
-            onClick={onRefreshInsights}
-            className="text-xs text-indigo-600 font-medium hover:underline"
-          >
-            Re-analyze Pipeline →
-          </button>
-        )}
+        <div>
+          <h3 className="text-sm font-bold text-white">Sophia Executive Insights</h3>
+          <p className="text-[10px] font-mono text-slate-400">
+            AI-synthesized strategic recommendations grounded strictly in current pipeline telemetry
+          </p>
+        </div>
       </div>
+      {onRefreshInsights && (
+        <button onClick={onRefreshInsights} className="text-xs font-mono text-cyan-400 hover:underline">
+          Re-analyze Pipeline →
+        </button>
+      )}
+    </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {insights.map((insight, idx) => {
-          const meta = getCategoryMeta(insight.category);
-          const insightKey = insight.id ? `insight-${insight.id}` : `insight-${insight.category}-${idx}`;
-          return (
-            <div
-              key={insightKey}
-              className="p-4 rounded-xl border border-slate-200/90 bg-slate-50/40 hover:bg-white hover:border-indigo-300 hover:shadow-xs transition-all flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-semibold border ${meta.color}`}>
-                    {meta.icon}
-                    {insight.category}
-                  </span>
-
-                  <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                      insight.priority === 'Critical'
-                        ? 'bg-rose-100 text-rose-800'
-                        : insight.priority === 'High'
-                        ? 'bg-amber-100 text-amber-800'
-                        : 'bg-slate-200 text-slate-700'
-                    }`}
-                  >
-                    {insight.priority}
-                  </span>
-                </div>
-
-                <h4 className="font-bold text-sm text-slate-900 leading-snug">
-                  {insight.title}
-                </h4>
-
-                <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-                  {insight.description}
-                </p>
-
-                {insight.estimated_value && (
-                  <div className="mt-2.5 text-xs font-semibold text-emerald-700">
-                    Revenue Potential: +${insight.estimated_value.toLocaleString()}/mo
-                  </div>
-                )}
+    <div className={`grid grid-cols-1 gap-3 ${insights.length === 4 ? 'md:grid-cols-2 xl:grid-cols-4' : 'md:grid-cols-3'}`}>
+      {insights.map((insight, idx) => {
+        const m = meta(insight.category);
+        const key = insight.id ? `insight-${insight.id}` : `insight-${insight.category}-${idx}`;
+        return (
+          <div key={key} className={`p-3.5 rounded-lg bg-mca-card border ${m.border} flex flex-col justify-between`}>
+            <div>
+              <div className="flex items-center justify-between text-[10px] font-mono">
+                <span className={`${m.text} font-bold flex items-center gap-1`}>
+                  <i className={`fa-solid ${m.icon}`}></i> {insight.category}
+                </span>
+                <span className={`${priorityChip(insight.priority)} px-1.5 py-0.5 rounded uppercase`}>
+                  {insight.priority}
+                </span>
               </div>
-
-              <div className="mt-4 pt-3 border-t border-slate-200/60">
-                <div className="text-[11px] text-slate-500 mb-2">
-                  <strong>Recommended:</strong> {insight.recommended_action}
+              <h5 className="text-xs font-bold text-white mt-1.5">{insight.title}</h5>
+              <p className="text-[11px] text-slate-400 mt-1">{insight.description}</p>
+              {insight.estimated_value ? (
+                <div className="text-[11px] font-mono text-emerald-400 mt-1.5">
+                  Revenue Potential: +${insight.estimated_value.toLocaleString()}/mo
                 </div>
-                <button
-                  onClick={() => onExecuteAction(insight)}
-                  className="w-full py-1.5 px-3 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
-                >
-                  Take Action
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+              ) : null}
+              <div className="text-[10px] font-mono text-slate-400 mt-2 bg-slate-900/60 p-2 rounded border border-white/5">
+                <span className="text-purple-300 font-bold">Recommended:</span> {insight.recommended_action}
               </div>
             </div>
-          );
-        })}
-      </div>
+            <button
+              onClick={() => onExecuteAction(insight)}
+              className={`mt-3 text-xs font-mono ${m.action} hover:text-white flex items-center gap-1 self-start`}
+            >
+              Take Action →
+            </button>
+          </div>
+        );
+      })}
     </div>
-  );
-};
+  </section>
+);

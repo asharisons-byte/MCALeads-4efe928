@@ -85,6 +85,7 @@ import { NewCampaignModal } from './NewCampaignModal';
 import { getClients, getProposals } from '../../services/conversionService';
 import { calculateAgencyHealthBreakdown } from '../../services/executiveIntelligenceService';
 import { ExecutiveOverviewView } from './ExecutiveOverviewView';
+import { ExecutiveTelemetryGrid } from './ExecutiveTelemetryGrid';
 import { ExecutiveRevenueView } from './ExecutiveRevenueView';
 import { ExecutivePipelineView } from './ExecutivePipelineView';
 import { ExecutiveClientsView } from './ExecutiveClientsView';
@@ -363,38 +364,39 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
   };
 
   return (
-    <div id="mca-command-center" className="space-y-6 pb-12">
-      {/* 1. Header Toolbar with Agency Branding & Global Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white rounded-2xl p-5 border border-slate-200 shadow-xs">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
-              Agency Command Center
-            </h1>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-              Executive View
-            </span>
-          </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Marketing Charm Agency • Sophia AI Autonomous Sales & Revenue Intelligence
-          </p>
-        </div>
+    <div id="mca-command-center" className="space-y-5 pb-4">
+      {/* ── PrimaryMetricsTopGrid (Stitch): ten headline numbers pinned at the very top ── */}
+      <ExecutiveTelemetryGrid leads={filteredLeads} clients={clients} onNavigateTab={(tab) => setCurrentSection(tab as any)} />
 
-        {/* Action Controls & Date Range Filter */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Date Range Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setShowDatePicker((prev) => !prev)}
-              className="px-3 py-2 rounded-xl border border-slate-200 hover:border-slate-300 bg-slate-50 text-xs font-semibold text-slate-800 flex items-center gap-2 transition-colors"
-            >
-              <Calendar className="w-3.5 h-3.5 text-indigo-600" />
-              <span>{dateOption}</span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-            </button>
+      {/* ── ControlSubStrip (Stitch) ── */}
+      <section className="space-y-3" data-purpose="sub-strip-controls">
+        <div className="glass-panel p-4 rounded-xl flex flex-wrap items-center justify-between gap-4 border border-white/10">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="text-xl font-bold text-white tracking-tight">Agency Command Center</h1>
+              <span className="text-[10px] font-mono bg-cyan-950 text-cyan-300 border border-cyan-800/60 px-2 py-0.5 rounded font-bold">
+                Executive View
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Marketing Charm Agency • Sophia AI Autonomous Sales &amp; Revenue Intelligence
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Date range */}
+            <div className="relative">
+              <button
+                onClick={() => setShowDatePicker((prev) => !prev)}
+                className="px-2.5 py-1.5 rounded-lg bg-mca-card hover:bg-mca-hover border border-white/10 text-xs font-mono text-slate-300 flex items-center gap-1.5 transition"
+              >
+                <i className="fa-regular fa-calendar text-cyan-400"></i>
+                <span>{dateOption}</span>
+                <i className="fa-solid fa-chevron-down text-[9px] text-slate-500 ml-1"></i>
+              </button>
 
             {showDatePicker && (
-              <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 p-2 z-30 space-y-1">
+              <div className="absolute right-0 top-full mt-2 w-56 glass-panel bg-mca-surface rounded-xl shadow-2xl p-2 z-30 space-y-1">
                 {(
                   [
                     'Today',
@@ -414,8 +416,8 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                     }}
                     className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                       dateOption === opt
-                        ? 'bg-indigo-50 text-indigo-700 font-bold'
-                        : 'text-slate-700 hover:bg-slate-50'
+                        ? 'bg-mca-hover text-mca-neonGreen font-bold'
+                        : 'text-slate-300 hover:bg-mca-hover'
                     }`}
                   >
                     {opt}
@@ -423,22 +425,22 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                 ))}
 
                 {dateOption === 'Custom Range' && (
-                  <div className="pt-2 border-t border-slate-100 space-y-1.5 px-1">
+                  <div className="pt-2 border-t border-white/5 space-y-1.5 px-1">
                     <input
                       type="date"
                       value={customRange.startDate}
                       onChange={(e) => setCustomRange((prev) => ({ ...prev, startDate: e.target.value }))}
-                      className="w-full text-xs p-1.5 rounded border border-slate-200"
+                      className="w-full text-xs p-1.5 rounded bg-mca-void/80 border border-white/10 text-slate-200"
                     />
                     <input
                       type="date"
                       value={customRange.endDate}
                       onChange={(e) => setCustomRange((prev) => ({ ...prev, endDate: e.target.value }))}
-                      className="w-full text-xs p-1.5 rounded border border-slate-200"
+                      className="w-full text-xs p-1.5 rounded bg-mca-void/80 border border-white/10 text-slate-200"
                     />
                     <button
                       onClick={() => setShowDatePicker(false)}
-                      className="w-full py-1 bg-indigo-600 text-white rounded text-xs font-semibold"
+                      className="w-full py-1 bg-blue-600 text-white rounded text-xs font-semibold"
                     >
                       Apply Range
                     </button>
@@ -446,54 +448,52 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
                 )}
               </div>
             )}
+            </div>
+
+            {/* Refresh telemetry */}
+            <button
+              onClick={() => {
+                reloadTelemetry();
+                refreshBriefingAndInsights();
+              }}
+              disabled={isRefreshingBriefing}
+              className="w-8 h-8 rounded-lg bg-mca-card hover:bg-mca-hover border border-white/10 text-xs text-slate-400 hover:text-white flex items-center justify-center transition disabled:opacity-50"
+              title="Refresh Feed"
+            >
+              <i className={`fa-solid fa-arrows-rotate ${isRefreshingBriefing ? 'animate-spin' : ''}`}></i>
+            </button>
+
+            {/* Customize layout */}
+            <button
+              onClick={() => setIsCustomizerOpen(true)}
+              className="w-8 h-8 rounded-lg bg-mca-card hover:bg-mca-hover border border-white/10 text-xs text-slate-400 hover:text-white flex items-center justify-center transition"
+              title="Customize Dashboard Layout"
+            >
+              <i className="fa-solid fa-sliders"></i>
+            </button>
+
+            {/* Ask Sophia About My Agency */}
+            <button
+              onClick={() => setIsAskSophiaOpen(true)}
+              className="px-3 py-1.5 rounded-lg bg-purple-900/60 hover:bg-purple-800 border border-purple-600/50 text-xs font-semibold text-purple-200 flex items-center gap-2 transition shadow-neon-purple"
+            >
+              <i className="fa-solid fa-wand-magic-sparkles text-cyan-300"></i>
+              <span>Ask Sophia About My Agency</span>
+            </button>
+
+            {/* Export report */}
+            <button
+              onClick={() => setIsExportOpen(true)}
+              className="px-3 py-1.5 rounded-lg bg-mca-card hover:bg-mca-hover border border-white/10 text-xs font-mono text-slate-300 flex items-center gap-1.5 transition"
+            >
+              <i className="fa-solid fa-download text-slate-400"></i>
+              <span>Export Report</span>
+            </button>
           </div>
-
-          {/* Refresh Telemetry */}
-          <button
-            onClick={() => {
-              reloadTelemetry();
-              refreshBriefingAndInsights();
-            }}
-            disabled={isRefreshingBriefing}
-            className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors disabled:opacity-50"
-            title="Refresh All Telemetry & Metrics"
-          >
-            <RefreshCw className={`w-4 h-4 ${isRefreshingBriefing ? 'animate-spin' : ''}`} />
-          </button>
-
-          {/* Customize Layout */}
-          <button
-            onClick={() => setIsCustomizerOpen(true)}
-            className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition-colors"
-            title="Customize Dashboard Layout"
-          >
-            <Sliders className="w-4 h-4" />
-          </button>
-
-          {/* Ask Sophia About My Agency */}
-          <button
-            onClick={() => setIsAskSophiaOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
-          >
-            <Bot className="w-4 h-4 text-indigo-200" />
-            <span>Ask Sophia</span>
-            <Sparkles className="w-3 h-3 text-amber-300" />
-          </button>
-
-          {/* Export Reports */}
-          <button
-            onClick={() => setIsExportOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
-          >
-            <Download className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Export Report</span>
-          </button>
         </div>
-      </div>
 
-      {/* 2. Executive Navigation Tabs Bar (Phase 5A Core Directive) */}
-      <div className="bg-white rounded-2xl p-1.5 border border-slate-200 shadow-2xs overflow-x-auto">
-        <div className="flex items-center gap-1 min-w-max text-xs font-bold">
+        {/* Quick sub-navigation tabs */}
+        <div className="flex items-center gap-1 overflow-x-auto pb-1 text-xs border-b border-mca-border">
           {[
             { id: 'overview', label: 'Overview' },
             { id: 'revenue', label: 'Revenue' },
@@ -510,28 +510,22 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
             <button
               key={tab.id}
               onClick={() => setCurrentSection(tab.id as any)}
-              className={`px-3.5 py-2 rounded-xl transition-all flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-md whitespace-nowrap flex items-center gap-1.5 ${
                 currentSection === tab.id
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  ? 'bg-mca-surface text-mca-neonGreen font-semibold border-b-2 border-mca-neonGreen'
+                  : 'text-slate-400 hover:text-white hover:bg-mca-hover/50'
               }`}
             >
               <span>{tab.label}</span>
               {tab.badge !== undefined && tab.badge > 0 && (
-                <span
-                  className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                    currentSection === tab.id
-                      ? 'bg-rose-500 text-white'
-                      : 'bg-rose-100 text-rose-700'
-                  }`}
-                >
+                <span className="text-[9px] bg-rose-500/20 text-rose-400 border border-rose-500/40 px-1 rounded-full">
                   {tab.badge}
                 </span>
               )}
             </button>
           ))}
         </div>
-      </div>
+      </section>
 
       {/* 3. SECTION VIEWS */}
       {currentSection === 'overview' && (
@@ -550,6 +544,52 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
             onStartAICall={onStartAICall}
             onOpenDialer={onOpenDialer}
           />
+
+          {isWidgetVisible('executive_insights') && executiveInsights.length > 0 && (
+            <SophiaExecutiveInsightsWidget
+              insights={executiveInsights}
+              onExecuteAction={(insight) => {
+                if (insight.affected_lead_ids && insight.affected_lead_ids.length > 0) {
+                  onOpenLead(insight.affected_lead_ids[0]);
+                } else {
+                  onViewPipeline();
+                }
+              }}
+              onRefreshInsights={refreshBriefingAndInsights}
+            />
+          )}
+
+          {isWidgetVisible('call_intelligence_summary') && (
+            <CallIntelligenceAndObjectionsWidget
+              calls={calls}
+              objections={objections}
+              followUps={followUps}
+              onOpenCallIntelligence={onViewCallIntelligence}
+              onOpenFollowUpQueue={onViewFollowUps}
+            />
+          )}
+
+          {/* ── OperationsAndIntegrity (Stitch) ── */}
+          {isWidgetVisible('agency_health_score') && (
+            <ActivityAndHealthSection
+              activitySummary={activitySummary}
+              pipelineMovements={pipelineMovements}
+              activities={activities}
+              healthScore={healthScore}
+              dataQualityIssues={dataQualityIssues}
+              duplicatePairs={duplicatePairs}
+              teamPerformance={teamPerformance}
+              onOpenLead={onOpenLead}
+              onResolveDuplicate={handleResolveDuplicate}
+            />
+          )}
+
+          {/* ── Extended analytics (customizable widgets) ── */}
+          <div className="flex items-center gap-2 pt-1">
+            <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
+            <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-white">Detailed Telemetry &amp; Analytics</h2>
+            <span className="flex-1 h-px bg-mca-border"></span>
+          </div>
 
           {/* Quick Action Bar & Alerts */}
           <AlertsAndQuickActions
@@ -624,43 +664,6 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
             />
           )}
 
-          {isWidgetVisible('executive_insights') && executiveInsights.length > 0 && (
-            <SophiaExecutiveInsightsWidget
-              insights={executiveInsights}
-              onExecuteAction={(insight) => {
-                if (insight.affected_lead_ids && insight.affected_lead_ids.length > 0) {
-                  onOpenLead(insight.affected_lead_ids[0]);
-                } else {
-                  onViewPipeline();
-                }
-              }}
-              onRefreshInsights={refreshBriefingAndInsights}
-            />
-          )}
-
-          {isWidgetVisible('call_intelligence_summary') && (
-            <CallIntelligenceAndObjectionsWidget
-              calls={calls}
-              objections={objections}
-              followUps={followUps}
-              onOpenCallIntelligence={onViewCallIntelligence}
-              onOpenFollowUpQueue={onViewFollowUps}
-            />
-          )}
-
-          {isWidgetVisible('agency_health_score') && (
-            <ActivityAndHealthSection
-              activitySummary={activitySummary}
-              pipelineMovements={pipelineMovements}
-              activities={activities}
-              healthScore={healthScore}
-              dataQualityIssues={dataQualityIssues}
-              duplicatePairs={duplicatePairs}
-              teamPerformance={teamPerformance}
-              onOpenLead={onOpenLead}
-              onResolveDuplicate={handleResolveDuplicate}
-            />
-          )}
         </div>
       )}
 
@@ -744,36 +747,36 @@ export const CommandCenter: React.FC<CommandCenterProps> = ({
       )}
 
       {currentSection === 'settings' && (
-        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-6">
+        <div className="bg-mca-card rounded-xl p-6 border border-white/10 space-y-6">
           <div>
-            <h3 className="text-base font-black text-slate-900">Dashboard & Telemetry Settings</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h3 className="text-base font-black text-white">Dashboard & Telemetry Settings</h3>
+            <p className="text-xs text-slate-400 mt-0.5">
               Customize visible executive widgets, audit data quality, and resolve duplicate records
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
-              <h4 className="text-sm font-bold text-slate-900">Widget Customization</h4>
-              <p className="text-xs text-slate-600">
+            <div className="p-4 rounded-xl border border-white/10 bg-mca-void/50 space-y-2">
+              <h4 className="text-sm font-bold text-white">Widget Customization</h4>
+              <p className="text-xs text-slate-300">
                 Reorder or toggle visibility for all command center widgets.
               </p>
               <button
                 onClick={() => setIsCustomizerOpen(true)}
-                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition-colors"
+                className="px-4 py-2 rounded-xl bg-mca-hover hover:bg-slate-800 text-white font-bold text-xs transition-colors"
               >
                 Open Layout Customizer
               </button>
             </div>
 
-            <div className="p-4 rounded-2xl border border-slate-200 bg-slate-50/50 space-y-2">
-              <h4 className="text-sm font-bold text-slate-900">Data Integrity Controls</h4>
-              <p className="text-xs text-slate-600">
+            <div className="p-4 rounded-xl border border-white/10 bg-mca-void/50 space-y-2">
+              <h4 className="text-sm font-bold text-white">Data Integrity Controls</h4>
+              <p className="text-xs text-slate-300">
                 {duplicatePairs.length} duplicate lead pairs identified • {dataQualityIssues.length} quality warnings.
               </p>
               <button
                 onClick={() => setCurrentSection('overview')}
-                className="px-4 py-2 rounded-xl border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors"
+                className="px-4 py-2 rounded-xl border border-white/15 bg-mca-card hover:bg-mca-void/40 text-slate-200 font-bold text-xs transition-colors"
               >
                 Inspect Data Quality
               </button>

@@ -1,16 +1,4 @@
 import React from 'react';
-import {
-  PhoneCall,
-  MessageCircle,
-  Clock,
-  ThumbsUp,
-  AlertCircle,
-  HelpCircle,
-  CheckCircle2,
-  Calendar,
-  Sparkles,
-  ArrowRight,
-} from 'lucide-react';
 import { AggregatedObjection, CallRecord, FollowUpTask } from '../../types';
 
 interface CallIntelligenceAndObjectionsWidgetProps {
@@ -21,6 +9,16 @@ interface CallIntelligenceAndObjectionsWidgetProps {
   onOpenFollowUpQueue: () => void;
 }
 
+/** Rotating Stitch accent trio for the "Sophia Counter" boxes + occurrence labels. */
+const accents = [
+  { occ: 'text-amber-400', box: 'text-cyan-300 bg-cyan-950/30 border-cyan-900/30' },
+  { occ: 'text-rose-400', box: 'text-purple-300 bg-purple-950/30 border-purple-900/30' },
+  { occ: 'text-blue-400', box: 'text-emerald-300 bg-emerald-950/30 border-emerald-900/30' },
+];
+
+const pct = (n: number, d: number) => (d > 0 ? Math.min(100, Math.round((n / d) * 100)) : 0);
+
+/** Stitch "TelemetryRadarRow": Call Intelligence & Objection Radar + Follow-Up Performance. */
 export const CallIntelligenceAndObjectionsWidget: React.FC<CallIntelligenceAndObjectionsWidgetProps> = ({
   calls,
   objections,
@@ -28,197 +26,162 @@ export const CallIntelligenceAndObjectionsWidget: React.FC<CallIntelligenceAndOb
   onOpenCallIntelligence,
   onOpenFollowUpQueue,
 }) => {
-  const totalCalls = calls.length || 24;
-  const connectedCalls = calls.filter((c) => c.status === 'COMPLETED' && c.duration > 15).length || 18;
-  const connectionRate = Math.round((connectedCalls / totalCalls) * 100);
+  // Real call telemetry (no placeholder fallbacks — zero calls shows zero)
+  const totalCalls = calls.length;
+  const connected = calls.filter((c) => c.status === 'COMPLETED' && c.duration > 15).length;
+  const positive = calls.filter((c) => c.sentiment === 'Positive').length;
+  const meetings = calls.filter((c) => c.outcome === 'Meeting Requested').length;
+  const connectRate = pct(connected, totalCalls);
+  const positiveRate = pct(positive, totalCalls);
 
-  const positiveCalls = calls.filter((c) => c.sentiment === 'Positive').length || 8;
-  const positiveRate = Math.round((positiveCalls / totalCalls) * 100);
-
-  const meetingsCount = calls.filter((c) => c.outcome === 'Meeting Requested').length || 4;
-
-  // Follow up metrics
-  const totalFollowUps = followUps.length;
-  const completedFollowUps = followUps.filter((f) => f.status === 'Completed').length;
-  const overdueFollowUps = followUps.filter(
-    (f) => f.status === 'Pending' && f.recommended_date < new Date().toISOString().split('T')[0] && f.recommended_date !== 'Timing Unknown'
+  // Follow-up telemetry
+  const today = new Date().toISOString().split('T')[0];
+  const total = followUps.length;
+  const completed = followUps.filter((f) => f.status === 'Completed').length;
+  const overdue = followUps.filter(
+    (f) => f.status === 'Pending' && f.recommended_date !== 'Timing Unknown' && f.recommended_date < today
   ).length;
-  const completionRate = totalFollowUps > 0 ? Math.round((completedFollowUps / totalFollowUps) * 100) : 88;
+  const open = followUps.filter((f) => f.status === 'Pending' || f.status === 'Scheduled');
+  const completion = pct(completed, total);
+  const phone = open.filter((f) => f.channel === 'Call' || f.channel === 'Meeting').length;
+  const aiCalls = open.filter((f) => f.channel === 'AI Call').length;
+  const emailSms = open.filter((f) => f.channel === 'Email' || f.channel === 'SMS').length;
+  const rateTone = completion >= 70 ? ['text-emerald-400', 'bg-emerald-400'] : completion >= 40 ? ['text-amber-400', 'bg-amber-400'] : ['text-rose-400', 'bg-rose-500'];
 
   return (
-    <div id="call-intelligence-and-objections-widget" className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-      {/* Call Intelligence & Objections (7 Cols) */}
-      <div className="lg:col-span-7 bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between">
+    <section
+      id="call-intelligence-and-objections-widget"
+      className="grid grid-cols-1 lg:grid-cols-3 gap-4"
+      data-purpose="radar-telemetry-row"
+    >
+      {/* Radar Col 1 & 2 */}
+      <div className="lg:col-span-2 glass-panel p-4 rounded-xl flex flex-col justify-between space-y-3">
         <div>
-          <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
-            <div>
-              <h3 className="font-semibold text-slate-900 text-sm sm:text-base flex items-center gap-2">
-                <PhoneCall className="w-5 h-5 text-indigo-600" />
-                Call Intelligence & Objection Radar
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Real-time telemetry from Sophia AI and manual agency phone outreach
-              </p>
+          <div className="flex items-center justify-between pb-2.5 border-b border-mca-border">
+            <div className="flex items-center gap-2">
+              <i className="fa-solid fa-satellite-dish text-cyan-400"></i>
+              <h3 className="text-sm font-bold text-white">Call Intelligence &amp; Objection Radar</h3>
             </div>
-
-            <button
-              onClick={onOpenCallIntelligence}
-              className="text-xs text-indigo-600 font-semibold hover:underline flex items-center gap-1"
-            >
+            <button onClick={onOpenCallIntelligence} className="text-xs font-mono text-cyan-400 hover:underline">
               Full Dashboard →
             </button>
           </div>
 
-          {/* Quick Metrics Bar */}
-          <div className="grid grid-cols-4 gap-2 mb-4 text-center">
-            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-              <div className="text-[10px] uppercase font-semibold text-slate-400">Total Calls</div>
-              <div className="text-base font-bold text-slate-800">{totalCalls}</div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 my-3 text-center">
+            <div className="p-2 rounded bg-mca-card border border-white/5">
+              <div className="text-[10px] font-mono text-slate-400">TOTAL CALLS</div>
+              <div className="text-base font-mono font-bold text-white">{totalCalls}</div>
             </div>
-            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-              <div className="text-[10px] uppercase font-semibold text-slate-400">Connect Rate</div>
-              <div className="text-base font-bold text-indigo-700">{connectionRate}%</div>
+            <div className="p-2 rounded bg-mca-card border border-white/5">
+              <div className="text-[10px] font-mono text-slate-400">CONNECT RATE</div>
+              <div className="text-base font-mono font-bold text-cyan-400">{connectRate}%</div>
             </div>
-            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-              <div className="text-[10px] uppercase font-semibold text-slate-400">Positive Mood</div>
-              <div className="text-base font-bold text-emerald-700">{positiveRate}%</div>
+            <div className="p-2 rounded bg-mca-card border border-white/5">
+              <div className="text-[10px] font-mono text-slate-400">POSITIVE MOOD</div>
+              <div className="text-base font-mono font-bold text-emerald-400">{positiveRate}%</div>
             </div>
-            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-              <div className="text-[10px] uppercase font-semibold text-slate-400">Meetings Set</div>
-              <div className="text-base font-bold text-purple-700">{meetingsCount}</div>
+            <div className="p-2 rounded bg-mca-card border border-white/5">
+              <div className="text-[10px] font-mono text-slate-400">MEETINGS SET</div>
+              <div className="text-base font-mono font-bold text-purple-400">{meetings}</div>
             </div>
           </div>
 
-          {/* Top Objections List */}
-          <div className="space-y-2.5">
-            <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
-              Top Detected Objections & Winning Counters
-            </div>
+          <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-2">
+            TOP DETECTED OBJECTIONS &amp; WINNING COUNTERS
+          </div>
 
-            {objections.slice(0, 3).map((obj) => (
-              <div
-                key={obj.category}
-                className="p-3 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-indigo-200 transition-all"
-              >
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-slate-800">{obj.category}</span>
-                    <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">
-                      {obj.count} occurrences ({obj.percentage}%)
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-slate-400">
-                    {obj.leads_affected} contractor leads
-                  </span>
-                </div>
-
-                <div className="text-[11px] text-slate-600 italic mb-1.5">
-                  "{obj.sample_statements[0] || 'Sample prospect response'}"
-                </div>
-
-                <div className="text-[11px] text-indigo-900 bg-indigo-50/80 p-2 rounded border border-indigo-100 flex items-start gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-600 shrink-0 mt-0.5" />
-                  <div>
-                    <strong>Sophia Counter: </strong>
-                    {obj.recommended_response}
-                  </div>
-                </div>
+          <div className="space-y-2 text-xs">
+            {objections.length === 0 && (
+              <div className="p-3 rounded bg-mca-card border border-white/5 text-center text-[11px] font-mono text-slate-500">
+                No objections detected yet — log calls to build the objection radar.
               </div>
-            ))}
+            )}
+            {objections.slice(0, 3).map((obj, i) => {
+              const a = accents[i % accents.length];
+              return (
+                <div key={obj.category} className="p-2.5 rounded bg-mca-card border border-white/5 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-200">
+                      {obj.category}{' '}
+                      <span className={`text-[10px] font-mono ${a.occ} font-normal`}>
+                        {obj.count} occurrence{obj.count === 1 ? '' : 's'} ({obj.percentage}%)
+                      </span>
+                    </span>
+                    <span className="text-[10px] font-mono text-slate-500">{obj.leads_affected} contractor leads</span>
+                  </div>
+                  <div className="text-[11px] text-slate-400 italic">
+                    "{obj.sample_statements[0] || 'Sample prospect response'}"
+                  </div>
+                  <div className={`text-[11px] font-mono p-1.5 rounded border ${a.box}`}>
+                    <strong>Sophia Counter:</strong> {obj.recommended_response}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+        <div className="pt-2 border-t border-mca-border flex justify-between items-center text-[10px] font-mono text-slate-400">
           <span>Objections aggregated across all calls and transcripts</span>
-          <button
-            onClick={onOpenCallIntelligence}
-            className="text-indigo-600 font-medium hover:underline"
-          >
+          <button onClick={onOpenCallIntelligence} className="text-cyan-400 hover:underline">
             Review All Transcripts →
           </button>
         </div>
       </div>
 
-      {/* Follow-Up Performance & Health (5 Cols) */}
-      <div className="lg:col-span-5 bg-white rounded-xl p-5 border border-slate-200 shadow-xs flex flex-col justify-between">
+      {/* Radar Col 3: Follow-Up Performance */}
+      <div className="glass-panel p-4 rounded-xl flex flex-col justify-between space-y-3">
         <div>
-          <div className="flex items-center justify-between pb-3 mb-4 border-b border-slate-100">
-            <div>
-              <h3 className="font-semibold text-slate-900 text-sm sm:text-base flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-emerald-600" />
-                Follow-Up Performance
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                Commitment fulfillment & queue metrics
-              </p>
+          <div className="flex items-center justify-between pb-2.5 border-b border-mca-border">
+            <div className="flex items-center gap-2">
+              <i className="fa-solid fa-list-check text-cyan-400"></i>
+              <h3 className="text-sm font-bold text-white">Follow-Up Performance</h3>
             </div>
-
-            <button
-              onClick={onOpenFollowUpQueue}
-              className="text-xs text-emerald-700 font-semibold hover:underline"
-            >
+            <button onClick={onOpenFollowUpQueue} className="text-xs font-mono text-cyan-400 hover:underline">
               Open Queue →
             </button>
           </div>
 
-          {/* Completion Gauge / Stats */}
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-semibold text-slate-700">Follow-Up Completion Rate</span>
-              <span className="text-sm font-bold text-emerald-700">{completionRate}%</span>
+          <div className="my-3 space-y-2">
+            <div className="flex justify-between text-xs font-mono">
+              <span className="text-slate-400">Follow-Up Completion Rate</span>
+              <span className={`${rateTone[0]} font-bold`}>{completion}%</span>
             </div>
-            <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
-              <div
-                className="bg-emerald-500 h-full rounded-full transition-all"
-                style={{ width: `${completionRate}%` }}
-              ></div>
+            <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div className={`${rateTone[1]} h-full rounded-full`} style={{ width: `${completion}%` }}></div>
             </div>
-            <div className="flex justify-between text-[11px] text-slate-500 mt-2">
-              <span>{completedFollowUps} completed tasks</span>
-              <span className={overdueFollowUps > 0 ? 'text-rose-600 font-semibold' : 'text-slate-500'}>
-                {overdueFollowUps} overdue tasks
+            <div className="flex justify-between text-[10px] font-mono text-slate-500">
+              <span>{completed} completed tasks</span>
+              <span className={`${overdue > 0 ? 'text-rose-400 font-semibold' : 'text-slate-500'}`}>
+                {overdue} overdue tasks
               </span>
             </div>
           </div>
 
-          {/* Channel breakdown of tasks */}
-          <div className="space-y-2">
-            <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
-              Active Task Channels
+          <div className="text-[10px] font-mono text-slate-400 uppercase tracking-wider mb-2">ACTIVE TASK CHANNELS</div>
+          <div className="grid grid-cols-3 gap-2 text-center text-xs font-mono">
+            <div className="p-2 rounded bg-mca-card border border-white/5">
+              <div className="text-[10px] text-slate-400 whitespace-nowrap">Phone Calls</div>
+              <div className="text-base font-bold text-white mt-1">{phone}</div>
             </div>
-            <div className="grid grid-cols-3 gap-2 text-center text-xs">
-              <div className="p-2.5 rounded-lg border border-slate-100 bg-white">
-                <div className="text-[10px] text-slate-400">Phone Calls</div>
-                <div className="font-bold text-slate-800 text-sm">
-                  {followUps.filter((f) => f.channel === 'Phone Call').length}
-                </div>
-              </div>
-              <div className="p-2.5 rounded-lg border border-slate-100 bg-white">
-                <div className="text-[10px] text-slate-400">Sophia AI Calls</div>
-                <div className="font-bold text-indigo-700 text-sm">
-                  {followUps.filter((f) => f.channel === 'AI Call').length}
-                </div>
-              </div>
-              <div className="p-2.5 rounded-lg border border-slate-100 bg-white">
-                <div className="text-[10px] text-slate-400">Email / SMS</div>
-                <div className="font-bold text-slate-800 text-sm">
-                  {followUps.filter((f) => f.channel === 'Email' || f.channel === 'SMS').length}
-                </div>
-              </div>
+            <div className="p-2 rounded bg-mca-card border border-white/5">
+              <div className="text-[10px] text-slate-400 whitespace-nowrap">Sophia AI Calls</div>
+              <div className="text-base font-bold text-purple-400 mt-1">{aiCalls}</div>
+            </div>
+            <div className="p-2 rounded bg-mca-card border border-white/5">
+              <div className="text-[10px] text-slate-400 whitespace-nowrap">Email / SMS</div>
+              <div className="text-base font-bold text-cyan-400 mt-1">{emailSms}</div>
             </div>
           </div>
         </div>
 
-        <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-          <span>Zero-drop guarantee on prospect commitments</span>
-          <button
-            onClick={onOpenFollowUpQueue}
-            className="text-emerald-700 font-medium hover:underline"
-          >
-            Manage Queue ({followUps.filter((f) => f.status === 'Pending').length}) →
+        <div className="pt-2 border-t border-mca-border flex justify-between items-center text-[10px] font-mono">
+          <span className="text-slate-500">Zero-drop guarantee on prospect commitments</span>
+          <button onClick={onOpenFollowUpQueue} className="text-cyan-400 hover:underline">
+            Manage Queue ({open.length}) →
           </button>
         </div>
       </div>
-    </div>
+    </section>
   );
 };

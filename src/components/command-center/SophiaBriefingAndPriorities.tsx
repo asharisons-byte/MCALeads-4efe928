@@ -84,15 +84,15 @@ export const SophiaBriefingAndPriorities: React.FC<SophiaBriefingAndPrioritiesPr
   const getActionIcon = (actionType: TodayPriorityItem['action_type']) => {
     switch (actionType) {
       case 'AI Call':
-        return <Radio className="w-3.5 h-3.5 text-indigo-600 animate-pulse" />;
+        return <Radio className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />;
       case 'Call':
-        return <Phone className="w-3.5 h-3.5 text-emerald-600" />;
+        return <Phone className="w-3.5 h-3.5 text-emerald-400" />;
       case 'Email':
-        return <Mail className="w-3.5 h-3.5 text-blue-600" />;
+        return <Mail className="w-3.5 h-3.5 text-blue-400" />;
       case 'SMS':
-        return <MessageSquare className="w-3.5 h-3.5 text-violet-600" />;
+        return <MessageSquare className="w-3.5 h-3.5 text-violet-400" />;
       default:
-        return <FileText className="w-3.5 h-3.5 text-amber-600" />;
+        return <FileText className="w-3.5 h-3.5 text-amber-400" />;
     }
   };
 
@@ -101,19 +101,19 @@ export const SophiaBriefingAndPriorities: React.FC<SophiaBriefingAndPrioritiesPr
       {/* Sophia Daily Briefing Card (7 Cols) */}
       <div className="lg:col-span-7 bg-linear-to-br from-indigo-900 via-slate-900 to-slate-950 text-white rounded-xl p-6 shadow-sm border border-indigo-800/40 relative overflow-hidden flex flex-col justify-between">
         {/* Subtle background glow */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
         <div>
           {/* Header row */}
           <div className="flex items-center justify-between gap-3 border-b border-indigo-800/50 pb-4 mb-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-indigo-600/30 border border-indigo-400/30 flex items-center justify-center text-indigo-300">
+              <div className="w-10 h-10 rounded-lg bg-blue-600/30 border border-indigo-400/30 flex items-center justify-center text-indigo-300">
                 <Bot className="w-5 h-5" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <span className="font-semibold text-base text-white">Sophia Daily Briefing</span>
-                  <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-indigo-500/20 text-indigo-300 border border-indigo-400/30 flex items-center gap-1">
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-blue-500/20 text-indigo-300 border border-indigo-400/30 flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-indigo-400" />
                     AI Intelligence
                   </span>
@@ -162,7 +162,7 @@ export const SophiaBriefingAndPriorities: React.FC<SophiaBriefingAndPrioritiesPr
           <div className="space-y-3 text-sm text-indigo-100/90 leading-relaxed">
             <p className="font-medium text-indigo-200">{briefing.greeting}</p>
             {briefing.summary_paragraphs.map((p, idx) => (
-              <p key={idx} className="text-slate-300 text-xs sm:text-sm">
+              <p key={idx} className="text-slate-600 text-xs sm:text-sm">
                 {p}
               </p>
             ))}
@@ -172,7 +172,7 @@ export const SophiaBriefingAndPriorities: React.FC<SophiaBriefingAndPrioritiesPr
         {/* Top Priority Highlight Banner */}
         <div className="mt-5 p-3.5 rounded-lg bg-indigo-950/80 border border-indigo-700/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-start gap-2.5">
-            <div className="p-1.5 rounded-md bg-indigo-600/30 text-indigo-300 shrink-0 mt-0.5">
+            <div className="p-1.5 rounded-md bg-blue-600/30 text-indigo-300 shrink-0 mt-0.5">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
@@ -189,7 +189,7 @@ export const SophiaBriefingAndPriorities: React.FC<SophiaBriefingAndPrioritiesPr
           {briefing.top_priority.lead_id && (
             <button
               onClick={() => onOpenLead(briefing.top_priority.lead_id!)}
-              className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium flex items-center justify-center gap-1.5 shrink-0 transition-colors"
+              className="px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium flex items-center justify-center gap-1.5 shrink-0 transition-colors"
             >
               Open Prospect
               <ArrowRight className="w-3.5 h-3.5" />
@@ -199,17 +199,17 @@ export const SophiaBriefingAndPriorities: React.FC<SophiaBriefingAndPrioritiesPr
       </div>
 
       {/* Today's Priorities Panel (5 Cols) */}
-      <div className="lg:col-span-5 bg-white rounded-xl p-5 shadow-xs border border-slate-200 flex flex-col justify-between">
+      <div className="lg:col-span-5 bg-mca-card rounded-xl p-5 border border-white/10 flex flex-col justify-between">
         <div>
-          <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-100">
+          <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/5">
             <div>
-              <h3 className="font-semibold text-slate-900 text-sm sm:text-base flex items-center gap-2">
+              <h3 className="font-semibold text-white text-sm sm:text-base flex items-center gap-2">
                 Today's Priorities
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-rose-950/50 text-rose-300 border border-rose-800/50">
                   {priorities.filter((p) => !completedPriorityIds.has(p.id)).length} Actionable
                 </span>
               </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-400 mt-0.5">
                 Deterministic queue of immediate outreach & closing tasks
               </p>
             </div>
@@ -218,8 +218,8 @@ export const SophiaBriefingAndPriorities: React.FC<SophiaBriefingAndPrioritiesPr
           {/* Priorities List */}
           <div className="space-y-2.5 max-h-[340px] overflow-y-auto pr-1">
             {priorities.length === 0 ? (
-              <div className="text-center py-10 text-slate-400 text-xs">
-                <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto mb-2 opacity-80" />
+              <div className="text-center py-10 text-slate-500 text-xs">
+                <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto mb-2 opacity-80" />
                 No overdue or urgent tasks for today. Agency operations are up to date!
               </div>
             ) : (
@@ -231,10 +231,10 @@ export const SophiaBriefingAndPriorities: React.FC<SophiaBriefingAndPrioritiesPr
                     onClick={() => onOpenLead(item.lead_id)}
                     className={`p-3 rounded-lg border transition-all cursor-pointer flex items-start gap-3 group ${
                       isCompleted
-                        ? 'bg-slate-50/70 border-slate-200/60 opacity-60'
+                        ? 'bg-mca-void/70 border-white/10 opacity-60'
                         : item.priority === 'Critical'
-                        ? 'bg-rose-50/40 border-rose-200/80 hover:border-rose-300'
-                        : 'bg-white border-slate-200/80 hover:border-indigo-300 hover:shadow-xs'
+                        ? 'bg-rose-950/40 border-rose-800/50 hover:border-rose-700/60'
+                        : 'bg-mca-card border-white/10 hover:border-indigo-700/60 hover:shadow-xs'
                     }`}
                   >
                     {/* Checkbox trigger */}
@@ -242,8 +242,8 @@ export const SophiaBriefingAndPriorities: React.FC<SophiaBriefingAndPrioritiesPr
                       onClick={(e) => togglePriorityComplete(item.id, e)}
                       className={`mt-0.5 p-1 rounded-md transition-colors ${
                         isCompleted
-                          ? 'text-emerald-600 bg-emerald-50'
-                          : 'text-slate-300 hover:text-slate-500'
+                          ? 'text-emerald-400 bg-emerald-950/50'
+                          : 'text-slate-600 hover:text-slate-400'
                       }`}
                       title={isCompleted ? 'Mark pending' : 'Mark completed'}
                     >
@@ -254,27 +254,27 @@ export const SophiaBriefingAndPriorities: React.FC<SophiaBriefingAndPrioritiesPr
                       <div className="flex items-center justify-between gap-1">
                         <span
                           className={`font-semibold text-xs sm:text-sm truncate ${
-                            isCompleted ? 'line-through text-slate-500' : 'text-slate-900'
+                            isCompleted ? 'line-through text-slate-400' : 'text-white'
                           }`}
                         >
                           {item.business_name}
                         </span>
-                        <span className="text-[11px] font-bold text-slate-700 shrink-0">
+                        <span className="text-[11px] font-bold text-slate-200 shrink-0">
                           ${item.estimated_mrr.toLocaleString()} MRR
                         </span>
                       </div>
 
-                      <div className="flex items-center gap-1.5 mt-0.5 text-xs text-slate-600">
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-slate-100 text-[10px] font-medium text-slate-700">
+                      <div className="flex items-center gap-1.5 mt-0.5 text-xs text-slate-300">
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-mca-hover text-[10px] font-medium text-slate-200">
                           {getActionIcon(item.action_type)}
                           {item.action_type}
                         </span>
                         <span className="truncate">{item.action}</span>
                       </div>
 
-                      <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2">
-                        <span className="flex items-center gap-1 text-slate-500">
-                          <Clock className="w-3 h-3 text-slate-400" />
+                      <div className="flex items-center justify-between text-[11px] text-slate-400 mt-2">
+                        <span className="flex items-center gap-1 text-slate-400">
+                          <Clock className="w-3 h-3 text-slate-500" />
                           {item.due_time}
                         </span>
 
@@ -286,7 +286,7 @@ export const SophiaBriefingAndPriorities: React.FC<SophiaBriefingAndPrioritiesPr
                           {item.action_type === 'AI Call' && onStartAICall && (
                             <button
                               onClick={() => onStartAICall(item.lead_id)}
-                              className="px-2 py-0.5 rounded text-[10px] font-medium bg-indigo-50 text-indigo-700 hover:bg-indigo-100 flex items-center gap-1"
+                              className="px-2 py-0.5 rounded text-[10px] font-medium bg-indigo-950/50 text-indigo-300 hover:bg-indigo-950 flex items-center gap-1"
                               title="Start Sophia AI Call"
                             >
                               <Radio className="w-3 h-3" />
@@ -296,7 +296,7 @@ export const SophiaBriefingAndPriorities: React.FC<SophiaBriefingAndPrioritiesPr
                           {item.action_type === 'Call' && onStartCall && (
                             <button
                               onClick={() => onStartCall(item.lead_id)}
-                              className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 flex items-center gap-1"
+                              className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-950/50 text-emerald-300 hover:bg-emerald-950 flex items-center gap-1"
                               title="Call Lead"
                             >
                               <Phone className="w-3 h-3" />
@@ -306,7 +306,7 @@ export const SophiaBriefingAndPriorities: React.FC<SophiaBriefingAndPrioritiesPr
                           {item.action_type === 'Email' && onSendEmail && (
                             <button
                               onClick={() => onSendEmail(item.lead_id)}
-                              className="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 hover:bg-blue-100 flex items-center gap-1"
+                              className="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-950/50 text-blue-300 hover:bg-blue-950 flex items-center gap-1"
                               title="Draft Email"
                             >
                               <Mail className="w-3 h-3" />
@@ -316,7 +316,7 @@ export const SophiaBriefingAndPriorities: React.FC<SophiaBriefingAndPrioritiesPr
                           {item.action_type === 'SMS' && onSendSMS && (
                             <button
                               onClick={() => onSendSMS(item.lead_id)}
-                              className="px-2 py-0.5 rounded text-[10px] font-medium bg-violet-50 text-violet-700 hover:bg-violet-100 flex items-center gap-1"
+                              className="px-2 py-0.5 rounded text-[10px] font-medium bg-violet-950/50 text-violet-300 hover:bg-violet-950 flex items-center gap-1"
                               title="Send SMS"
                             >
                               <MessageSquare className="w-3 h-3" />
@@ -334,7 +334,7 @@ export const SophiaBriefingAndPriorities: React.FC<SophiaBriefingAndPrioritiesPr
         </div>
 
         {/* Footer info */}
-        <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+        <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400">
           <span>Prioritized by closing probability & MRR</span>
           <span>Sophia Autonomous Dispatch</span>
         </div>

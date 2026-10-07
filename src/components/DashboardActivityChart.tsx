@@ -45,23 +45,23 @@ export const DashboardActivityChart: React.FC<DashboardActivityChartProps> = ({ 
         <AreaChart data={chartData}>
           <defs>
             <linearGradient id="colorCalls" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-              <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+              <stop offset="5%" stopColor="#00ff9d" stopOpacity={0.3}/>
+              <stop offset="95%" stopColor="#00ff9d" stopOpacity={0}/>
             </linearGradient>
             <linearGradient id="colorEmails" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+              <stop offset="5%" stopColor="#00e5ff" stopOpacity={0.3}/>
+              <stop offset="95%" stopColor="#00e5ff" stopOpacity={0}/>
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-          <XAxis dataKey="date" stroke="#475569" fontSize={10} tickFormatter={(v) => v.slice(5)} />
-          <YAxis stroke="#475569" fontSize={10} />
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+          <XAxis dataKey="date" stroke="#64748b" fontSize={10} tickFormatter={(v) => v.slice(5)} />
+          <YAxis stroke="#64748b" fontSize={10} />
           <Tooltip 
-            contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', fontSize: '12px' }}
+            contentStyle={{ backgroundColor: '#12141d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, fontSize: '12px', fontFamily: 'JetBrains Mono, monospace' }}
             itemStyle={{ color: '#e2e8f0' }}
           />
-          <Area type="monotone" dataKey="calls" stroke="#10b981" fillOpacity={1} fill="url(#colorCalls)" name="Calls" />
-          <Area type="monotone" dataKey="emails" stroke="#3b82f6" fillOpacity={1} fill="url(#colorEmails)" name="Emails" />
+          <Area type="monotone" dataKey="calls" stroke="#00ff9d" fillOpacity={1} fill="url(#colorCalls)" name="Calls" />
+          <Area type="monotone" dataKey="emails" stroke="#00e5ff" fillOpacity={1} fill="url(#colorEmails)" name="Emails" />
         </AreaChart>
       </ResponsiveContainer>
     </div>

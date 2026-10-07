@@ -273,7 +273,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Top Hero Banner: Agency Control Center */}
-      <div className="bg-gradient-to-r from-slate-900 via-purple-950 to-indigo-950 rounded-3xl p-6 sm:p-8 text-white border border-purple-900/50 shadow-2xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-slate-900 via-purple-950 to-indigo-950 rounded-xl p-6 sm:p-8 text-white border border-purple-900/50 shadow-2xl relative overflow-hidden">
         <div className="absolute right-0 top-0 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20"></div>
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -374,7 +374,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
 
             <button
               onClick={() => setShowInviteModal(true)}
-              className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold flex items-center gap-1.5 transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold flex items-center gap-1.5 transition-colors"
             >
               <UserPlus className="w-3.5 h-3.5" />
               <span>Invite Client User</span>
@@ -384,7 +384,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
       </div>
 
       {/* Navigation Sub-Tabs */}
-      <div className="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-white/10 dark:border-slate-800 pb-2 overflow-x-auto">
         {[
           { id: 'overview', label: 'Organization Overview', icon: Building2 },
           { id: 'users', label: `Client Users (${users.length})`, icon: Users },
@@ -402,7 +402,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shrink-0 ${
                 isActive
                   ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
-                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  : 'bg-mca-card dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-white/10 dark:border-slate-800 hover:bg-mca-void/40 dark:hover:bg-slate-800'
               }`}
             >
               <Icon className="w-4 h-4" />
@@ -424,11 +424,11 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
         <div className="space-y-6">
           {/* High-Level Metric Tiles */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+            <div className="p-4 rounded-xl bg-mca-card dark:bg-slate-900 border border-white/10 dark:border-slate-800 shadow-sm space-y-1">
               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block">
                 Retainer MRR
               </span>
-              <span className="text-xl font-black text-slate-900 dark:text-white">
+              <span className="text-xl font-black text-white dark:text-white">
                 ${currentClient?.actual_mrr.toLocaleString() || '2,400'}
               </span>
               <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold block">
@@ -436,7 +436,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+            <div className="p-4 rounded-xl bg-mca-card dark:bg-slate-900 border border-white/10 dark:border-slate-800 shadow-sm space-y-1">
               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block">
                 Portal Users
               </span>
@@ -448,60 +448,60 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+            <div className="p-4 rounded-xl bg-mca-card dark:bg-slate-900 border border-white/10 dark:border-slate-800 shadow-sm space-y-1">
               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block">
                 Pending Approvals
               </span>
               <span className="text-xl font-black text-amber-600 dark:text-amber-400">
                 {approvals.filter((a) => a.status === 'Pending').length}
               </span>
-              <span className="text-[10px] text-amber-700 dark:text-amber-300 font-semibold block">
+              <span className="text-[10px] text-amber-300 dark:text-amber-300 font-semibold block">
                 Awaiting Sign-off
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+            <div className="p-4 rounded-xl bg-mca-card dark:bg-slate-900 border border-white/10 dark:border-slate-800 shadow-sm space-y-1">
               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block">
                 Open Requests
               </span>
               <span className="text-xl font-black text-indigo-600 dark:text-indigo-400">
                 {requests.filter((r) => r.status !== 'Completed' && r.status !== 'Closed').length}
               </span>
-              <span className="text-[10px] text-indigo-700 dark:text-indigo-300 font-semibold block">
+              <span className="text-[10px] text-indigo-300 dark:text-indigo-300 font-semibold block">
                 In Ops Queue
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+            <div className="p-4 rounded-xl bg-mca-card dark:bg-slate-900 border border-white/10 dark:border-slate-800 shadow-sm space-y-1">
               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block">
                 Total Logins
               </span>
               <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">
                 {analytics?.total_logins || 14}
               </span>
-              <span className="text-[10px] text-emerald-700 dark:text-emerald-300 font-semibold block">
+              <span className="text-[10px] text-emerald-300 dark:text-emerald-300 font-semibold block">
                 High Engagement
               </span>
             </div>
 
-            <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-1">
+            <div className="p-4 rounded-xl bg-mca-card dark:bg-slate-900 border border-white/10 dark:border-slate-800 shadow-sm space-y-1">
               <span className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block">
                 Reports Viewed
               </span>
               <span className="text-xl font-black text-blue-600 dark:text-blue-400">
                 {analytics?.reports_viewed_count || 6}
               </span>
-              <span className="text-[10px] text-blue-700 dark:text-blue-300 font-semibold block">
+              <span className="text-[10px] text-blue-300 dark:text-blue-300 font-semibold block">
                 Sophia Assisted
               </span>
             </div>
           </div>
 
           {/* Quick Impersonation / View Launch Grid */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div className="bg-mca-card dark:bg-slate-900 rounded-xl border border-white/10 dark:border-slate-800 p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-white/5 dark:border-slate-800">
               <div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                <h3 className="text-base font-bold text-white dark:text-white">
                   Live Client Impersonation & Role Testing
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -516,30 +516,30 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                   role: 'Client Owner' as const,
                   title: 'Owner Portal View',
                   desc: 'Full visibility, approvals, team management, billing invoices & contracts.',
-                  color: 'border-purple-300 bg-purple-50/50 dark:bg-purple-950/20 text-purple-900 dark:text-purple-200',
+                  color: 'border-purple-700/60 bg-purple-950/50 dark:bg-purple-950/20 text-purple-300 dark:text-purple-200',
                   btnColor: 'bg-purple-600 hover:bg-purple-700 text-white',
                 },
                 {
                   role: 'Client Admin' as const,
                   title: 'Admin Portal View',
                   desc: 'Review deliverables, approve ad creatives, submit requests, and invite peers.',
-                  color: 'border-indigo-300 bg-indigo-50/50 dark:bg-indigo-950/20 text-indigo-900 dark:text-indigo-200',
-                  btnColor: 'bg-indigo-600 hover:bg-indigo-700 text-white',
+                  color: 'border-indigo-700/60 bg-indigo-950/50 dark:bg-indigo-950/20 text-indigo-300 dark:text-indigo-200',
+                  btnColor: 'bg-blue-600 hover:bg-blue-500 text-white',
                 },
                 {
                   role: 'Client Member' as const,
                   title: 'Team Member View',
                   desc: 'Read-only reports, inspect live milestone progress, and submit work requests.',
-                  color: 'border-slate-300 bg-slate-50/50 dark:bg-slate-850/50 text-slate-900 dark:text-slate-200',
+                  color: 'border-white/15 bg-mca-void/50 dark:bg-slate-850/50 text-white dark:text-slate-200',
                   btnColor: 'bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 text-white',
                 },
               ].map((item, idx) => (
                 <div
                   key={idx}
-                  className={`p-5 rounded-2xl border ${item.color} flex flex-col justify-between space-y-4`}
+                  className={`p-5 rounded-xl border ${item.color} flex flex-col justify-between space-y-4`}
                 >
                   <div className="space-y-1.5">
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-mca-card dark:bg-slate-800 border border-white/10 dark:border-slate-700">
                       {item.role}
                     </span>
                     <h4 className="text-sm font-bold">{item.title}</h4>
@@ -569,7 +569,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+              <h3 className="text-base font-bold text-white dark:text-white">
                 Authorized Client Users for {currentBusinessName}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -586,10 +586,10 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
             </button>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+          <div className="bg-mca-card dark:bg-slate-900 rounded-xl border border-white/10 dark:border-slate-800 overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 dark:bg-slate-850 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
+                <thead className="bg-mca-void/40 dark:bg-slate-850 text-slate-500 dark:text-slate-400 font-semibold border-b border-white/10 dark:border-slate-800">
                   <tr>
                     <th className="p-4">User Name</th>
                     <th className="p-4">Email Address</th>
@@ -600,10 +600,10 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                     <th className="p-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                <tbody className="divide-y divide-white/5 dark:divide-slate-800 text-slate-200 dark:text-slate-300">
                   {users.map((user) => (
-                    <tr key={user.user_id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
-                      <td className="p-4 font-bold text-slate-900 dark:text-white">
+                    <tr key={user.user_id} className="hover:bg-mca-void/60 dark:hover:bg-slate-800/40 transition-colors">
+                      <td className="p-4 font-bold text-white dark:text-white">
                         {user.name}
                       </td>
                       <td className="p-4 font-mono text-slate-600 dark:text-slate-400">
@@ -613,10 +613,10 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                         <span
                           className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
                             user.role === 'Client Owner'
-                              ? 'bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
+                              ? 'bg-purple-950 dark:bg-purple-950 text-purple-300 dark:text-purple-300 border border-purple-800/50 dark:border-purple-800'
                               : user.role === 'Client Admin'
-                              ? 'bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800'
-                              : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                              ? 'bg-indigo-950 dark:bg-indigo-950 text-indigo-300 dark:text-indigo-300 border border-indigo-800/50 dark:border-indigo-800'
+                              : 'bg-mca-hover dark:bg-slate-800 text-slate-200 dark:text-slate-300 border border-white/10 dark:border-slate-700'
                           }`}
                         >
                           {user.role}
@@ -624,7 +624,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                       </td>
                       <td className="p-4">{user.title || 'Client Stakeholder'}</td>
                       <td className="p-4">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-950 text-emerald-300 dark:bg-emerald-950 dark:text-emerald-300">
                           {user.status}
                         </span>
                       </td>
@@ -635,7 +635,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => onLaunchPortalAsUser(user)}
-                            className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-purple-50 dark:hover:bg-purple-950 text-slate-700 dark:text-slate-300 hover:text-purple-600 font-semibold transition-colors flex items-center gap-1 text-[11px]"
+                            className="px-2.5 py-1 rounded-lg bg-mca-hover dark:bg-slate-800 hover:bg-purple-950/50 dark:hover:bg-purple-950 text-slate-200 dark:text-slate-300 hover:text-purple-600 font-semibold transition-colors flex items-center gap-1 text-[11px]"
                           >
                             <ExternalLink className="w-3 h-3" />
                             <span>Impersonate</span>
@@ -670,7 +670,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+              <h3 className="text-base font-bold text-white dark:text-white">
                 Content Sharing Governance for {currentBusinessName}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -687,10 +687,10 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
             </button>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+          <div className="bg-mca-card dark:bg-slate-900 rounded-xl border border-white/10 dark:border-slate-800 overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 dark:bg-slate-850 text-slate-500 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
+                <thead className="bg-mca-void/40 dark:bg-slate-850 text-slate-500 dark:text-slate-400 font-semibold border-b border-white/10 dark:border-slate-800">
                   <tr>
                     <th className="p-4">Document Title</th>
                     <th className="p-4">Category</th>
@@ -700,19 +700,19 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                     <th className="p-4 text-right">Downloads</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                <tbody className="divide-y divide-white/5 dark:divide-slate-800 text-slate-200 dark:text-slate-300">
                   {documents.map((doc) => (
-                    <tr key={doc.document_id} className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                    <tr key={doc.document_id} className="hover:bg-mca-void/60 dark:hover:bg-slate-800/40 transition-colors">
                       <td className="p-4">
                         <div className="flex items-center gap-2.5">
                           <FileText className="w-4 h-4 text-slate-400" />
-                          <span className="font-bold text-slate-900 dark:text-white">
+                          <span className="font-bold text-white dark:text-white">
                             {doc.title}
                           </span>
                         </div>
                       </td>
                       <td className="p-4">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-mca-hover dark:bg-slate-800 text-slate-600 dark:text-slate-300">
                           {doc.category}
                         </span>
                       </td>
@@ -728,10 +728,10 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                           }
                           className={`text-xs font-bold px-2.5 py-1 rounded-lg border focus:outline-none ${
                             doc.visibility === 'Share with Client'
-                              ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border-emerald-300'
+                              ? 'bg-emerald-950/50 dark:bg-emerald-950/60 text-emerald-300 dark:text-emerald-300 border-emerald-700/60'
                               : doc.visibility === 'Shared with Specific Client User'
-                              ? 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-300'
-                              : 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border-rose-300'
+                              ? 'bg-indigo-950/50 dark:bg-indigo-950/60 text-indigo-300 dark:text-indigo-300 border-indigo-700/60'
+                              : 'bg-rose-950/50 dark:bg-rose-950/60 text-rose-300 dark:text-rose-300 border-rose-700/60'
                           }`}
                         >
                           <option value="Share with Client">Share with Client (Portal)</option>
@@ -757,7 +757,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
       {activeSubTab === 'requests' && (
         <div className="space-y-4">
           <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+            <h3 className="text-base font-bold text-white dark:text-white">
               Client Service & Modification Requests
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -769,25 +769,25 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
             {requests.map((req) => (
               <div
                 key={req.request_id}
-                className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3"
+                className="p-5 rounded-xl bg-mca-card dark:bg-slate-900 border border-white/10 dark:border-slate-800 shadow-sm space-y-3"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span
                       className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                         req.priority === 'Urgent'
-                          ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                          ? 'bg-rose-950 text-rose-300 dark:bg-rose-950 dark:text-rose-300'
                           : req.priority === 'High'
-                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                          : 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+                          ? 'bg-amber-950 text-amber-300 dark:bg-amber-950 dark:text-amber-300'
+                          : 'bg-mca-hover text-slate-200 dark:bg-slate-800 dark:text-slate-300'
                       }`}
                     >
                       {req.priority} Priority
                     </span>
-                    <span className="text-xs font-bold px-2 py-0.5 rounded bg-purple-50 dark:bg-purple-950 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                    <span className="text-xs font-bold px-2 py-0.5 rounded bg-purple-950/50 dark:bg-purple-950 text-purple-300 dark:text-purple-300 border border-purple-800/50 dark:border-purple-800">
                       {req.category}
                     </span>
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                    <h4 className="text-sm font-bold text-white dark:text-white">
                       {req.subject}
                     </h4>
                   </div>
@@ -795,21 +795,21 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-bold shrink-0 ${
                       req.status === 'Completed'
-                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                        ? 'bg-emerald-950 text-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
                         : req.status === 'In Progress'
-                        ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300'
-                        : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                        ? 'bg-indigo-950 text-indigo-300 dark:bg-indigo-950 dark:text-indigo-300'
+                        : 'bg-amber-950 text-amber-300 dark:bg-amber-950 dark:text-amber-300'
                     }`}
                   >
                     Status: {req.status}
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-850 p-3 rounded-xl">
+                <p className="text-xs text-slate-600 dark:text-slate-300 bg-mca-void/40 dark:bg-slate-850 p-3 rounded-xl">
                   {req.description}
                 </p>
 
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-slate-400 pt-2 border-t border-white/5 dark:border-slate-800">
                   <span>
                     Submitted by <strong>{req.submitted_by.name}</strong> ({req.submitted_by.role}) on{' '}
                     {new Date(req.created_at).toLocaleDateString()}
@@ -821,7 +821,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                       setAgencyResponseStatus(req.status);
                       setAgencyResponseText(req.agency_response || '');
                     }}
-                    className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold transition-colors"
+                    className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold transition-colors"
                   >
                     Manage & Reply to Request
                   </button>
@@ -839,7 +839,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+              <h3 className="text-base font-bold text-white dark:text-white">
                 Client Sign-Off & Approval Workflow
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -860,14 +860,14 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
             {approvals.map((appr) => (
               <div
                 key={appr.approval_id}
-                className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3"
+                className="p-5 rounded-xl bg-mca-card dark:bg-slate-900 border border-white/10 dark:border-slate-800 shadow-sm space-y-3"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-mca-hover dark:bg-slate-800 text-slate-200 dark:text-slate-300">
                       {appr.category}
                     </span>
-                    <h4 className="text-sm font-bold text-slate-900 dark:text-white">
+                    <h4 className="text-sm font-bold text-white dark:text-white">
                       {appr.title}
                     </h4>
                   </div>
@@ -875,12 +875,12 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                   <span
                     className={`px-3 py-1 rounded-full text-xs font-bold ${
                       appr.status === 'Approved'
-                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                        ? 'bg-emerald-950 text-emerald-300 dark:bg-emerald-950 dark:text-emerald-300'
                         : appr.status === 'Changes Requested'
-                        ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                        ? 'bg-amber-950 text-amber-300 dark:bg-amber-950 dark:text-amber-300'
                         : appr.status === 'Rejected'
-                        ? 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
-                        : 'bg-amber-50 text-amber-800 border border-amber-300 dark:bg-amber-950/60 dark:text-amber-300'
+                        ? 'bg-rose-950 text-rose-300 dark:bg-rose-950 dark:text-rose-300'
+                        : 'bg-amber-950/50 text-amber-300 border border-amber-700/60 dark:bg-amber-950/60 dark:text-amber-300'
                     }`}
                   >
                     {appr.status}
@@ -892,17 +892,17 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                 </p>
 
                 {appr.client_feedback && (
-                  <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 text-xs">
+                  <div className="p-3 rounded-xl bg-amber-950/50 dark:bg-amber-950/40 border border-amber-800/50 dark:border-amber-900/50 text-xs">
                     <strong className="text-amber-950 dark:text-amber-300 font-bold block mb-0.5">
                       Client Feedback Notes:
                     </strong>
-                    <span className="text-amber-900/90 dark:text-amber-200/90">
+                    <span className="text-amber-300/90 dark:text-amber-200/90">
                       "{appr.client_feedback}"
                     </span>
                   </div>
                 )}
 
-                <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-white/5 dark:border-slate-800">
                   <span>Sign-off Deadline: {appr.deadline}</span>
                   {appr.responded_by && (
                     <span>
@@ -923,7 +923,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
       {activeSubTab === 'audit_log' && (
         <div className="space-y-4">
           <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+            <h3 className="text-base font-bold text-white dark:text-white">
               Client Portal Audit Log & Security Trail
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -931,20 +931,20 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
             </p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
-            <div className="p-4 bg-slate-50 dark:bg-slate-850 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-slate-500">
+          <div className="bg-mca-card dark:bg-slate-900 rounded-xl border border-white/10 dark:border-slate-800 overflow-hidden shadow-sm">
+            <div className="p-4 bg-mca-void/40 dark:bg-slate-850 border-b border-white/10 dark:border-slate-800 flex items-center justify-between text-xs font-semibold text-slate-500">
               <span>Timestamp & User</span>
               <span>Activity Type</span>
               <span>Details</span>
             </div>
-            <div className="divide-y divide-slate-100 dark:divide-slate-800 max-h-96 overflow-y-auto">
+            <div className="divide-y divide-white/5 dark:divide-slate-800 max-h-96 overflow-y-auto">
               {activities.map((act) => (
                 <div
                   key={act.activity_id}
-                  className="p-4 flex items-center justify-between text-xs hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors"
+                  className="p-4 flex items-center justify-between text-xs hover:bg-mca-void/50 dark:hover:bg-slate-800/50 transition-colors"
                 >
                   <div className="space-y-0.5">
-                    <span className="font-bold text-slate-900 dark:text-white block">
+                    <span className="font-bold text-white dark:text-white block">
                       {act.user_name}
                     </span>
                     <span className="text-[11px] text-slate-400 font-mono">
@@ -952,7 +952,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                     </span>
                   </div>
 
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-950 dark:bg-purple-950 text-purple-300 dark:text-purple-300">
                     {act.activity_type}
                   </span>
 
@@ -969,12 +969,12 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
       {/* Modal: Invite Client User */}
       {showInviteModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+          <div className="bg-mca-card dark:bg-slate-900 border border-white/10 dark:border-slate-800 rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <h3 className="text-base font-bold text-white dark:text-white">
               Invite User to {currentBusinessName} Portal
             </h3>
             {inviteNotice ? (
-              <div className="p-4 rounded-xl bg-emerald-50 text-emerald-800 text-xs font-bold">
+              <div className="p-4 rounded-xl bg-emerald-950/50 text-emerald-300 text-xs font-bold">
                 {inviteNotice}
               </div>
             ) : (
@@ -987,7 +987,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                     value={inviteName}
                     onChange={(e) => setInviteName(e.target.value)}
                     placeholder="e.g. Jessica Taylor"
-                    className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                    className="w-full p-2.5 rounded-xl border border-white/15 dark:border-slate-700 bg-mca-void/40 dark:bg-slate-800"
                   />
                 </div>
                 <div>
@@ -998,7 +998,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
                     placeholder="e.g. jessica@clientcompany.com"
-                    className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                    className="w-full p-2.5 rounded-xl border border-white/15 dark:border-slate-700 bg-mca-void/40 dark:bg-slate-800"
                   />
                 </div>
                 <div>
@@ -1006,7 +1006,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                   <select
                     value={inviteRole}
                     onChange={(e) => setInviteRole(e.target.value as any)}
-                    className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                    className="w-full p-2.5 rounded-xl border border-white/15 dark:border-slate-700 bg-mca-void/40 dark:bg-slate-800"
                   >
                     <option value="Client Admin">Client Admin (Approvals, Requests, Campaigns)</option>
                     <option value="Client Owner">Client Owner (Full Org Access, Billing & Invoices)</option>
@@ -1017,7 +1017,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowInviteModal(false)}
-                    className="px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100"
+                    className="px-4 py-2 rounded-xl text-slate-500 hover:bg-mca-hover"
                   >
                     Cancel
                   </button>
@@ -1037,8 +1037,8 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
       {/* Modal: Share Document */}
       {showAddDocModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+          <div className="bg-mca-card dark:bg-slate-900 border border-white/10 dark:border-slate-800 rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <h3 className="text-base font-bold text-white dark:text-white">
               Share Document with {currentBusinessName}
             </h3>
             <form onSubmit={handleAddDocument} className="space-y-3 text-xs">
@@ -1050,7 +1050,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                   value={newDocTitle}
                   onChange={(e) => setNewDocTitle(e.target.value)}
                   placeholder="e.g. Q3 Strategic Local SEO Audit"
-                  className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  className="w-full p-2.5 rounded-xl border border-white/15 dark:border-slate-700 bg-mca-void/40 dark:bg-slate-800"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -1059,7 +1059,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                   <select
                     value={newDocCategory}
                     onChange={(e) => setNewDocCategory(e.target.value as any)}
-                    className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                    className="w-full p-2.5 rounded-xl border border-white/15 dark:border-slate-700 bg-mca-void/40 dark:bg-slate-800"
                   >
                     <option value="Deliverables">Deliverables</option>
                     <option value="Reports">Reports</option>
@@ -1074,7 +1074,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                   <select
                     value={newDocVisibility}
                     onChange={(e) => setNewDocVisibility(e.target.value as any)}
-                    className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-850"
+                    className="w-full p-2.5 rounded-xl border border-white/15 dark:border-slate-700 bg-mca-void/40 dark:bg-slate-850"
                   >
                     <option value="Share with Client">Share with Client (Portal)</option>
                     <option value="Shared with Specific Client User">Specific User Only</option>
@@ -1089,14 +1089,14 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                   value={newDocUrl}
                   onChange={(e) => setNewDocUrl(e.target.value)}
                   placeholder="https://drive.google.com/..."
-                  className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  className="w-full p-2.5 rounded-xl border border-white/15 dark:border-slate-700 bg-mca-void/40 dark:bg-slate-800"
                 />
               </div>
               <div className="flex items-center justify-end gap-2 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowAddDocModal(false)}
-                  className="px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100"
+                  className="px-4 py-2 rounded-xl text-slate-500 hover:bg-mca-hover"
                 >
                   Cancel
                 </button>
@@ -1115,8 +1115,8 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
       {/* Modal: Request Sign-Off / Approval */}
       {showNewApprovalModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+          <div className="bg-mca-card dark:bg-slate-900 border border-white/10 dark:border-slate-800 rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <h3 className="text-base font-bold text-white dark:text-white">
               Create Client Sign-Off Request
             </h3>
             <form onSubmit={handleCreateApproval} className="space-y-3 text-xs">
@@ -1128,7 +1128,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                   value={approvalTitle}
                   onChange={(e) => setApprovalTitle(e.target.value)}
                   placeholder="e.g. Q4 Google Ads Geo-Radius Expansion"
-                  className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  className="w-full p-2.5 rounded-xl border border-white/15 dark:border-slate-700 bg-mca-void/40 dark:bg-slate-800"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -1137,7 +1137,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                   <select
                     value={approvalCategory}
                     onChange={(e) => setApprovalCategory(e.target.value as any)}
-                    className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                    className="w-full p-2.5 rounded-xl border border-white/15 dark:border-slate-700 bg-mca-void/40 dark:bg-slate-800"
                   >
                     <option value="Ad Creative">Ad Creative</option>
                     <option value="Landing Page">Landing Page</option>
@@ -1152,7 +1152,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                     type="date"
                     value={approvalDeadline}
                     onChange={(e) => setApprovalDeadline(e.target.value)}
-                    className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                    className="w-full p-2.5 rounded-xl border border-white/15 dark:border-slate-700 bg-mca-void/40 dark:bg-slate-800"
                   />
                 </div>
               </div>
@@ -1163,14 +1163,14 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                   value={approvalDesc}
                   onChange={(e) => setApprovalDesc(e.target.value)}
                   placeholder="Provide context on what the client is approving and projected impact..."
-                  className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  className="w-full p-2.5 rounded-xl border border-white/15 dark:border-slate-700 bg-mca-void/40 dark:bg-slate-800"
                 />
               </div>
               <div className="flex items-center justify-end gap-2 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowNewApprovalModal(false)}
-                  className="px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100"
+                  className="px-4 py-2 rounded-xl text-slate-500 hover:bg-mca-hover"
                 >
                   Cancel
                 </button>
@@ -1189,8 +1189,8 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
       {/* Modal: Respond to Client Request */}
       {selectedRequestForResponse && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">
+          <div className="bg-mca-card dark:bg-slate-900 border border-white/10 dark:border-slate-800 rounded-xl max-w-lg w-full p-6 shadow-2xl space-y-4">
+            <h3 className="text-base font-bold text-white dark:text-white">
               Manage Client Request: {selectedRequestForResponse.subject}
             </h3>
             <p className="text-xs text-slate-500">
@@ -1203,7 +1203,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                 <select
                   value={agencyResponseStatus}
                   onChange={(e) => setAgencyResponseStatus(e.target.value as any)}
-                  className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  className="w-full p-2.5 rounded-xl border border-white/15 dark:border-slate-700 bg-mca-void/40 dark:bg-slate-800"
                 >
                   <option value="Under Review">Under Review</option>
                   <option value="In Progress">In Progress (Assigned to Ops)</option>
@@ -1219,7 +1219,7 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                   value={agencyResponseText}
                   onChange={(e) => setAgencyResponseText(e.target.value)}
                   placeholder="Explain actions taken or timeline for completion..."
-                  className="w-full p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800"
+                  className="w-full p-2.5 rounded-xl border border-white/15 dark:border-slate-700 bg-mca-void/40 dark:bg-slate-800"
                 />
               </div>
 
@@ -1227,13 +1227,13 @@ export const ClientPortalAgencyHub: React.FC<ClientPortalAgencyHubProps> = ({
                 <button
                   type="button"
                   onClick={() => setSelectedRequestForResponse(null)}
-                  className="px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100"
+                  className="px-4 py-2 rounded-xl text-slate-500 hover:bg-mca-hover"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold"
                 >
                   Save Status & Send Reply
                 </button>

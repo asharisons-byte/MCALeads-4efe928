@@ -108,65 +108,65 @@ export const ExecutiveMarketsView: React.FC<ExecutiveMarketsViewProps> = ({
     <div className="space-y-6">
       {/* 1. TOP TELEMETRY STRIP */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-4 bg-white rounded-3xl border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-bold uppercase tracking-wider">
+        <div className="p-4 bg-mca-card rounded-xl border border-white/10">
+          <div className="flex items-center justify-between text-xs text-slate-400 font-bold uppercase tracking-wider">
             <span>Primary Market Hub</span>
-            <Building className="w-4 h-4 text-indigo-600" />
+            <Building className="w-4 h-4 text-indigo-400" />
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-1">{topHub}, OR</div>
-          <div className="text-[10px] text-indigo-600 font-semibold mt-0.5">
+          <div className="text-2xl font-black text-white mt-1">{topHub}, OR</div>
+          <div className="text-[10px] text-indigo-400 font-semibold mt-0.5">
             Highest Lead Density
           </div>
         </div>
 
-        <div className="p-4 bg-white rounded-3xl border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-bold uppercase tracking-wider">
+        <div className="p-4 bg-mca-card rounded-xl border border-white/10">
+          <div className="flex items-center justify-between text-xs text-slate-400 font-bold uppercase tracking-wider">
             <span>Active City Hubs</span>
-            <MapPin className="w-4 h-4 text-emerald-600" />
+            <MapPin className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-2xl font-black text-slate-900 mt-1">{rawCities.length} Regions</div>
-          <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">
+          <div className="text-2xl font-black text-white mt-1">{rawCities.length} Regions</div>
+          <div className="text-[10px] text-emerald-400 font-semibold mt-0.5">
             100% Oregon CCB Coverage
           </div>
         </div>
 
-        <div className="p-4 bg-white rounded-3xl border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-bold uppercase tracking-wider">
+        <div className="p-4 bg-mca-card rounded-xl border border-white/10">
+          <div className="flex items-center justify-between text-xs text-slate-400 font-bold uppercase tracking-wider">
             <span>Market MRR Won</span>
-            <DollarSign className="w-4 h-4 text-emerald-600" />
+            <DollarSign className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-2xl font-black text-emerald-700 mt-1">
+          <div className="text-2xl font-black text-emerald-300 mt-1">
             ${totalConfirmedMRR.toLocaleString()}
-            <span className="text-xs font-semibold text-emerald-600">/mo</span>
+            <span className="text-xs font-semibold text-emerald-400">/mo</span>
           </div>
-          <div className="text-[10px] text-slate-500 font-semibold mt-0.5">
+          <div className="text-[10px] text-slate-400 font-semibold mt-0.5">
             {clients.length} Active Retainers
           </div>
         </div>
 
-        <div className="p-4 bg-white rounded-3xl border border-slate-200 shadow-2xs">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-bold uppercase tracking-wider">
+        <div className="p-4 bg-mca-card rounded-xl border border-white/10">
+          <div className="flex items-center justify-between text-xs text-slate-400 font-bold uppercase tracking-wider">
             <span>Expansion Target</span>
-            <Sparkles className="w-4 h-4 text-amber-500" />
+            <Sparkles className="w-4 h-4 text-amber-400" />
           </div>
-          <div className="text-2xl font-black text-amber-600 mt-1">Eugene & Bend</div>
-          <div className="text-[10px] text-amber-700 font-semibold mt-0.5">
+          <div className="text-2xl font-black text-amber-400 mt-1">Eugene & Bend</div>
+          <div className="text-[10px] text-amber-300 font-semibold mt-0.5">
             High Margin HVAC & Roofing
           </div>
         </div>
       </div>
 
       {/* 2. OREGON MARKET HEATMAP & REGIONAL OPPORTUNITY CANVAS */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-5">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+      <div className="bg-mca-card rounded-xl p-6 border border-white/10 space-y-5">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-white/5">
           <div>
             <div className="flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-indigo-600" />
-              <h3 className="text-base font-black text-slate-900">
+              <MapPin className="w-5 h-5 text-indigo-400" />
+              <h3 className="text-base font-black text-white">
                 Oregon Geographic Opportunity Heatmap & Density Engine
               </h3>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-400 mt-0.5">
               Interactive geographic intelligence: regional density, CCB contractor licensing, and active client footprints
             </p>
           </div>
@@ -174,16 +174,16 @@ export const ExecutiveMarketsView: React.FC<ExecutiveMarketsViewProps> = ({
           {/* Interactive Filters Bar */}
           <div className="flex flex-wrap items-center gap-2 text-xs">
             {/* Industry Trade */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-              <span className="text-slate-400 text-[10px] uppercase font-bold px-2">Trade:</span>
+            <div className="flex items-center gap-1 bg-mca-hover p-1 rounded-xl">
+              <span className="text-slate-500 text-[10px] uppercase font-bold px-2">Trade:</span>
               {['All', 'Roofing', 'Plumbing', 'HVAC', 'Electrical'].map((niche) => (
                 <button
                   key={niche}
                   onClick={() => setSelectedIndustry(niche)}
                   className={`px-2.5 py-1 rounded-lg font-semibold transition-colors ${
                     selectedIndustry === niche
-                      ? 'bg-white text-indigo-700 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-mca-card text-indigo-300'
+                      : 'text-slate-300 hover:text-white'
                   }`}
                 >
                   {niche}
@@ -192,8 +192,8 @@ export const ExecutiveMarketsView: React.FC<ExecutiveMarketsViewProps> = ({
             </div>
 
             {/* Score Filter */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
-              <span className="text-slate-400 text-[10px] uppercase font-bold px-2">Score:</span>
+            <div className="flex items-center gap-1 bg-mca-hover p-1 rounded-xl">
+              <span className="text-slate-500 text-[10px] uppercase font-bold px-2">Score:</span>
               {[
                 { label: 'All', val: 0 },
                 { label: '60+', val: 60 },
@@ -204,8 +204,8 @@ export const ExecutiveMarketsView: React.FC<ExecutiveMarketsViewProps> = ({
                   onClick={() => setMinScore(s.val)}
                   className={`px-2 py-1 rounded-lg font-semibold transition-colors ${
                     minScore === s.val
-                      ? 'bg-white text-indigo-700 shadow-xs'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-mca-card text-indigo-300'
+                      : 'text-slate-300 hover:text-white'
                   }`}
                 >
                   {s.label}
@@ -214,13 +214,13 @@ export const ExecutiveMarketsView: React.FC<ExecutiveMarketsViewProps> = ({
             </div>
 
             {/* Target Type */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+            <div className="flex items-center gap-1 bg-mca-hover p-1 rounded-xl">
               <button
                 onClick={() => setTargetType(targetType === 'hot' ? 'all' : 'hot')}
                 className={`px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1 transition-colors ${
                   targetType === 'hot'
-                    ? 'bg-amber-500 text-white shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-amber-500 text-white'
+                    : 'text-slate-300 hover:text-white'
                 }`}
               >
                 <Flame className="w-3.5 h-3.5" />
@@ -240,25 +240,25 @@ export const ExecutiveMarketsView: React.FC<ExecutiveMarketsViewProps> = ({
               <div
                 key={city.city}
                 onClick={() => setSelectedCity(isSelected ? null : city.city)}
-                className={`p-4 rounded-2xl border transition-all cursor-pointer relative overflow-hidden ${
+                className={`p-4 rounded-xl border transition-all cursor-pointer relative overflow-hidden ${
                   isSelected
-                    ? 'border-indigo-600 bg-indigo-50/40 shadow-sm ring-2 ring-indigo-500/20'
-                    : 'border-slate-200 bg-white hover:border-slate-300 shadow-2xs'
+                    ? 'border-indigo-600 bg-indigo-950/40 shadow-sm ring-2 ring-indigo-500/20'
+                    : 'border-white/10 bg-mca-card hover:border-white/15'
                 }`}
               >
                 {/* Density Badge */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <MapPin className={`w-4 h-4 ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`} />
-                    <h4 className="text-sm font-bold text-slate-900">{city.city}, OR</h4>
+                    <MapPin className={`w-4 h-4 ${isSelected ? 'text-indigo-400' : 'text-slate-500'}`} />
+                    <h4 className="text-sm font-bold text-white">{city.city}, OR</h4>
                   </div>
                   <span
                     className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                       city.density === 'High Density'
-                        ? 'bg-emerald-100 text-emerald-800'
+                        ? 'bg-emerald-950 text-emerald-300'
                         : city.density === 'Medium Density'
-                        ? 'bg-indigo-100 text-indigo-800'
-                        : 'bg-slate-100 text-slate-700'
+                        ? 'bg-indigo-950 text-indigo-300'
+                        : 'bg-mca-hover text-slate-200'
                     }`}
                   >
                     {city.density}
@@ -267,27 +267,27 @@ export const ExecutiveMarketsView: React.FC<ExecutiveMarketsViewProps> = ({
 
                 {/* Metrics */}
                 <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                  <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">
-                    <span className="text-[10px] text-slate-400 block font-medium">CCB Leads</span>
-                    <span className="text-base font-black text-slate-800">{city.lead_count}</span>
+                  <div className="p-2 rounded-xl bg-mca-void/40 border border-white/5">
+                    <span className="text-[10px] text-slate-500 block font-medium">CCB Leads</span>
+                    <span className="text-base font-black text-slate-100">{city.lead_count}</span>
                   </div>
-                  <div className="p-2 rounded-xl bg-slate-50 border border-slate-100">
-                    <span className="text-[10px] text-slate-400 block font-medium">Hot Leads</span>
-                    <span className="text-base font-black text-amber-600">{city.hot_targets}</span>
+                  <div className="p-2 rounded-xl bg-mca-void/40 border border-white/5">
+                    <span className="text-[10px] text-slate-500 block font-medium">Hot Leads</span>
+                    <span className="text-base font-black text-amber-400">{city.hot_targets}</span>
                   </div>
                 </div>
 
                 {/* Revenue and Footprint */}
-                <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px]">
-                  <span className="text-slate-500">Active Retainers:</span>
-                  <span className={`font-bold ${hasClients ? 'text-emerald-700' : 'text-slate-400'}`}>
+                <div className="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[11px]">
+                  <span className="text-slate-400">Active Retainers:</span>
+                  <span className={`font-bold ${hasClients ? 'text-emerald-300' : 'text-slate-500'}`}>
                     {city.active_clients} Client{city.active_clients !== 1 ? 's' : ''}
                   </span>
                 </div>
                 {city.confirmed_mrr > 0 && (
                   <div className="flex items-center justify-between text-[11px] font-bold pt-0.5">
-                    <span className="text-slate-500">Won Retainer:</span>
-                    <span className="text-emerald-700">${city.confirmed_mrr.toLocaleString()}/mo</span>
+                    <span className="text-slate-400">Won Retainer:</span>
+                    <span className="text-emerald-300">${city.confirmed_mrr.toLocaleString()}/mo</span>
                   </div>
                 )}
               </div>
@@ -297,18 +297,18 @@ export const ExecutiveMarketsView: React.FC<ExecutiveMarketsViewProps> = ({
 
         {/* Selected Market Drill-Down Drawer */}
         {selectedCity && (
-          <div className="mt-4 p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200">
+          <div className="mt-4 p-5 bg-mca-void/40 rounded-xl border border-white/10 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-white/10">
               <div className="flex items-center gap-2">
-                <Crosshair className="w-4 h-4 text-indigo-600" />
-                <h4 className="text-sm font-black text-slate-900">
+                <Crosshair className="w-4 h-4 text-indigo-400" />
+                <h4 className="text-sm font-black text-white">
                   {selectedCity}, OR Market Drill-Down
                 </h4>
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800">
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-950 text-indigo-300">
                   {activeDrillDownLeads.length} Matching Leads • {activeDrillDownClients.length} Active Clients
                 </span>
               </div>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-slate-400">
                 Grounded strictly in Oregon CCB and Local Pack Telemetry
               </span>
             </div>
@@ -316,26 +316,26 @@ export const ExecutiveMarketsView: React.FC<ExecutiveMarketsViewProps> = ({
             {/* Active Clients in this Hub */}
             {activeDrillDownClients.length > 0 && (
               <div className="space-y-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
                   <ShieldCheck className="w-3.5 h-3.5" /> Active Clients in {selectedCity}
                 </span>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {activeDrillDownClients.map((client) => (
                     <div
                       key={client.client_id}
-                      className="p-3 bg-white rounded-xl border border-emerald-200 shadow-2xs flex items-center justify-between text-xs"
+                      className="p-3 bg-mca-card rounded-xl border border-emerald-800/50 flex items-center justify-between text-xs"
                     >
                       <div>
-                        <div className="font-bold text-slate-900">{client.business_name}</div>
-                        <div className="text-[11px] text-slate-500">
+                        <div className="font-bold text-white">{client.business_name}</div>
+                        <div className="text-[11px] text-slate-400">
                           {client.niche} • {client.services?.join(', ') || 'SEO & Web'}
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-black text-emerald-700">
+                        <div className="font-black text-emerald-300">
                           ${client.actual_mrr.toLocaleString()}/mo
                         </div>
-                        <span className="text-[10px] text-emerald-600 font-bold">Confirmed Retainer</span>
+                        <span className="text-[10px] text-emerald-400 font-bold">Confirmed Retainer</span>
                       </div>
                     </div>
                   ))}
@@ -345,12 +345,12 @@ export const ExecutiveMarketsView: React.FC<ExecutiveMarketsViewProps> = ({
 
             {/* Discovered Leads in this Hub */}
             <div className="space-y-2">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                 <Target className="w-3.5 h-3.5" /> Prospect Pipeline in {selectedCity}
               </span>
 
               {activeDrillDownLeads.length === 0 ? (
-                <div className="p-6 text-center text-xs text-slate-400 bg-white rounded-xl border border-slate-200">
+                <div className="p-6 text-center text-xs text-slate-500 bg-mca-card rounded-xl border border-white/10">
                   No leads matching current filters in {selectedCity}.
                 </div>
               ) : (
@@ -358,21 +358,21 @@ export const ExecutiveMarketsView: React.FC<ExecutiveMarketsViewProps> = ({
                   {activeDrillDownLeads.map((lead) => (
                     <div
                       key={lead.lead_id}
-                      className="p-3 bg-white rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between gap-3 text-xs hover:border-indigo-300 transition-colors"
+                      className="p-3 bg-mca-card rounded-xl border border-white/10 flex items-center justify-between gap-3 text-xs hover:border-indigo-700/60 transition-colors"
                     >
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-900">{lead.business_name}</span>
+                          <span className="font-bold text-white">{lead.business_name}</span>
                           {lead.is_hot_target && (
-                            <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-amber-100 text-amber-800">
+                            <span className="px-1.5 py-0.2 rounded text-[9px] font-black bg-amber-950 text-amber-300">
                               HOT TARGET
                             </span>
                           )}
-                          <span className="text-[11px] text-slate-400 font-medium">
+                          <span className="text-[11px] text-slate-500 font-medium">
                             {lead.niche}
                           </span>
                         </div>
-                        <div className="text-[11px] text-slate-500 flex items-center gap-3">
+                        <div className="text-[11px] text-slate-400 flex items-center gap-3">
                           <span>CCB #{lead.ccb_license_number || '189420'}</span>
                           <span>Score: <strong>{lead.lead_score}/100</strong></span>
                           <span>Stage: <strong>{lead.pipeline_stage}</strong></span>
@@ -381,8 +381,8 @@ export const ExecutiveMarketsView: React.FC<ExecutiveMarketsViewProps> = ({
 
                       <div className="flex items-center gap-3 shrink-0">
                         <div className="text-right">
-                          <span className="text-[10px] text-slate-400 block">Est. Retainer</span>
-                          <span className="font-black text-indigo-700">
+                          <span className="text-[10px] text-slate-500 block">Est. Retainer</span>
+                          <span className="font-black text-indigo-300">
                             ${(Number(lead.estimated_retainer) || 2200).toLocaleString()}/mo
                           </span>
                         </div>
@@ -390,7 +390,7 @@ export const ExecutiveMarketsView: React.FC<ExecutiveMarketsViewProps> = ({
                         {onOpenLead && (
                           <button
                             onClick={() => onOpenLead(lead.lead_id)}
-                            className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs flex items-center gap-1 transition-colors"
+                            className="px-3 py-1.5 bg-mca-hover hover:bg-slate-800 text-white font-bold rounded-xl text-xs flex items-center gap-1 transition-colors"
                           >
                             <span>Inspect</span>
                             <ChevronRight className="w-3.5 h-3.5" />
@@ -407,15 +407,15 @@ export const ExecutiveMarketsView: React.FC<ExecutiveMarketsViewProps> = ({
       </div>
 
       {/* 3. INDUSTRY & TRADE PERFORMANCE INTELLIGENCE TABLE */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100">
+      <div className="bg-mca-card rounded-xl p-6 border border-white/10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-white/5">
           <div>
-            <h3 className="text-base font-black text-slate-900">Industry & Trade Performance</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <h3 className="text-base font-black text-white">Industry & Trade Performance</h3>
+            <p className="text-xs text-slate-400 mt-0.5">
               Comparative unit economics and conversion velocity across Oregon contractor verticals
             </p>
           </div>
-          <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
+          <span className="text-xs font-bold text-indigo-400 bg-indigo-950/50 px-3 py-1 rounded-full">
             {industries.length} Oregon Contractor Niches
           </span>
         </div>
@@ -423,7 +423,7 @@ export const ExecutiveMarketsView: React.FC<ExecutiveMarketsViewProps> = ({
         <div className="mt-4 overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead>
-              <tr className="border-b border-slate-100 text-slate-400 uppercase text-[10px] tracking-wider">
+              <tr className="border-b border-white/5 text-slate-500 uppercase text-[10px] tracking-wider">
                 <th className="pb-3 font-semibold">Niche / Trade</th>
                 <th className="pb-3 font-semibold text-right">Leads</th>
                 <th className="pb-3 font-semibold text-right">Avg Score</th>
@@ -434,18 +434,18 @@ export const ExecutiveMarketsView: React.FC<ExecutiveMarketsViewProps> = ({
                 <th className="pb-3 font-semibold pl-4">Sophia Strategic Verdict</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-white/5">
               {industries.map((ind, idx) => (
-                <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
-                  <td className="py-3 font-bold text-slate-900">{ind.industry}</td>
-                  <td className="py-3 text-right text-slate-700 font-semibold">{ind.lead_count}</td>
-                  <td className="py-3 text-right text-indigo-600 font-bold">{ind.average_lead_score}/100</td>
-                  <td className="py-3 text-right text-emerald-600 font-bold">{ind.win_rate}%</td>
-                  <td className="py-3 text-right text-slate-700">${ind.average_retainer.toLocaleString()}/mo</td>
-                  <td className="py-3 text-right font-black text-slate-900">${ind.total_revenue.toLocaleString()}/mo</td>
-                  <td className="py-3 text-right text-indigo-700 font-bold">${ind.opportunity_value.toLocaleString()}</td>
-                  <td className="py-3 pl-4 text-[11px] text-slate-600 font-medium">
-                    <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-800 text-[10px] font-bold mr-1.5">
+                <tr key={idx} className="hover:bg-mca-void/80 transition-colors">
+                  <td className="py-3 font-bold text-white">{ind.industry}</td>
+                  <td className="py-3 text-right text-slate-200 font-semibold">{ind.lead_count}</td>
+                  <td className="py-3 text-right text-indigo-400 font-bold">{ind.average_lead_score}/100</td>
+                  <td className="py-3 text-right text-emerald-400 font-bold">{ind.win_rate}%</td>
+                  <td className="py-3 text-right text-slate-200">${ind.average_retainer.toLocaleString()}/mo</td>
+                  <td className="py-3 text-right font-black text-white">${ind.total_revenue.toLocaleString()}/mo</td>
+                  <td className="py-3 text-right text-indigo-300 font-bold">${ind.opportunity_value.toLocaleString()}</td>
+                  <td className="py-3 pl-4 text-[11px] text-slate-300 font-medium">
+                    <span className="px-2 py-0.5 rounded bg-indigo-950/50 text-indigo-300 text-[10px] font-bold mr-1.5">
                       {ind.verdict}
                     </span>
                     {ind.strategic_notes}

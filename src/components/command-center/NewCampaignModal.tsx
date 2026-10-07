@@ -65,26 +65,26 @@ export const NewCampaignModal: React.FC<NewCampaignModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
-      <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200 space-y-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-mca-hover/50 backdrop-blur-xs p-4">
+      <div className="bg-mca-card rounded-xl max-w-lg w-full p-6 shadow-xl border border-white/10 space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="flex items-center justify-between pb-3 border-b border-white/5">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-indigo-50 border border-indigo-200/80 flex items-center justify-center text-indigo-600">
+            <div className="w-8 h-8 rounded-lg bg-indigo-950/50 border border-indigo-800/50 flex items-center justify-center text-indigo-400">
               <Send className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-bold text-base text-slate-900">
+              <h3 className="font-bold text-base text-white">
                 Launch Contractor Outreach Campaign
               </h3>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-400">
                 Create an automated multi-touch sequence for verified Oregon CCB targets
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            className="p-1 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-mca-hover transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -93,7 +93,7 @@ export const NewCampaignModal: React.FC<NewCampaignModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Campaign Name */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700">
+            <label className="text-xs font-semibold text-slate-200">
               Campaign Sequence Name
             </label>
             <input
@@ -102,13 +102,13 @@ export const NewCampaignModal: React.FC<NewCampaignModalProps> = ({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Portland Metro Plumbers GMB & SEO Sprint"
-              className="w-full px-3.5 py-2 rounded-lg border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-3.5 py-2 rounded-lg border border-white/10 text-xs focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
 
           {/* Channel Selector */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-700">
+            <label className="text-xs font-semibold text-slate-200">
               Outreach Channel
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -119,8 +119,8 @@ export const NewCampaignModal: React.FC<NewCampaignModalProps> = ({
                   onClick={() => setChannel(ch)}
                   className={`p-2.5 rounded-lg border text-xs font-semibold transition-all ${
                     channel === ch
-                      ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
-                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                      ? 'bg-indigo-950/50 border-indigo-700/60 text-indigo-300'
+                      : 'bg-mca-card border-white/10 text-slate-200 hover:bg-mca-void/40'
                   }`}
                 >
                   {ch}
@@ -132,14 +132,14 @@ export const NewCampaignModal: React.FC<NewCampaignModalProps> = ({
           {/* Niche & Location */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                <Briefcase className="w-3.5 h-3.5 text-slate-400" />
+              <label className="text-xs font-semibold text-slate-200 flex items-center gap-1">
+                <Briefcase className="w-3.5 h-3.5 text-slate-500" />
                 Target Niche
               </label>
               <select
                 value={niche}
                 onChange={(e) => setNiche(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white"
+                className="w-full px-3 py-2 rounded-lg border border-white/10 text-xs bg-mca-card"
               >
                 <option value="Plumbing">Plumbing</option>
                 <option value="Roofing">Roofing</option>
@@ -152,14 +152,14 @@ export const NewCampaignModal: React.FC<NewCampaignModalProps> = ({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1">
-                <MapPin className="w-3.5 h-3.5 text-slate-400" />
+              <label className="text-xs font-semibold text-slate-200 flex items-center gap-1">
+                <MapPin className="w-3.5 h-3.5 text-slate-500" />
                 Target Territory
               </label>
               <select
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 text-xs bg-white"
+                className="w-full px-3 py-2 rounded-lg border border-white/10 text-xs bg-mca-card"
               >
                 <option value="Portland Metro">Portland Metro</option>
                 <option value="Willamette Valley">Willamette Valley (Salem/Eugene)</option>
@@ -170,27 +170,27 @@ export const NewCampaignModal: React.FC<NewCampaignModalProps> = ({
           </div>
 
           {/* Enrolled Preview */}
-          <div className="p-3 rounded-lg bg-indigo-50/60 border border-indigo-100 flex items-center justify-between text-xs">
-            <span className="text-indigo-900 font-medium">
+          <div className="p-3 rounded-lg bg-indigo-950/60 border border-indigo-900/40 flex items-center justify-between text-xs">
+            <span className="text-indigo-300 font-medium">
               Initial Target Cohort: <strong>{Math.min(15, candidateLeads.length)} contractors</strong>
             </span>
-            <span className="text-indigo-700 font-bold">
+            <span className="text-indigo-300 font-bold">
               ~${(Math.min(15, candidateLeads.length) * 2400).toLocaleString()} Potential
             </span>
           </div>
 
           {/* Footer */}
-          <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+          <div className="pt-3 border-t border-white/5 flex items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-medium transition-colors"
+              className="px-4 py-2 rounded-lg border border-white/10 hover:bg-mca-void/40 text-slate-200 text-xs font-medium transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors"
+              className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors"
             >
               <Plus className="w-4 h-4" />
               Launch Sequence

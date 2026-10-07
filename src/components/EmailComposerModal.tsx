@@ -544,7 +544,7 @@ export const EmailComposerModal: React.FC<EmailComposerModalProps> = ({
                           }}
                           className={`w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center justify-between ${
                             selectedTone === tone
-                              ? 'bg-indigo-600 text-white'
+                              ? 'bg-blue-600 text-white'
                               : 'text-slate-300 hover:bg-slate-800'
                           }`}
                         >
@@ -657,7 +657,7 @@ export const EmailComposerModal: React.FC<EmailComposerModalProps> = ({
                     }}
                     className={`py-1 text-[11px] font-semibold rounded transition-all ${
                       personalizationLevel === level
-                        ? 'bg-indigo-600 text-white shadow-sm'
+                        ? 'bg-blue-600 text-white shadow-sm'
                         : 'text-slate-400 hover:text-white'
                     }`}
                   >

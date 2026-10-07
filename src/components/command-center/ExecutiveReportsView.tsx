@@ -79,20 +79,20 @@ export const ExecutiveReportsView: React.FC<ExecutiveReportsViewProps> = ({
   return (
     <div className="space-y-6">
       {/* 1. REPORT CONTROL HEADER */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-mca-card rounded-xl p-6 border border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-indigo-600" />
-            <h3 className="text-base font-black text-slate-900">Executive Report Generator</h3>
+            <FileText className="w-5 h-5 text-indigo-400" />
+            <h3 className="text-base font-black text-white">Executive Report Generator</h3>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-400 mt-0.5">
             Board-ready briefings for agency owner Ahmed with verified financials and strategic insights
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {/* Report Type Selector */}
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl text-xs font-bold">
+          <div className="flex items-center gap-1 bg-mca-hover p-1 rounded-xl text-xs font-bold">
             {(['Daily Briefing', 'Weekly Review', 'Monthly Review'] as const).map((t) => (
               <button
                 key={t}
@@ -102,8 +102,8 @@ export const ExecutiveReportsView: React.FC<ExecutiveReportsViewProps> = ({
                 }}
                 className={`px-3 py-1.5 rounded-xl transition-all ${
                   reportType === t
-                    ? 'bg-white text-indigo-700 shadow-xs'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-mca-card text-indigo-300'
+                    : 'text-slate-300 hover:text-white'
                 }`}
               >
                 {t}
@@ -114,7 +114,7 @@ export const ExecutiveReportsView: React.FC<ExecutiveReportsViewProps> = ({
           <button
             onClick={handleRegenerate}
             disabled={isGenerating}
-            className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs transition-colors"
+            className="p-2.5 rounded-xl bg-mca-hover hover:bg-slate-700 text-slate-200 text-xs transition-colors"
             title="Refresh Report"
           >
             <RefreshCw className={`w-4 h-4 ${isGenerating ? 'animate-spin' : ''}`} />
@@ -122,15 +122,15 @@ export const ExecutiveReportsView: React.FC<ExecutiveReportsViewProps> = ({
 
           <button
             onClick={handleExportCSV}
-            className="px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-colors"
+            className="px-3.5 py-2 rounded-xl border border-white/10 hover:bg-mca-void/40 text-slate-200 font-bold text-xs flex items-center gap-1.5 transition-colors"
           >
-            <Download className="w-3.5 h-3.5 text-slate-500" />
+            <Download className="w-3.5 h-3.5 text-slate-400" />
             <span>Export CSV</span>
           </button>
 
           <button
             onClick={handlePrint}
-            className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-colors"
+            className="px-4 py-2 rounded-xl bg-mca-hover hover:bg-slate-800 text-white font-bold text-xs flex items-center gap-1.5 transition-colors"
           >
             <Printer className="w-3.5 h-3.5" />
             <span>Print Report</span>
@@ -139,61 +139,61 @@ export const ExecutiveReportsView: React.FC<ExecutiveReportsViewProps> = ({
       </div>
 
       {/* 2. PRINTABLE EXECUTIVE BRIEFING DOCUMENT */}
-      <div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-md space-y-6 print:p-0 print:border-none print:shadow-none">
+      <div className="bg-mca-card rounded-xl p-8 border border-white/10 shadow-md space-y-6 print:p-0 print:border-none print:shadow-none">
         {/* Document Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
           <div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600">
+            <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
               MARKETING CHARM AGENCY • CONFIDENTIAL EXECUTIVE INTELLIGENCE
             </span>
             <h2 className="text-2xl font-black text-slate-950 mt-1">{briefing.title}</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-400 mt-0.5">
               Prepared for Ahmed, Agency Principal • Date: {briefing.date}
             </p>
           </div>
           <div className="text-right">
-            <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+            <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-950/50 text-emerald-300 border border-emerald-800/50">
               Audited Telemetry
             </span>
           </div>
         </div>
 
         {/* Executive Summary */}
-        <div className="p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 space-y-1.5 text-xs leading-relaxed">
-          <div className="flex items-center gap-2 font-bold text-indigo-900">
-            <Bot className="w-4 h-4 text-indigo-600" />
+        <div className="p-4 bg-indigo-950/50 rounded-xl border border-indigo-900/40 space-y-1.5 text-xs leading-relaxed">
+          <div className="flex items-center gap-2 font-bold text-indigo-300">
+            <Bot className="w-4 h-4 text-indigo-400" />
             <span>Executive Overview</span>
           </div>
-          <p className="text-slate-700">{briefing.summary}</p>
+          <p className="text-slate-200">{briefing.summary}</p>
         </div>
 
         {/* Core Financials Grid */}
         <div>
-          <h4 className="text-xs font-black uppercase tracking-wider text-slate-400 mb-3">
+          <h4 className="text-xs font-black uppercase tracking-wider text-slate-500 mb-3">
             Key Financial & Pipeline Metrics
           </h4>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-              <span className="text-[10px] text-slate-400 uppercase font-semibold">Confirmed MRR</span>
-              <div className="text-xl font-black text-emerald-700 mt-1">
+            <div className="p-3 bg-mca-void/40 rounded-xl border border-white/5">
+              <span className="text-[10px] text-slate-500 uppercase font-semibold">Confirmed MRR</span>
+              <div className="text-xl font-black text-emerald-300 mt-1">
                 ${briefing.metrics.confirmed_mrr.toLocaleString()}/mo
               </div>
             </div>
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-              <span className="text-[10px] text-slate-400 uppercase font-semibold">Pipeline MRR</span>
-              <div className="text-xl font-black text-indigo-700 mt-1">
+            <div className="p-3 bg-mca-void/40 rounded-xl border border-white/5">
+              <span className="text-[10px] text-slate-500 uppercase font-semibold">Pipeline MRR</span>
+              <div className="text-xl font-black text-indigo-300 mt-1">
                 ${briefing.metrics.pipeline_mrr.toLocaleString()}/mo
               </div>
             </div>
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-              <span className="text-[10px] text-slate-400 uppercase font-semibold">Active Retainers</span>
-              <div className="text-xl font-black text-slate-900 mt-1">
+            <div className="p-3 bg-mca-void/40 rounded-xl border border-white/5">
+              <span className="text-[10px] text-slate-500 uppercase font-semibold">Active Retainers</span>
+              <div className="text-xl font-black text-white mt-1">
                 {briefing.metrics.active_clients}
               </div>
             </div>
-            <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
-              <span className="text-[10px] text-slate-400 uppercase font-semibold">Hot Targets</span>
-              <div className="text-xl font-black text-amber-600 mt-1">
+            <div className="p-3 bg-mca-void/40 rounded-xl border border-white/5">
+              <span className="text-[10px] text-slate-500 uppercase font-semibold">Hot Targets</span>
+              <div className="text-xl font-black text-amber-400 mt-1">
                 {briefing.metrics.hot_leads}
               </div>
             </div>
@@ -203,24 +203,24 @@ export const ExecutiveReportsView: React.FC<ExecutiveReportsViewProps> = ({
         {/* Top Recommendation & Priorities */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
           {/* Top Recommendation */}
-          <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-2 text-xs">
-            <span className="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
-              <Sparkles className="w-4 h-4 text-indigo-600" /> Single Top Recommendation
+          <div className="p-4 bg-mca-card rounded-xl border border-white/10 space-y-2 text-xs">
+            <span className="font-bold text-white flex items-center gap-1.5 text-xs">
+              <Sparkles className="w-4 h-4 text-indigo-400" /> Single Top Recommendation
             </span>
-            <p className="text-slate-700 leading-relaxed font-medium">
+            <p className="text-slate-200 leading-relaxed font-medium">
               {briefing.top_recommendation}
             </p>
           </div>
 
           {/* Strategic Priorities */}
-          <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-2 text-xs">
-            <span className="font-bold text-slate-900 flex items-center gap-1.5 text-xs">
-              <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Strategic Priorities
+          <div className="p-4 bg-mca-card rounded-xl border border-white/10 space-y-2 text-xs">
+            <span className="font-bold text-white flex items-center gap-1.5 text-xs">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" /> Strategic Priorities
             </span>
-            <ul className="space-y-1 text-slate-700">
+            <ul className="space-y-1 text-slate-200">
               {briefing.priorities.map((item, idx) => (
                 <li key={idx} className="flex items-start gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 mt-1.5 shrink-0" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600 mt-1.5 shrink-0" />
                   <span>{item}</span>
                 </li>
               ))}
@@ -231,12 +231,12 @@ export const ExecutiveReportsView: React.FC<ExecutiveReportsViewProps> = ({
         {/* Risks & Opportunities */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
           <div className="space-y-2 text-xs">
-            <h5 className="font-bold text-rose-800 uppercase text-[10px] tracking-wider">
+            <h5 className="font-bold text-rose-300 uppercase text-[10px] tracking-wider">
               Identified Operational Risks
             </h5>
             <div className="space-y-1.5">
               {briefing.risks.map((risk, idx) => (
-                <div key={idx} className="p-3 bg-rose-50/50 rounded-xl border border-rose-200 text-rose-900">
+                <div key={idx} className="p-3 bg-rose-950/50 rounded-xl border border-rose-800/50 text-rose-300">
                   {risk}
                 </div>
               ))}
@@ -244,12 +244,12 @@ export const ExecutiveReportsView: React.FC<ExecutiveReportsViewProps> = ({
           </div>
 
           <div className="space-y-2 text-xs">
-            <h5 className="font-bold text-indigo-800 uppercase text-[10px] tracking-wider">
+            <h5 className="font-bold text-indigo-300 uppercase text-[10px] tracking-wider">
               High-Value Strategic Opportunities
             </h5>
             <div className="space-y-1.5">
               {briefing.opportunities.map((opp, idx) => (
-                <div key={idx} className="p-3 bg-indigo-50/50 rounded-xl border border-indigo-200 text-indigo-900">
+                <div key={idx} className="p-3 bg-indigo-950/50 rounded-xl border border-indigo-800/50 text-indigo-300">
                   {opp}
                 </div>
               ))}
@@ -258,7 +258,7 @@ export const ExecutiveReportsView: React.FC<ExecutiveReportsViewProps> = ({
         </div>
 
         {/* Document Footer */}
-        <div className="pt-6 border-t border-slate-200 flex items-center justify-between text-[11px] text-slate-400">
+        <div className="pt-6 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-500">
           <span>Marketing Charm Agency Executive Intelligence Suite</span>
           <span>Autonomous AI Engine Grounded in Oregon CRM Telemetry</span>
         </div>

@@ -1,30 +1,4 @@
 import React from 'react';
-import {
-  LayoutDashboard,
-  Users,
-  ListFilter,
-  BrainCircuit,
-  Award,
-  Sparkles,
-  Target,
-  Kanban,
-  Clock,
-  BarChart3,
-  DollarSign,
-  Settings,
-  Puzzle,
-  UserCheck,
-  Bot,
-  ChevronRight,
-  Mail,
-  MessageSquare,
-  Phone,
-  FileCheck,
-  ShieldCheck,
-  FileSpreadsheet,
-  Zap,
-  Activity,
-} from 'lucide-react';
 
 import { canAccess, normalizeAppRole } from '../utils/roleUtils.js';
 import { AppRole } from '../constants.js';
@@ -70,22 +44,72 @@ interface SidebarProps {
 }
 
 /**
- * Sidebar (Unified-Shell Architecture)
+ * Sidebar — Stitch "MainSidebar" (w-64 rail, unified-shell navigation anchor).
  *
- * The Sidebar acts as the canonical navigation anchor for the Marketing Charm Agency suite.
- * It maintains a fixed width and viewport height to ensure a consistent, non-shrinking,
- * non-expanding navigation experience across all modules (Command Center, Leads, etc.).
- *
- * - Width: Locked to 288px (w-72)
- * - Height: Locked to full viewport height (h-screen)
- * - Behavior: Non-shrinking/expanding (flex-shrink-0)
- *
- * Note: The Client Portal module is intentionally isolated from this shell to maintain white-label integrity.
+ * Markup, spacing, badges and active-state styling mirror the Stitch
+ * Executive Command Dashboard export. All routes / role gates are preserved.
+ * The Client Portal module stays isolated from this shell (white-label integrity).
  */
+
+/* ── Badge presets (verbatim from the Stitch markup) ───────────────────── */
+const badge = {
+  count: 'text-[9px] font-mono bg-slate-800 text-slate-300 px-1.5 rounded',
+  countMuted: 'text-[9px] font-mono bg-slate-800 text-slate-400 px-1.5 rounded',
+  phaseBlue: 'text-[9px] font-mono bg-blue-900/40 text-blue-400 px-1.5 py-0.5 rounded border border-blue-800/50',
+  csv: 'text-[9px] font-mono text-cyan-400 bg-cyan-950/60 px-1 rounded',
+  agents: 'text-[9px] font-mono bg-purple-900/50 text-purple-300 px-1.5 rounded',
+  whiteLabel: 'font-mono border border-slate-700 text-slate-400 px-1 rounded text-[8px]',
+  phaseAmber: 'text-[9px] font-mono bg-amber-950/60 text-amber-400 px-1.5 rounded border border-amber-900/40',
+  indigo: 'text-[9px] font-mono bg-indigo-950 text-indigo-300 px-1.5 rounded border border-indigo-800/40',
+  purple: 'text-[9px] font-mono bg-purple-950 text-purple-300 px-1.5 rounded',
+  hot: 'text-[9px] font-mono bg-amber-500/20 text-amber-400 px-1.5 rounded border border-amber-500/30',
+  live: 'text-[9px] font-mono bg-mca-neonGreen/10 text-mca-neonGreen px-1 rounded',
+  cyan: 'text-[9px] font-mono bg-cyan-950 text-cyan-300 px-1.5 rounded',
+  blue: 'text-[9px] font-mono bg-blue-950 text-blue-300 px-1.5 rounded',
+  amber: 'text-[9px] font-mono bg-amber-950/60 text-amber-300 px-1.5 rounded border border-amber-900/40',
+  approvalsPending:
+    'text-[9px] font-mono bg-amber-500/20 text-amber-300 px-1.5 rounded border border-amber-500/40 animate-pulse',
+} as const;
+
+interface NavItemProps {
+  id: string;
+  active: boolean;
+  onClick: () => void;
+  icon: string; // font-awesome class (e.g. "fa-terminal")
+  iconClass?: string; // colour accent for the icon
+  label: React.ReactNode;
+  badgeEl?: React.ReactNode;
+}
+
+const NavItem: React.FC<NavItemProps> = ({ id, active, onClick, icon, iconClass = '', label, badgeEl }) => (
+  <button
+    id={id}
+    onClick={onClick}
+    aria-current={active ? 'page' : undefined}
+    className={`w-full text-left flex items-center justify-between px-2.5 py-1.5 rounded-md transition ${
+      active
+        ? 'bg-gradient-to-r from-mca-neonGreen/10 to-transparent text-mca-neonGreen border-l-2 border-mca-neonGreen font-semibold shadow-glass'
+        : 'text-slate-400 hover:text-white hover:bg-mca-hover'
+    }`}
+  >
+    <span className="flex items-center gap-2 min-w-0">
+      <i className={`fa-solid ${icon} w-4 text-center shrink-0 ${active ? '' : iconClass}`}></i>
+      <span className="truncate">{label}</span>
+    </span>
+    {badgeEl ? badgeEl : active ? <i className="fa-solid fa-circle text-[6px] animate-pulse"></i> : null}
+  </button>
+);
+
+const GroupHeader: React.FC<{ title: string; tag?: React.ReactNode }> = ({ title, tag }) => (
+  <div className="px-2 mb-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-500 font-semibold flex items-center justify-between">
+    <span>{title}</span>
+    {tag}
+  </div>
+);
+
 export const Sidebar: React.FC<SidebarProps> = ({
   currentTab,
   onNavigate,
-  onOpenImport,
   leadsCount,
   hotCount,
   draftsCount = 0,
@@ -95,549 +119,325 @@ export const Sidebar: React.FC<SidebarProps> = ({
   approvalsCount = 0,
   currentUserRole,
 }) => {
-  const normalizedRole = normalizeAppRole(currentUserRole || '') || currentUserRole as AppRole;
+  const normalizedRole = normalizeAppRole(currentUserRole || '') || (currentUserRole as AppRole);
   const canAccessTeam = canAccess(normalizedRole as AppRole, 'TeamManagement', 'READ');
   const isSalesRep = ['SDR', 'APPOINTMENT_SETTER', 'OUTREACH_SPECIALIST'].includes(normalizedRole as string);
+
+  const is = (t: NavigationItem) => currentTab === t;
+  const go = (t: NavigationItem) => () => onNavigate(t);
 
   return (
     <aside
       id="mca-sidebar"
-      className="hud-sidebar w-72 h-screen flex flex-col flex-shrink-0 select-none z-20"
-      style={{ width: "288px", flexShrink: 0 }}
+      className="w-64 h-screen bg-mca-surface border-r border-mca-border flex flex-col flex-shrink-0 z-30 select-none"
+      data-purpose="sidebar-navigation"
     >
-      {/* Brand Header */}
-      <div className="hud-sidebar-brand">
-        <div className="flex items-center gap-3">
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              background: 'var(--primary-container)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <Zap size={18} color="#002110" strokeWidth={2.5} />
-          </div>
-          <div className="min-w-0">
-            <div
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 16,
-                fontWeight: 700,
-                letterSpacing: '-0.02em',
-                color: 'var(--primary-container)',
-                lineHeight: 1,
-              }}
-            >
-              Marketing Charm
-            </div>
-            <div
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                color: 'var(--primary-fixed-dim)',
-                marginTop: 3,
-              }}
-            >
-              Lead Agency Suite
-            </div>
-          </div>
+      {/* Sidebar Branding Header */}
+      <div className="h-16 border-b border-mca-border flex items-center px-4 gap-3 bg-mca-void/50 shrink-0">
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-mca-neonGreen flex items-center justify-center font-mono font-bold text-black shadow-neon-green">
+          MCA
         </div>
-
-        <div
-          className="flex items-center justify-between mt-3 px-2 py-1"
-          style={{ background: 'var(--surface-container)' }}
-        >
-          <div className="flex items-center gap-2">
-            <span className="hud-live-dot" />
-            <span
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: 9,
-                fontWeight: 700,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                color: 'var(--primary-fixed)',
-              }}
-            >
-              SWARM ONLINE
-            </span>
+        <div>
+          <div className="text-xs font-bold text-white tracking-widest uppercase">Lead Agency Suite</div>
+          <div className="text-[10px] font-mono text-mca-neonGreen flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-mca-neonGreen animate-pulse"></span>
+            SWARM ONLINE v5.4
           </div>
-          <span
-            style={{
-              fontFamily: 'var(--font-mono)',
-              fontSize: 9,
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              color: 'var(--outline)',
-              textTransform: 'uppercase',
-            }}
-          >
-            MCA HUD
-          </span>
         </div>
       </div>
 
-      {/* Navigation Groups */}
-      <div className="flex-1 overflow-y-auto px-2 py-3 space-y-3">
-        {/* WORKSPACE */}
+      {/* Navigation Directory */}
+      <div className="flex-1 overflow-y-auto px-3 py-4 space-y-5 text-xs">
+        {/* Group: Workspace */}
         <div>
-          <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Workspace
-          </div>
-          <div className="space-y-1">
+          <GroupHeader
+            title="Workspace"
+            tag={<span className="text-[9px] bg-slate-800 text-slate-400 px-1 rounded">HUD</span>}
+          />
+          <nav className="space-y-0.5">
             {!isSalesRep && (
-              <button
+              <NavItem
                 id="nav-command-center"
-                onClick={() => onNavigate('command_center')}
-                className={`hud-nav-item ${
-                  currentTab === 'command_center' ? "active" : ""
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <LayoutDashboard className="w-4 h-4 text-indigo-400" />
-                  <span>Command Center</span>
-                </div>
-              </button>
+                active={is('command_center')}
+                onClick={go('command_center')}
+                icon="fa-terminal"
+                label="Command Center"
+                badgeEl={<span className={badge.phaseBlue}>Phase 5A</span>}
+              />
             )}
-
             {!isSalesRep && (
-              <button
+              <NavItem
                 id="nav-dashboard"
-                onClick={() => onNavigate('dashboard')}
-                className={`hud-nav-item ${
-                  currentTab === 'dashboard' ? "active" : ""
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <LayoutDashboard className="w-4 h-4 text-indigo-400" />
-                  <span>Dashboard</span>
-                </div>
-              </button>
+                active={is('dashboard')}
+                onClick={go('dashboard')}
+                icon="fa-gauge-high"
+                label="Dashboard"
+              />
             )}
-
-            <button
+            <NavItem
               id="nav-leads"
-              onClick={() => onNavigate('leads')}
-              className={`hud-nav-item ${
-                currentTab === 'leads' ? "active" : ""
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4 text-slate-400" />
-                <span>Leads</span>
-              </div>
-              <span className="px-1.5 py-0.5 text-[10px] rounded-md bg-slate-800 text-slate-300 font-mono">
-                {leadsCount}
-              </span>
-            </button>
-
-            <button
+              active={is('leads')}
+              onClick={go('leads')}
+              icon="fa-user-plus"
+              label="Leads"
+              badgeEl={<span className={badge.count}>{leadsCount}</span>}
+            />
+            <NavItem
               id="nav-import-leads"
-              onClick={() => onNavigate('import_leads')}
-              className={`hud-nav-item ${
-                currentTab === 'import_leads' ? "active" : ""
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <FileSpreadsheet className="w-4 h-4 text-indigo-400" />
-                <span>Import Leads</span>
-              </div>
-            </button>
-
-            <button
+              active={is('import_leads')}
+              onClick={go('import_leads')}
+              icon="fa-file-import"
+              label="Import Leads"
+              badgeEl={<span className={badge.csv}>.CSV</span>}
+            />
+            <NavItem
               id="nav-lead-lists"
-              onClick={() => onNavigate('lead_lists')}
-              className={`hud-nav-item ${
-                currentTab === 'lead_lists' ? "active" : ""
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <ListFilter className="w-4 h-4 text-slate-400" />
-                <span>Lead Lists</span>
-              </div>
-            </button>
-          </div>
+              active={is('lead_lists')}
+              onClick={go('lead_lists')}
+              icon="fa-list-check"
+              label="Lead Lists"
+            />
+          </nav>
         </div>
 
-        {/* AI WORKFORCE & AUTOMATION */}
+        {/* Group: AI Workforce */}
         <div>
-          <div className="hud-sidebar-section-label"><span>AI Workforce</span></div>
-          <div className="space-y-1">
+          <GroupHeader
+            title="AI Workforce"
+            tag={
+              <span className="text-[9px] bg-purple-950 text-purple-400 px-1 rounded border border-purple-800/40">
+                Phase 4A
+              </span>
+            }
+          />
+          <nav className="space-y-0.5">
             {!isSalesRep && (
-              <button
+              <NavItem
                 id="nav-ai-workforce"
-                onClick={() => onNavigate('ai_workforce')}
-                className={`hud-nav-item ${
-                  currentTab === 'ai_workforce' ? "active" : ""
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Bot className="w-4 h-4 text-indigo-400" />
-                  <span>Agency AI Workforce</span>
-                </div>
-                <span className="px-1.5 py-0.5 text-[9px] rounded font-bold bg-indigo-500/20 text-indigo-300">
-                  7 Agents
-                </span>
-              </button>
+                active={is('ai_workforce')}
+                onClick={go('ai_workforce')}
+                icon="fa-microchip"
+                iconClass="text-purple-400"
+                label="Agency AI Workforce"
+                badgeEl={<span className={badge.agents}>7 Agents</span>}
+              />
             )}
-
-            <button
+            <NavItem
               id="nav-ai-approvals"
-              onClick={() => onNavigate('ai_approvals')}
-              className={`hud-nav-item ${
-                currentTab === 'ai_approvals' ? "active" : ""
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-amber-400" />
-                <span>Approval Center</span>
-              </div>
-              {approvalsCount > 0 ? (
-                <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold animate-pulse">
+              active={is('ai_approvals')}
+              onClick={go('ai_approvals')}
+              icon="fa-shield-halved"
+              label="Approval Center"
+              badgeEl={
+                <span className={approvalsCount > 0 ? badge.approvalsPending : badge.countMuted}>
                   {approvalsCount}
                 </span>
-              ) : (
-                <span className="px-1.5 py-0.5 text-[9px] rounded text-slate-500">
-                  0
-                </span>
-              )}
-            </button>
-          </div>
+              }
+            />
+          </nav>
         </div>
 
-        {/* CLIENT EXPERIENCE & WHITE-LABEL PORTAL */}
+        {/* Group: Client Experience */}
         <div>
-          <div className="hud-sidebar-section-label"><span>Client Experience</span></div>
-          <div className="space-y-1">
-            <button
+          <GroupHeader
+            title="Client Experience"
+            tag={<span className="text-[9px] bg-slate-800 text-slate-400 px-1 rounded">Phase 4B</span>}
+          />
+          <nav className="space-y-0.5">
+            <NavItem
               id="nav-client-portal"
-              onClick={() => onNavigate('client_portal')}
-              className={`hud-nav-item ${
-                currentTab === 'client_portal' ? "active" : ""
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-purple-400" />
-                <span>Client Portal</span>
-              </div>
-              <span className="px-1.5 py-0.5 text-[9px] rounded font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                White-Label
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* INTELLIGENCE */}
-        <div>
-          <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Intelligence
-          </div>
-          <div className="space-y-1">
-            <button
-              id="nav-lead-intelligence"
-              onClick={() => onNavigate('lead_intelligence')}
-              className={`hud-nav-item ${
-                currentTab === 'lead_intelligence' ? "active" : ""
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Target className="w-4 h-4 text-indigo-400" />
-                <span>Lead Intelligence & Scoring</span>
-              </div>
-            </button>
-
-            <button
-              id="nav-ai-analysis"
-              onClick={() => onNavigate('ai_analysis')}
-              className={`hud-nav-item ${
-                currentTab === 'ai_analysis' ? "active" : ""
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <BrainCircuit className="w-4 h-4 text-purple-400" />
-                <span>AI Lead Analysis</span>
-              </div>
-            </button>
-
-            <button
-              id="nav-call-intelligence"
-              onClick={() => onNavigate('call_intelligence')}
-              className={`hud-nav-item ${
-                currentTab === 'call_intelligence' ? "active" : ""
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-purple-400" />
-                <span>Call Intelligence & Objections</span>
-              </div>
-            </button>
-
-            <button
-              id="nav-lead-scoring"
-              onClick={() => onNavigate('lead_scoring')}
-              className={`hud-nav-item ${
-                currentTab === 'lead_scoring' ? "active" : ""
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Award className="w-4 h-4 text-amber-400" />
-                <span>Lead Scoring (0–100)</span>
-              </div>
-            </button>
-
-            <button
-              id="nav-opportunities"
-              onClick={() => onNavigate('opportunities')}
-              className={`hud-nav-item ${
-                currentTab === 'opportunities' ? "active" : ""
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-cyan-400" />
-                <span>Opportunities</span>
-              </div>
-              <span className="px-1.5 py-0.5 text-[10px] rounded bg-amber-500/20 text-amber-300 font-bold">
-                {hotCount} Hot
-              </span>
-            </button>
-          </div>
-        </div>
-
-        {/* PIPELINE */}
-        <div>
-          <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Pipeline
-          </div>
-          <div className="space-y-1">
-            <button
-              id="nav-pipeline"
-              onClick={() => onNavigate('pipeline')}
-              className={`hud-nav-item ${
-                currentTab === 'pipeline' ? "active" : ""
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Kanban className="w-4 h-4 text-blue-400" />
-                <span>Pipeline / Kanban</span>
-              </div>
-            </button>
-
-            <button
+              active={is('client_portal')}
+              onClick={go('client_portal')}
+              icon="fa-window-maximize"
+              iconClass="text-cyan-400"
+              label="Client Portal"
+              badgeEl={<span className={badge.whiteLabel}>White-Label</span>}
+            />
+            <NavItem
               id="nav-audits-proposals"
-              onClick={() => onNavigate('audits_proposals')}
-              className={`hud-nav-item ${
-                currentTab === 'audits_proposals' ? "active" : ""
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <FileCheck className="w-4 h-4 text-amber-400" />
-                <span>Audits & Proposals</span>
-              </div>
-            </button>
-
-            <button
-              id="nav-followups"
-              onClick={() => onNavigate('follow_ups')}
-              className={`hud-nav-item ${
-                currentTab === 'follow_ups' ? "active" : ""
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-amber-400" />
-                <span>Follow-Up Queue</span>
-              </div>
-              {typeof followUpsCount === 'number' && followUpsCount > 0 && (
-                <span className="px-1.5 py-0.5 text-[10px] rounded-md bg-amber-500/20 text-amber-300 font-mono font-bold">
-                  {followUpsCount}
-                </span>
-              )}
-            </button>
-          </div>
+              active={is('audits_proposals')}
+              onClick={go('audits_proposals')}
+              icon="fa-file-signature"
+              label="Audits & Proposals"
+              badgeEl={<span className={badge.phaseAmber}>Phase 2C</span>}
+            />
+          </nav>
         </div>
 
-        {/* OUTREACH */}
+        {/* Group: Intelligence */}
         <div>
-          <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Outreach
-          </div>
-          <div className="space-y-1">
-            <button
-              id="nav-email-outreach"
-              onClick={() => onNavigate('email_outreach')}
-              className={`hud-nav-item ${
-                currentTab === 'email_outreach' ? "active" : ""
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-blue-400" />
-                <span>Email Outreach</span>
-              </div>
-              {typeof draftsCount === 'number' && draftsCount > 0 && (
-                <span className="px-1.5 py-0.5 text-[10px] rounded-md bg-blue-500/20 text-blue-300 font-mono font-bold">
-                  {draftsCount}
-                </span>
-              )}
-            </button>
+          <GroupHeader title="Intelligence" />
+          <nav className="space-y-0.5">
+            <NavItem
+              id="nav-lead-intelligence"
+              active={is('lead_intelligence')}
+              onClick={go('lead_intelligence')}
+              icon="fa-brain"
+              iconClass="text-indigo-400"
+              label="Lead Intel & Scoring"
+            />
+            <NavItem
+              id="nav-ai-analysis"
+              active={is('ai_analysis')}
+              onClick={go('ai_analysis')}
+              icon="fa-chart-pie"
+              label="AI Lead Analysis"
+            />
+            <NavItem
+              id="nav-call-intelligence"
+              active={is('call_intelligence')}
+              onClick={go('call_intelligence')}
+              icon="fa-headset"
+              iconClass="text-purple-400"
+              label="Call Intel & Objections"
+            />
+            <NavItem
+              id="nav-lead-scoring"
+              active={is('lead_scoring')}
+              onClick={go('lead_scoring')}
+              icon="fa-ranking-star"
+              iconClass="text-amber-400"
+              label="Lead Scoring (0–100)"
+            />
+            <NavItem
+              id="nav-opportunities"
+              active={is('opportunities')}
+              onClick={go('opportunities')}
+              icon="fa-fire"
+              iconClass="text-amber-500"
+              label="Opportunities"
+              badgeEl={<span className={badge.hot}>{hotCount} Hot</span>}
+            />
+          </nav>
+        </div>
 
-            <button
-              id="nav-sms-outreach"
-              onClick={() => onNavigate('sms')}
-              className={`hud-nav-item ${
-                currentTab === 'sms' ? "active" : ""
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <MessageSquare className="w-4 h-4 text-sky-400" />
-                <span>SMS Outreach</span>
-              </div>
-              {typeof smsCount === 'number' && smsCount > 0 && (
-                <span className="px-1.5 py-0.5 text-[10px] rounded-md bg-sky-500/20 text-sky-300 font-mono font-bold">
-                  {smsCount}
-                </span>
-              )}
-            </button>
-
-            <button
+        {/* Group: Outreach & Ops */}
+        <div>
+          <GroupHeader title="Outreach & Ops" />
+          <nav className="space-y-0.5">
+            <NavItem
               id="nav-calls"
-              onClick={() => onNavigate('calls')}
-              className={`hud-nav-item ${
-                currentTab === 'calls' ? "active" : ""
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-emerald-400" />
-                <span>Calls & Dialer</span>
-              </div>
-              {typeof callsCount === 'number' && callsCount > 0 && (
-                <span className="px-1.5 py-0.5 text-[10px] rounded-md bg-emerald-500/20 text-emerald-300 font-mono font-bold">
-                  {callsCount}
-                </span>
-              )}
-            </button>
-          </div>
+              active={is('calls')}
+              onClick={go('calls')}
+              icon="fa-phone-volume"
+              iconClass="text-mca-neonGreen"
+              label="MCA Dialer LIVE"
+              badgeEl={callsCount > 0 ? <span className={badge.live}>{callsCount}</span> : undefined}
+            />
+            <NavItem
+              id="nav-sms-outreach"
+              active={is('sms')}
+              onClick={go('sms')}
+              icon="fa-comments"
+              label="SMS Swarm"
+              badgeEl={smsCount > 0 ? <span className={badge.cyan}>{smsCount}</span> : undefined}
+            />
+            <NavItem
+              id="nav-email-outreach"
+              active={is('email_outreach')}
+              onClick={go('email_outreach')}
+              icon="fa-envelope"
+              label="Email Outreach"
+              badgeEl={draftsCount > 0 ? <span className={badge.blue}>{draftsCount}</span> : undefined}
+            />
+            <NavItem
+              id="nav-pipeline"
+              active={is('pipeline')}
+              onClick={go('pipeline')}
+              icon="fa-table-columns"
+              iconClass="text-blue-400"
+              label="Pipeline / Kanban"
+            />
+            <NavItem
+              id="nav-followups"
+              active={is('follow_ups')}
+              onClick={go('follow_ups')}
+              icon="fa-clock"
+              iconClass="text-amber-400"
+              label="Follow-Up Queue"
+              badgeEl={followUpsCount > 0 ? <span className={badge.amber}>{followUpsCount}</span> : undefined}
+            />
+          </nav>
         </div>
 
-        {/* REPORTING */}
+        {/* Group: Reporting */}
         <div>
-          <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Reporting
-          </div>
-          <div className="space-y-1">
+          <GroupHeader title="Reporting" />
+          <nav className="space-y-0.5">
             {!isSalesRep && (
-              <button
+              <NavItem
                 id="nav-analytics"
-                onClick={() => onNavigate('analytics')}
-                className={`hud-nav-item ${
-                  currentTab === 'analytics' ? "active" : ""
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-emerald-400" />
-                  <span>Analytics</span>
-                </div>
-              </button>
+                active={is('analytics')}
+                onClick={go('analytics')}
+                icon="fa-chart-column"
+                iconClass="text-emerald-400"
+                label="Analytics"
+              />
             )}
-
-            <button
+            <NavItem
               id="nav-revenue"
-              onClick={() => onNavigate('revenue')}
-              className={`hud-nav-item ${
-                currentTab === 'revenue' ? "active" : ""
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-emerald-300" />
-                <span>Revenue Forecast</span>
-              </div>
-            </button>
-          </div>
+              active={is('revenue')}
+              onClick={go('revenue')}
+              icon="fa-dollar-sign"
+              iconClass="text-emerald-300"
+              label="Revenue Forecast"
+            />
+          </nav>
         </div>
 
-        {/* SETTINGS */}
+        {/* Group: Settings */}
         <div>
-          <div className="px-3 pb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-            Settings
-          </div>
-          <div className="space-y-1">
+          <GroupHeader title="Settings" />
+          <nav className="space-y-0.5">
             {!isSalesRep && (
-              <button
+              <NavItem
                 id="nav-agency-settings"
-                onClick={() => onNavigate('agency_settings')}
-                className={`hud-nav-item ${
-                  currentTab === 'agency_settings' ? "active" : ""
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Settings className="w-4 h-4 text-slate-400" />
-                  <span>Agency Settings</span>
-                </div>
-              </button>
+                active={is('agency_settings')}
+                onClick={go('agency_settings')}
+                icon="fa-gear"
+                label="Agency Settings"
+              />
             )}
-
             {!isSalesRep && (
-              <button
+              <NavItem
                 id="nav-integrations"
-                onClick={() => onNavigate('integrations')}
-                className={`hud-nav-item ${
-                  currentTab === 'integrations' ? "active" : ""
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <Puzzle className="w-4 h-4 text-slate-400" />
-                  <span>Integrations</span>
-                </div>
-              </button>
+                active={is('integrations')}
+                onClick={go('integrations')}
+                icon="fa-puzzle-piece"
+                label="Integrations"
+              />
             )}
-
             {canAccessTeam && (
-              <button
+              <NavItem
                 id="nav-team"
-                onClick={() => onNavigate('team')}
-                className={`hud-nav-item ${
-                  currentTab === 'team' ? "active" : ""
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <UserCheck className="w-4 h-4 text-slate-400" />
-                  <span>Team</span>
-                </div>
-              </button>
+                active={is('team')}
+                onClick={go('team')}
+                icon="fa-user-group"
+                label="Team"
+              />
             )}
-          </div>
+          </nav>
         </div>
       </div>
 
-      {/* AI Sales Rep Sophia Card */}
-      <div className="p-3 border-t border-[var(--hud-border-base)] bg-[var(--hud-obsidian)]">
+      {/* Sidebar Bottom Telemetry Widget */}
+      <div className="p-3 border-t border-mca-border bg-mca-void/60 text-[11px] shrink-0">
         <div
           onClick={() => onNavigate('ai_workforce')}
-          className="p-2.5 bg-[var(--surface-container)] border border-[var(--hud-border-base)] flex items-center justify-between cursor-pointer hover:border-[var(--hud-border-bright)] transition-colors"
+          className="p-2.5 rounded-lg bg-mca-card border border-white/5 flex items-center justify-between cursor-pointer hover:border-white/15 transition"
         >
-          <div className="flex items-center space-x-2.5">
-            <div className="relative">
-              <div className="w-8 h-8 bg-[var(--primary-container)] flex items-center justify-center text-[#002110]">
-                <Bot className="w-4 h-4" />
-              </div>
-              <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-[var(--primary-container)] ring-2 ring-[var(--hud-obsidian)] animate-pulse" />
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-md bg-purple-950 border border-purple-800/40 flex items-center justify-center text-purple-300 font-mono text-[10px] font-bold">
+              AI
             </div>
             <div>
-              <div className="text-xs font-bold text-white flex items-center gap-1">
-                <span>Sophia & Workforce</span>
-                <span className="text-[9px] px-1 py-0.2 rounded bg-indigo-500/30 text-indigo-200 uppercase font-semibold">AI Ops</span>
-              </div>
-              <div className="text-[10px] text-indigo-300/80">
-                Multi-Agent Ready
-              </div>
+              <div className="font-bold text-white leading-none">Sophia &amp; Workforce</div>
+              <div className="text-[9px] text-mca-neonGreen font-mono mt-0.5">Phase 4A Multi-Agent Ready</div>
             </div>
           </div>
-          <ChevronRight className="w-4 h-4 text-indigo-400/60" />
+          <button className="text-slate-400 hover:text-white" aria-label="Open AI Workforce">
+            <i className="fa-solid fa-chevron-right text-xs"></i>
+          </button>
         </div>
       </div>
     </aside>

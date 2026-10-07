@@ -72,7 +72,7 @@ export const BulkProgressOverlay: React.FC<BulkProgressOverlayProps> = ({
   const needsManualAdvance = opType === 'MANUAL_CALL' && !isComplete;
 
   return (
-    <div className="fixed bottom-6 right-6 w-96 bg-[var(--surface-container-lowest)] border border-[var(--hud-border-bright)] rounded-none shadow-2xl z-50 overflow-hidden">
+    <div className="fixed bottom-6 right-6 w-96 bg-[var(--surface-container-lowest)] border border-[var(--hud-border-bright)] rounded-lg shadow-2xl z-50 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--hud-border-base)]">
         <div className="flex items-center gap-2">
@@ -146,7 +146,7 @@ export const BulkProgressOverlay: React.FC<BulkProgressOverlayProps> = ({
 
         {/* Countdown timer for SMS/Email */}
         {hasCountdown && (
-          <div className="flex items-center gap-2 text-xs text-[var(--on-surface-variant)] bg-[var(--surface-container-high)] rounded-none px-3 py-2">
+          <div className="flex items-center gap-2 text-xs text-[var(--on-surface-variant)] bg-[var(--surface-container-high)] rounded-lg px-3 py-2">
             <Clock className="w-3.5 h-3.5 text-[var(--tertiary-fixed-dim)] shrink-0" />
             <span>
               Next send in{' '}
@@ -162,7 +162,7 @@ export const BulkProgressOverlay: React.FC<BulkProgressOverlayProps> = ({
         {needsManualAdvance && onAdvanceManualCall && running === 0 && (
           <button
             onClick={onAdvanceManualCall}
-            className="w-full text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white rounded-none px-3 py-2 flex items-center justify-center gap-2 transition"
+            className="w-full text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white rounded-lg px-3 py-2 flex items-center justify-center gap-2 transition"
           >
             <SkipForward className="w-3.5 h-3.5" />
             Call Ended — Next Lead
@@ -171,7 +171,7 @@ export const BulkProgressOverlay: React.FC<BulkProgressOverlayProps> = ({
 
         {/* Complete summary */}
         {isComplete && (
-          <div className="text-xs text-[var(--on-surface-variant)] bg-[var(--surface-container-high)] rounded-none px-3 py-2">
+          <div className="text-xs text-[var(--on-surface-variant)] bg-[var(--surface-container-high)] rounded-lg px-3 py-2">
             {failed === 0
               ? `✅ All ${successful} leads processed successfully.`
               : `⚠️ ${successful} succeeded · ${failed} failed. Review failed leads below.`}
