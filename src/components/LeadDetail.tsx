@@ -334,7 +334,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
           <button
             onClick={handleRunAIAnalysis}
             disabled={isAnalyzing}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[var(--secondary-container)] hover:bg-indigo-500 disabled:opacity-50 text-xs font-semibold text-white transition-all shadow-sm"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[var(--secondary-container)] hover:bg-blue-500 disabled:opacity-50 text-xs font-semibold text-white transition-all shadow-sm"
           >
             {isAnalyzing ? (
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -347,14 +347,14 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
       </div>
 
       {/* Lead Profile Header Card */}
-      <div className="p-6 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] shadow-xl space-y-6">
+      <div className="p-6 rounded-xl bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] shadow-xl space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-3 flex-wrap">
               <h1 className="text-2xl font-extrabold text-white tracking-tight">
                 {lead.business_name}
               </h1>
-              <span className="text-xs font-mono px-2 py-0.5 rounded-none bg-[var(--surface-container)] text-[var(--on-surface-variant)]">
+              <span className="text-xs font-mono px-2 py-0.5 rounded-lg bg-[var(--surface-container)] text-[var(--on-surface-variant)]">
                 {lead.lead_id}
               </span>
               {lead.is_hot_target && (
@@ -385,7 +385,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                 value={lead.pipeline_stage}
                 onChange={(e) => handleStageChange(e.target.value as PipelineStage)}
                 disabled={isUpdating}
-                className="mt-1 bg-[var(--surface-container)] border border-[var(--hud-border-bright)] text-xs font-bold text-white rounded-none px-3 py-1.5 focus:border-indigo-500 disabled:opacity-50"
+                className="mt-1 bg-[var(--surface-container)] border border-[var(--hud-border-bright)] text-xs font-bold text-white rounded-lg px-3 py-1.5 focus:border-indigo-500 disabled:opacity-50"
               >
                 <option value="New Lead">New Lead</option>
                 <option value="Contacted">Contacted</option>
@@ -447,21 +447,21 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
 
         {/* Highlight Metrics */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-[var(--hud-border-base)]">
-          <div className="p-3 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)]">
+          <div className="p-3 rounded-lg bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)]">
             <div className="text-[10px] text-[var(--outline)] uppercase font-semibold">Estimated Retainer</div>
             <div className="text-base font-bold text-[var(--primary-container)] font-mono mt-0.5">
               ${lead.estimated_retainer?.toLocaleString() || '1,800'}/mo
             </div>
           </div>
 
-          <div className="p-3 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)]">
+          <div className="p-3 rounded-lg bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)]">
             <div className="text-[10px] text-[var(--outline)] uppercase font-semibold">Revenue Lift</div>
             <div className="text-base font-bold text-blue-400 font-mono mt-0.5">
               {lead.estimated_revenue_lift || '$4,000–$8,000/mo'}
             </div>
           </div>
 
-          <div className="p-3 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)]">
+          <div className="p-3 rounded-lg bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)]">
             <div className="text-[10px] text-[var(--outline)] uppercase font-semibold">Google Reviews</div>
             <div className="text-base font-bold text-amber-400 flex items-center gap-1 mt-0.5">
               <Star className="w-4 h-4 fill-amber-400" />
@@ -470,7 +470,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
             </div>
           </div>
 
-          <div className="p-3 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)]">
+          <div className="p-3 rounded-lg bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)]">
             <div className="text-[10px] text-[var(--outline)] uppercase font-semibold">Recommended Service</div>
             <div className="text-xs font-bold text-white truncate mt-1">
               {lead.recommended_service}
@@ -628,7 +628,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsSophiaAICallOpen(true)}
-                className="px-3.5 py-1.5 rounded-lg bg-[var(--secondary-container)] hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-purple-900/30"
+                className="px-3.5 py-1.5 rounded-lg bg-[var(--secondary-container)] hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 transition-all shadow-md shadow-purple-900/30"
               >
                 <Bot className="w-3.5 h-3.5" />
                 <span>Launch Sophia AI Call</span>
@@ -645,7 +645,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
 
           {/* Calls List */}
           {leadCalls.length === 0 ? (
-            <div className="p-12 text-center rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-3">
+            <div className="p-12 text-center rounded-lg bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-3">
               <Phone className="w-8 h-8 text-slate-600 mx-auto" />
               <div className="text-sm font-bold text-[var(--on-surface-variant)]">No Calls Recorded Yet</div>
               <p className="text-xs text-slate-500 max-w-md mx-auto">
@@ -659,7 +659,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                 return (
                   <div
                     key={call.call_id}
-                    className="p-5 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] hover:border-slate-700 transition-all space-y-4"
+                    className="p-5 rounded-xl bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] hover:border-slate-700 transition-all space-y-4"
                   >
                     {/* Call Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
@@ -689,7 +689,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
 
                       <button
                         onClick={() => setSelectedCallForModal(call)}
-                        className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 transition-colors self-start sm:self-auto"
+                        className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1.5 transition-colors self-start sm:self-auto"
                       >
                         <Sparkles className="w-3.5 h-3.5" />
                         <span>View Intelligence & Notes</span>
@@ -758,7 +758,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
       {activeTab === 'overview' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Contact & Business Info */}
-          <div className="p-6 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-4">
+          <div className="p-6 rounded-xl bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-4">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-indigo-400" />
               <span>Contact &amp; Entity Profile</span>
@@ -797,7 +797,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
           </div>
 
           {/* Digital Infrastructure Audit */}
-          <div className="p-6 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-4">
+          <div className="p-6 rounded-xl bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-4">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <Globe className="w-4 h-4 text-emerald-400" />
               <span>Digital Presence &amp; Speed Audit</span>
@@ -874,7 +874,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
           </div>
 
           {/* Google Maps & Local Search Embed */}
-          <div className="lg:col-span-2 p-6 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-4">
+          <div className="lg:col-span-2 p-6 rounded-xl bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-rose-400" />
@@ -894,7 +894,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 rounded-none bg-[var(--surface-container)]/40 border border-[var(--hud-border-bright)]/60 space-y-2">
+              <div className="p-4 rounded-xl bg-[var(--surface-container)]/40 border border-[var(--hud-border-bright)]/60 space-y-2">
                 <div className="text-[10px] text-[var(--outline)] uppercase font-semibold">GMB Status</div>
                 <div className={`text-sm font-bold ${(!lead.gmb_status || lead.gmb_status === 'No GMB' || lead.gmb_status === 'Missing') ? 'text-rose-400' : 'text-emerald-400'}`}>
                   {lead.gmb_status || 'No GMB'}
@@ -906,7 +906,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                 </p>
               </div>
 
-              <div className="p-4 rounded-none bg-[var(--surface-container)]/40 border border-[var(--hud-border-bright)]/60 space-y-2">
+              <div className="p-4 rounded-xl bg-[var(--surface-container)]/40 border border-[var(--hud-border-bright)]/60 space-y-2">
                 <div className="text-[10px] text-[var(--outline)] uppercase font-semibold">Coordinates</div>
                 <div className="text-xs font-mono text-[var(--on-surface-variant)]">
                   Lat: {lead.latitude || 45.5152}
@@ -916,7 +916,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                 </div>
               </div>
 
-              <div className="p-4 rounded-none bg-[var(--surface-container)]/40 border border-[var(--hud-border-bright)]/60 space-y-2">
+              <div className="p-4 rounded-xl bg-[var(--surface-container)]/40 border border-[var(--hud-border-bright)]/60 space-y-2">
                 <div className="text-[10px] text-[var(--outline)] uppercase font-semibold">Local Search Opportunity</div>
                 <div className="text-xs font-bold text-emerald-400">
                   {lead.gmb_review_count && lead.gmb_review_count < 10
@@ -935,7 +935,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
       {/* TAB 2: Marketing Gaps & Offer */}
       {activeTab === 'gaps' && (
         <div className="space-y-6">
-          <div className="p-6 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-4">
+          <div className="p-6 rounded-xl bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-4">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-400" />
               <span>Identified Marketing &amp; Conversion Gaps</span>
@@ -986,7 +986,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
               </div>
             </div>
 
-            <div className="p-4 rounded-none bg-[var(--surface-container)]/40 border border-[var(--hud-border-bright)] space-y-2">
+            <div className="p-4 rounded-xl bg-[var(--surface-container)]/40 border border-[var(--hud-border-bright)] space-y-2">
               <div className="text-xs font-bold text-indigo-300">
                 Primary: {lead.recommended_service}
               </div>
@@ -1097,7 +1097,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
 
       {/* TAB 4: Score Breakdown (0–100 Explainability) */}
       {activeTab === 'scoring' && (
-        <div className="p-6 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-6">
+        <div className="p-6 rounded-xl bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-6">
           <div className="flex items-center justify-between border-b border-slate-800 pb-4">
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
@@ -1169,7 +1169,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
             ].map((item, idx) => (
               <div
                 key={idx}
-                className="p-4 rounded-none bg-[var(--surface-container)]/40 border border-[var(--hud-border-bright)]/60 space-y-2"
+                className="p-4 rounded-xl bg-[var(--surface-container)]/40 border border-[var(--hud-border-bright)]/60 space-y-2"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-white">{item.category}</span>
@@ -1194,7 +1194,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
       {activeTab === 'notes' && (
         <div className="space-y-6">
           {/* Add Note Form */}
-          <div className="p-6 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-4">
+          <div className="p-6 rounded-xl bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-4">
             <h3 className="text-sm font-bold text-white flex items-center gap-2">
               <Plus className="w-4 h-4 text-indigo-400" />
               <span>Add Note or Call Log</span>
@@ -1228,7 +1228,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
                 <button
                   type="submit"
                   disabled={!newNoteContent.trim()}
-                  className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-xs font-semibold text-white flex items-center gap-1.5 shadow-sm"
+                  className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-xs font-semibold text-white flex items-center gap-1.5 shadow-sm"
                 >
                   <Send className="w-3.5 h-3.5" />
                   <span>Save Entry</span>
@@ -1277,7 +1277,7 @@ export const LeadDetail: React.FC<LeadDetailProps> = ({
 
       {/* TAB 6: Original Data Preservation */}
       {activeTab === 'original_data' && (
-        <div className="p-6 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-4">
+        <div className="p-6 rounded-xl bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-sm font-bold text-white flex items-center gap-2">

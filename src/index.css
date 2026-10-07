@@ -1,544 +1,454 @@
 @import "tailwindcss";
 
-/* =====================================================
-   AUTONOMOUS KINETIC HUD — Design System
-   Stitch "Autonomous Kinetic HUD" Visual Language
-   ===================================================== */
+/* =====================================================================
+   MCA AGENCY — "Autonomous Kinetic HUD"
+   Mirrors the Stitch "Executive Command Dashboard" export 1:1.
+   Source of truth: stitch code.html (Tailwind config + hud-effects styles)
+   ===================================================================== */
+
+@theme {
+  /* Typography — Space Grotesk for UI/headings, JetBrains Mono for data */
+  --font-sans: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Courier New", monospace;
+
+  /* Stitch `mca` palette (names kept identical so Stitch markup copies 1:1) */
+  --color-mca-void: #07090e;
+  --color-mca-bg: #0c0e15;
+  --color-mca-surface: #12141d;
+  --color-mca-card: #161924;
+  --color-mca-hover: #1e2230;
+  --color-mca-border: rgba(255, 255, 255, 0.08);
+  --color-mca-borderActive: rgba(0, 255, 157, 0.4);
+  --color-mca-neonGreen: #00ff9d;
+  --color-mca-neonCyan: #00e5ff;
+  --color-mca-neonPurple: #9d4edd;
+  --color-mca-neonAmber: #ffb703;
+  --color-mca-neonRed: #ff2e63;
+
+  /* Stitch neon glows */
+  --shadow-neon-green: 0 0 15px -3px rgba(0, 255, 157, 0.35);
+  --shadow-neon-cyan: 0 0 15px -3px rgba(0, 229, 255, 0.35);
+  --shadow-neon-purple: 0 0 15px -3px rgba(157, 78, 221, 0.35);
+  --shadow-neon-red: 0 0 15px -3px rgba(255, 46, 99, 0.35);
+  --shadow-glass: inset 0 1px 1px 0 rgba(255, 255, 255, 0.05);
+
+  /* Re-base the dark slate steps used by older pages onto the HUD surfaces,
+     so every legacy `bg-slate-900/950` panel lands on the exact Stitch tones */
+  --color-slate-850: #161924;
+  --color-slate-900: #12141d;
+  --color-slate-950: #07090e;
+}
 
 :root {
-  /* Core Palette */
-  --hud-void:           #050608;
-  --hud-obsidian:       #090A0F;
-  --hud-graphite:       #0D0F17;
-  --hud-carbon:         #131722;
-  --hud-steel:          #1A1C26;
-  --hud-chrome:         #242736;
+  /* Legacy CSS-variable API (used by Leads/Dashboard/Detail pages) re-pointed
+     at the Stitch palette so those pages inherit the new look automatically. */
+  --hud-void: #07090e;
+  --hud-obsidian: #0c0e15;
+  --hud-graphite: #12141d;
+  --hud-carbon: #161924;
+  --hud-steel: #1e2230;
+  --hud-chrome: #262b3b;
 
-  /* Borders */
-  --hud-border-dim:     rgba(255,255,255,0.06);
-  --hud-border-base:    rgba(255,255,255,0.08);
-  --hud-border-bright:  rgba(255,255,255,0.15);
+  --hud-border-dim: rgba(255, 255, 255, 0.05);
+  --hud-border-base: rgba(255, 255, 255, 0.08);
+  --hud-border-bright: rgba(255, 255, 255, 0.14);
 
-  /* Semantic Colors */
-  --hud-emerald:        #00FF9D;
-  --hud-emerald-dim:    #00E38B;
-  --hud-emerald-glow:   rgba(0,255,157,0.25);
-  --hud-violet:         #8B5CF6;
-  --hud-violet-dim:     #571BC1;
-  --hud-violet-glow:    rgba(139,92,246,0.3);
-  --hud-cyan:           #06B6D4;
-  --hud-cyan-dim:       #4CD7F6;
-  --hud-amber:          #F59E0B;
-  --hud-crimson:        #EF4444;
+  --hud-emerald: #00ff9d;
+  --hud-emerald-dim: #00e38b;
+  --hud-emerald-glow: rgba(0, 255, 157, 0.25);
+  --hud-violet: #9d4edd;
+  --hud-violet-dim: #571bc1;
+  --hud-violet-glow: rgba(157, 78, 221, 0.3);
+  --hud-cyan: #00e5ff;
+  --hud-cyan-dim: #22d3ee;
+  --hud-amber: #fbbf24;
+  --hud-crimson: #fb7185;
 
-  /* Typography tokens */
-  --font-display:       'Space Grotesk', system-ui, sans-serif;
-  --font-mono:          'JetBrains Mono', 'Courier New', monospace;
+  --font-display: "Space Grotesk", system-ui, sans-serif;
 
-  /* Stitch color tokens */
-  --surface:            #121318;
-  --surface-dim:        #121318;
-  --surface-container-lowest: #0d0e13;
-  --surface-container-low:    #1a1b21;
-  --surface-container:        #1e1f25;
-  --surface-container-high:   #292a2f;
-  --surface-container-highest:#34343a;
-  --on-surface:         #e3e1e9;
-  --on-surface-variant: #b9cbbc;
-  --outline:            #849587;
-  --outline-variant:    #3b4a3f;
-  --primary:            #f4fff3;
-  --primary-container:  #00ff9d;
-  --primary-fixed:      #56ffa8;
-  --primary-fixed-dim:  #00e38b;
-  --secondary:          #d0bcff;
-  --secondary-container:#571bc1;
-  --on-secondary-container: #c4abff;
-  --tertiary-fixed-dim: #4cd7f6;
-  --error:              #ffb4ab;
-  --error-container:    #93000a;
+  --surface: #0c0e15;
+  --surface-dim: #0c0e15;
+  --surface-container-lowest: #12141d;
+  --surface-container-low: #12141d;
+  --surface-container: #161924;
+  --surface-container-high: #1e2230;
+  --surface-container-highest: #262b3b;
+  --on-surface: #e2e8f0;
+  --on-surface-variant: #94a3b8;
+  --outline: #64748b;
+  --outline-variant: rgba(255, 255, 255, 0.08);
+  --primary: #f4fff3;
+  --primary-container: #00ff9d;
+  --primary-fixed: #56ffa8;
+  --primary-fixed-dim: #00e38b;
+  --secondary: #c4b5fd;
+  --secondary-container: #3b1d6e;
+  --on-secondary-container: #ddd6fe;
+  --tertiary-fixed-dim: #22d3ee;
+  --error: #fb7185;
+  --error-container: #4c0519;
 }
 
 @layer base {
-  html, body {
+  html,
+  body {
     margin: 0;
     padding: 0;
-    background-color: var(--hud-void);
-    color: var(--on-surface);
-    font-family: var(--font-mono);
-    font-size: 13px;
-    line-height: 20px;
-    antialiased: true;
-    overflow-x: hidden;
     overscroll-behavior: none;
+  }
+
+  body {
+    background-color: #080a10;
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(0, 229, 255, 0.03) 0%, transparent 60%),
+      radial-gradient(circle at 100% 100%, rgba(157, 78, 221, 0.02) 0%, transparent 50%);
+    background-attachment: fixed;
+    color: #cbd5e1; /* slate-300 */
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   * {
     box-sizing: border-box;
   }
 
-  /* Zero radius mandate from Stitch */
-  .hud-card, .hud-panel, .hud-btn {
-    border-radius: 0 !important;
+  /* Hairline default so un-colored `border` utilities match the HUD */
+  *,
+  ::after,
+  ::before,
+  ::backdrop {
+    border-color: var(--color-mca-border);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background: #00ff9d;
+    color: #000;
+  }
+
+  input,
+  select,
+  textarea {
+    font-family: var(--font-sans);
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #64748b;
+  }
+  /* neon caret on dark fields */
+  input,
+  textarea {
+    caret-color: #00ff9d;
+  }
+  /* native date/select popups render dark */
+  :root {
+    color-scheme: dark;
   }
 }
 
-/* ─── Scrollbars ─── */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); }
-::-webkit-scrollbar-thumb:hover { background: rgba(0,255,157,0.25); }
-
-/* ─── HUD Sidebar ─── */
-.hud-sidebar {
-  background: var(--surface-container-lowest);
-  border-right: 1px solid var(--hud-border-base);
-  font-family: var(--font-mono);
+/* ─── Scrollbars (Stitch: 6px, #0c0e15 track, #1e2230 thumb → neon on hover) ─── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0c0e15;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e2230;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00ff9d;
 }
 
-.hud-sidebar-brand {
-  background: var(--surface-container-low);
-  border-bottom: 1px solid var(--hud-border-base);
-  padding: 1rem;
-}
-
-.hud-sidebar-section-label {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--outline);
-  padding: 0.5rem 0.5rem 0.25rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.hud-nav-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 0.375rem 0.5rem;
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--on-surface-variant);
-  text-decoration: none;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-  text-align: left;
-  border-radius: 0;
-}
-
-.hud-nav-item:hover {
-  background: var(--surface-container-high);
-  color: var(--on-surface);
-}
-
-.hud-nav-item.active {
-  background: var(--surface-container);
-  color: var(--primary-container);
-  font-weight: 700;
-}
-
-.hud-nav-badge {
-  font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 0.125rem 0.375rem;
-  border-radius: 0;
-}
-
-/* ─── HUD Header ─── */
-.hud-header {
-  background: color-mix(in srgb, var(--surface) 80%, transparent);
+/* ─── Stitch component primitives ─────────────────────────────────────── */
+.glass-panel {
+  background: linear-gradient(135deg, rgba(22, 25, 36, 0.75) 0%, rgba(16, 18, 26, 0.85) 100%);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--hud-border-base);
-  font-family: var(--font-mono);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-.hud-search-input {
-  background: var(--surface-container-lowest);
-  border: 1px solid var(--hud-border-base);
-  color: var(--on-surface);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  border-radius: 0;
-  padding: 0.375rem 1rem 0.375rem 2.5rem;
-  outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+.hud-border-cyan {
+  border-left: 3px solid #00e5ff;
+}
+.hud-border-green {
+  border-left: 3px solid #00ff9d;
+}
+.hud-border-purple {
+  border-left: 3px solid #9d4edd;
+}
+.hud-border-red {
+  border-left: 3px solid #ff2e63;
+}
+.hud-border-amber {
+  border-left: 3px solid #ffb703;
 }
 
-.hud-search-input:focus {
-  border-color: var(--primary-container);
-  box-shadow: 0 0 0 1px var(--hud-emerald-glow);
-  caret-color: var(--primary-container);
+/* ─── Legacy `hud-*` API, restyled to the Stitch look (rounded glass) ──── */
+.hud-app-shell {
+  background: transparent;
+}
+.hud-main-shell {
+  background: var(--color-mca-bg);
+}
+.hud-main-content {
+  background: var(--color-mca-bg);
+  scrollbar-color: #1e2230 #0c0e15;
+  scrollbar-width: thin;
 }
 
-.hud-search-input::placeholder {
-  color: var(--outline);
+.hud-panel,
+.hud-card {
+  background: linear-gradient(135deg, rgba(22, 25, 36, 0.75) 0%, rgba(16, 18, 26, 0.85) 100%);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 0.75rem;
+}
+.hud-panel-inner {
+  background: var(--color-mca-card);
+  border-radius: 0.5rem;
 }
 
-/* ─── Primary Kinetic Button ─── */
-.hud-btn-primary {
-  background: var(--primary-container);
-  color: #002110;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border: none;
-  border-radius: 0;
-  padding: 0.375rem 1rem;
-  cursor: pointer;
-  transition: box-shadow 0.15s, background 0.15s;
-}
-
-.hud-btn-primary:hover {
-  background: var(--primary-fixed);
-  box-shadow: 0 0 12px var(--hud-emerald-glow);
-}
-
-/* ─── Secondary Ghost Button ─── */
-.hud-btn-ghost {
-  background: var(--hud-obsidian);
-  color: #fff;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 0;
-  padding: 0.375rem 1rem;
-  cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.hud-btn-ghost:hover {
-  border-color: var(--hud-violet);
-  box-shadow: 0 0 10px var(--hud-violet-glow);
-}
-
-/* ─── Sophia AI Button ─── */
-.hud-btn-sophia {
-  background: var(--secondary-container);
-  color: var(--on-secondary-container);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border: 1px solid transparent;
-  border-radius: 0;
-  padding: 0.375rem 1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  box-shadow: 0 0 14px rgba(87,27,193,0.5);
-  transition: box-shadow 0.15s, background 0.15s;
-}
-
-.hud-btn-sophia:hover {
-  box-shadow: 0 0 20px var(--hud-violet-glow);
-  background: color-mix(in srgb, var(--secondary-container) 80%, #000);
-}
-
-/* ─── Metric HUD Cards ─── */
 .hud-metric-card {
-  background: var(--surface-container-lowest);
-  border: 1px solid var(--hud-border-base);
-  border-radius: 0;
-  padding: 1rem;
+  background: linear-gradient(135deg, rgba(22, 25, 36, 0.75) 0%, rgba(16, 18, 26, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-left: 3px solid #00ff9d;
+  border-radius: 0.75rem;
+  padding: 0.875rem;
   position: relative;
   overflow: hidden;
 }
-
-.hud-metric-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--primary-container);
+.hud-metric-card.violet {
+  border-left-color: #9d4edd;
 }
-
-.hud-metric-card.violet::before { background: var(--secondary); }
-.hud-metric-card.cyan::before   { background: var(--tertiary-fixed-dim); }
-.hud-metric-card.amber::before  { background: var(--hud-amber); }
-.hud-metric-card.red::before    { background: var(--error); }
-
+.hud-metric-card.cyan {
+  border-left-color: #00e5ff;
+}
+.hud-metric-card.amber {
+  border-left-color: #ffb703;
+}
+.hud-metric-card.red {
+  border-left-color: #ff2e63;
+}
 .hud-metric-value {
   font-family: var(--font-mono);
-  font-size: 32px;
+  font-size: 24px;
   font-weight: 700;
-  line-height: 36px;
-  letter-spacing: -0.04em;
-  color: var(--primary-container);
-  text-shadow: 0 0 12px var(--hud-emerald-glow);
+  line-height: 32px;
+  color: #00ff9d;
 }
-
 .hud-metric-label {
   font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--outline);
+  font-size: 11px;
+  font-weight: 400;
+  color: #94a3b8;
 }
 
-/* ─── Tables ─── */
+.hud-banner {
+  background: linear-gradient(135deg, rgba(22, 25, 36, 0.75) 0%, rgba(16, 18, 26, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-left: 3px solid #00ff9d;
+  border-radius: 0.75rem;
+  position: relative;
+  overflow: hidden;
+}
+.hud-banner::after {
+  content: "";
+  position: absolute;
+  top: -30%;
+  right: -5%;
+  width: 280px;
+  height: 280px;
+  background: radial-gradient(circle, rgba(0, 229, 255, 0.07) 0%, transparent 70%);
+  pointer-events: none;
+}
+
 .hud-table-row {
-  border-bottom: 1px solid var(--hud-border-dim);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   transition: background 0.1s;
 }
-
 .hud-table-row:hover {
-  background: rgba(0,255,157,0.04);
+  background: rgba(0, 255, 157, 0.04);
 }
-
 .hud-table-header {
   font-family: var(--font-mono);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--outline);
-  border-bottom: 1px solid var(--hud-border-base);
+  color: #64748b;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding: 0.5rem;
 }
 
-/* ─── Status Badges ─── */
 .hud-badge {
   font-family: var(--font-mono);
   font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   padding: 0.125rem 0.375rem;
-  border: 1px solid rgba(255,255,255,0.06);
-  background: rgba(255,255,255,0.04);
-  border-radius: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 0.25rem;
 }
-
 .hud-badge-emerald {
-  border-color: var(--hud-emerald-glow);
-  color: var(--primary-container);
-  background: rgba(0,255,157,0.06);
+  border-color: rgba(0, 255, 157, 0.3);
+  color: #00ff9d;
+  background: rgba(0, 255, 157, 0.08);
 }
-
 .hud-badge-violet {
-  border-color: var(--hud-violet-glow);
-  color: var(--secondary);
-  background: rgba(139,92,246,0.06);
+  border-color: rgba(157, 78, 221, 0.4);
+  color: #c4b5fd;
+  background: rgba(157, 78, 221, 0.1);
 }
-
 .hud-badge-amber {
-  border-color: rgba(245,158,11,0.3);
-  color: var(--hud-amber);
-  background: rgba(245,158,11,0.06);
+  border-color: rgba(251, 191, 36, 0.3);
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.08);
 }
-
 .hud-badge-red {
-  border-color: rgba(239,68,68,0.3);
-  color: var(--error);
-  background: rgba(239,68,68,0.06);
+  border-color: rgba(251, 113, 133, 0.3);
+  color: #fb7185;
+  background: rgba(251, 113, 133, 0.08);
 }
-
 .hud-badge-live {
   color: #002110;
-  background: var(--primary-container);
-  border-color: var(--primary-container);
-  animation: none;
+  background: #00ff9d;
+  border-color: #00ff9d;
 }
 
-/* ─── Dividers & Grid ─── */
 .hud-divider {
   border: none;
-  border-top: 1px solid var(--hud-border-base);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   margin: 0;
 }
 
-/* ─── Pulse / Glow Animations ─── */
-@keyframes hud-pulse-emerald {
-  0%, 100% { box-shadow: 0 0 6px var(--hud-emerald-glow); }
-  50%       { box-shadow: 0 0 16px var(--hud-emerald-glow); }
+/* Primary / ghost / Sophia buttons — Stitch: rounded-lg, text-xs */
+.hud-btn-primary {
+  background: #2563eb;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  transition: background 0.15s;
+}
+.hud-btn-primary:hover {
+  background: #3b82f6;
+}
+.hud-btn-ghost {
+  background: var(--color-mca-card);
+  color: #cbd5e1;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  transition: background 0.15s;
+}
+.hud-btn-ghost:hover {
+  background: var(--color-mca-hover);
+}
+.hud-btn-sophia {
+  background-image: linear-gradient(to right, #7e22ce, #4f46e5, #9333ea);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(192, 132, 252, 0.4);
+  border-radius: 0.5rem;
+  padding: 0.375rem 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: var(--shadow-neon-purple);
+}
+
+.hud-input,
+.hud-search-input {
+  background: rgba(7, 9, 14, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  font-size: 12px;
+  border-radius: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.hud-input:focus,
+.hud-search-input:focus {
+  border-color: #06b6d4;
+  box-shadow: 0 0 0 1px #06b6d4;
+}
+.hud-select {
+  background: var(--color-mca-card);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  border-radius: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  outline: none;
+}
+
+.hud-modal-backdrop {
+  background: rgba(5, 6, 8, 0.8);
+  backdrop-filter: blur(6px);
+}
+.hud-modal {
+  background: var(--color-mca-surface);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), var(--shadow-neon-cyan);
+  border-radius: 0.75rem;
+}
+.hud-search-results {
+  background: var(--color-mca-surface);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.75rem;
+  margin-top: 0.25rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.hud-progress-track {
+  background: #1e293b;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 9999px;
+}
+.hud-progress-fill {
+  height: 100%;
+  background: #00ff9d;
+  border-radius: 9999px;
+  transition: width 0.4s ease;
 }
 
 @keyframes hud-blink {
   0%, 100% { opacity: 1; }
-  50%       { opacity: 0.4; }
+  50% { opacity: 0.4; }
 }
-
 .hud-live-dot {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
-  background: var(--primary-container);
+  border-radius: 9999px;
+  background: #00ff9d;
   display: inline-block;
-  animation: hud-blink 1.4s ease-in-out infinite;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* ─── Panel Surfaces ─── */
-.hud-panel {
-  background: var(--surface-container-lowest);
-  border: 1px solid var(--hud-border-base);
-  border-radius: 0;
-}
-
-.hud-panel-inner {
-  background: var(--surface-container);
-  border-radius: 0;
-}
-
-/* ─── Forms ─── */
-.hud-input {
-  background: var(--hud-obsidian);
-  border: 1px solid rgba(255,255,255,0.12);
-  color: var(--on-surface);
-  font-family: var(--font-mono);
-  font-size: 13px;
-  border-radius: 0;
-  padding: 0.5rem 0.75rem;
-  outline: none;
-  width: 100%;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  caret-color: var(--primary-container);
-}
-
-.hud-input:focus {
-  border-color: var(--primary-container);
-  box-shadow: inset 0 0 0 1px rgba(0,255,157,0.15);
-}
-
-.hud-input::placeholder { color: var(--outline); }
-
-.hud-select {
-  background: var(--surface-container);
-  border: 1px solid var(--hud-border-base);
-  color: var(--on-surface);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border-radius: 0;
-  padding: 0.375rem 0.75rem;
-  outline: none;
-  cursor: pointer;
-  appearance: none;
-}
-
-/* ─── Dashboard Banner ─── */
-.hud-banner {
-  background: var(--surface-container-low);
-  border: 1px solid var(--hud-border-base);
-  border-left: 2px solid var(--primary-container);
-  border-radius: 0;
-  position: relative;
-  overflow: hidden;
-}
-
-.hud-banner::after {
-  content: '';
-  position: absolute;
-  top: -30%;
-  right: -5%;
-  width: 350px;
-  height: 350px;
-  background: radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-/* ─── Overrides: remove Tailwind rounding from key elements ─── */
-.rounded-xl, .rounded-lg, .rounded-2xl, .rounded-full {
-  /* Keep --but only for profile avatars / pill labels in interactive areas */
-}
-
-/* ─── Modal / Overlay ─── */
-.hud-modal-backdrop {
-  background: rgba(5,6,8,0.85);
-  backdrop-filter: blur(6px);
-}
-
-.hud-modal {
-  background: var(--hud-graphite);
-  border: 1px solid var(--hud-border-base);
-  box-shadow: 0 0 30px rgba(0,0,0,0.6), 0 0 16px var(--hud-emerald-glow);
-  border-radius: 0;
-}
-
-/* ─── Search dropdown ─── */
-.hud-search-results {
-  background: var(--surface-container-lowest);
-  border: 1px solid var(--hud-border-base);
-  border-top: none;
-  border-radius: 0;
-}
-
-/* ─── Progress bars ─── */
-.hud-progress-track {
-  background: var(--surface-container-high);
-  height: 3px;
-  overflow: hidden;
-  border-radius: 0;
-}
-
-.hud-progress-fill {
-  height: 100%;
-  background: var(--primary-container);
-  transition: width 0.4s ease;
-}
-
-/* ─── Crosshair accent (decorative) ─── */
-.hud-crosshair::before,
-.hud-crosshair::after {
-  content: '';
-  position: absolute;
-  background: var(--hud-emerald);
-  opacity: 0.3;
-}
-.hud-crosshair::before { width: 1px; height: 8px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
-.hud-crosshair::after  { width: 8px; height: 1px; top: 50%; left: 50%; transform: translate(-50%,-50%); }
-
-/* ─── Utility overrides for upgrade ─── */
-.hud-text-emerald { color: var(--primary-container) !important; }
-.hud-text-violet  { color: var(--secondary) !important; }
-.hud-text-cyan    { color: var(--tertiary-fixed-dim) !important; }
-.hud-text-amber   { color: var(--hud-amber) !important; }
-.hud-text-dim     { color: var(--on-surface-variant) !important; }
-.hud-text-outline { color: var(--outline) !important; }
-.hud-font-display { font-family: var(--font-display) !important; }
+.hud-text-emerald { color: #00ff9d !important; }
+.hud-text-violet  { color: #c4b5fd !important; }
+.hud-text-cyan    { color: #22d3ee !important; }
+.hud-text-amber   { color: #fbbf24 !important; }
+.hud-text-dim     { color: #94a3b8 !important; }
+.hud-text-outline { color: #64748b !important; }
+.hud-font-display { font-family: var(--font-sans) !important; }
 .hud-font-mono    { font-family: var(--font-mono) !important; }
-
-/* MCA HUD application shell */
-.hud-app-shell {
-  background:
-    radial-gradient(circle at 78% 8%, rgba(0, 255, 157, 0.035), transparent 24rem),
-    radial-gradient(circle at 18% 92%, rgba(76, 215, 246, 0.025), transparent 22rem),
-    var(--hud-void);
-}
-
-.hud-main-shell {
-  background: var(--hud-void);
-}
-
-.hud-main-content {
-  background:
-    linear-gradient(
-      180deg,
-      var(--hud-void) 0%,
-      var(--hud-obsidian) 100%
-    );
-  scrollbar-color: var(--hud-border-base) transparent;
-  scrollbar-width: thin;
-}

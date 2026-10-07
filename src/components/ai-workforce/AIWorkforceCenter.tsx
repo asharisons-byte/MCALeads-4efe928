@@ -158,7 +158,7 @@ export const AIWorkforceCenter: React.FC<AIWorkforceCenterProps> = ({
           <div className="flex items-center space-x-3 shrink-0">
             <button
               onClick={() => setActiveTab('studio')}
-              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold flex items-center space-x-2 transition-all shadow-md hover:shadow-indigo-500/25"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold flex items-center space-x-2 transition-all shadow-md hover:shadow-indigo-500/25"
             >
               <Zap className="w-4 h-4" />
               <span>Multi-Agent Studio</span>
@@ -222,7 +222,7 @@ export const AIWorkforceCenter: React.FC<AIWorkforceCenterProps> = ({
           onClick={() => setActiveTab('roster')}
           className={`px-4 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-colors whitespace-nowrap ${
             activeTab === 'roster'
-              ? 'bg-indigo-600 text-white shadow-sm'
+              ? 'bg-blue-600 text-white shadow-sm'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
           }`}
         >
@@ -234,7 +234,7 @@ export const AIWorkforceCenter: React.FC<AIWorkforceCenterProps> = ({
           onClick={() => setActiveTab('approvals')}
           className={`px-4 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-colors whitespace-nowrap ${
             activeTab === 'approvals'
-              ? 'bg-indigo-600 text-white shadow-sm'
+              ? 'bg-blue-600 text-white shadow-sm'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
           }`}
         >
@@ -251,7 +251,7 @@ export const AIWorkforceCenter: React.FC<AIWorkforceCenterProps> = ({
           onClick={() => setActiveTab('studio')}
           className={`px-4 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-colors whitespace-nowrap ${
             activeTab === 'studio'
-              ? 'bg-indigo-600 text-white shadow-sm'
+              ? 'bg-blue-600 text-white shadow-sm'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
           }`}
         >
@@ -263,7 +263,7 @@ export const AIWorkforceCenter: React.FC<AIWorkforceCenterProps> = ({
           onClick={() => setActiveTab('queue')}
           className={`px-4 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-colors whitespace-nowrap ${
             activeTab === 'queue'
-              ? 'bg-indigo-600 text-white shadow-sm'
+              ? 'bg-blue-600 text-white shadow-sm'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
           }`}
         >
@@ -275,7 +275,7 @@ export const AIWorkforceCenter: React.FC<AIWorkforceCenterProps> = ({
           onClick={() => setActiveTab('briefing')}
           className={`px-4 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-colors whitespace-nowrap ${
             activeTab === 'briefing'
-              ? 'bg-indigo-600 text-white shadow-sm'
+              ? 'bg-blue-600 text-white shadow-sm'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
           }`}
         >
@@ -287,7 +287,7 @@ export const AIWorkforceCenter: React.FC<AIWorkforceCenterProps> = ({
           onClick={() => setActiveTab('playbooks')}
           className={`px-4 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-colors whitespace-nowrap ${
             activeTab === 'playbooks'
-              ? 'bg-indigo-600 text-white shadow-sm'
+              ? 'bg-blue-600 text-white shadow-sm'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
           }`}
         >
@@ -299,7 +299,7 @@ export const AIWorkforceCenter: React.FC<AIWorkforceCenterProps> = ({
           onClick={() => setActiveTab('activity')}
           className={`px-4 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-colors whitespace-nowrap ${
             activeTab === 'activity'
-              ? 'bg-indigo-600 text-white shadow-sm'
+              ? 'bg-blue-600 text-white shadow-sm'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
           }`}
         >
@@ -311,7 +311,7 @@ export const AIWorkforceCenter: React.FC<AIWorkforceCenterProps> = ({
           onClick={() => setActiveTab('models')}
           className={`px-4 py-2.5 rounded-lg text-xs font-semibold flex items-center space-x-2 transition-colors whitespace-nowrap ${
             activeTab === 'models'
-              ? 'bg-indigo-600 text-white shadow-sm'
+              ? 'bg-blue-600 text-white shadow-sm'
               : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
           }`}
         >
@@ -458,7 +458,7 @@ export const AIWorkforceCenter: React.FC<AIWorkforceCenterProps> = ({
               <button
                 onClick={handleQuickExecuteTask}
                 disabled={isQuickExecuting}
-                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5"
+                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5"
               >
                 {isQuickExecuting ? (
                   <span>Executing...</span>

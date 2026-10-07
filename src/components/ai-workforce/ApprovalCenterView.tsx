@@ -404,7 +404,7 @@ export const ApprovalCenterView: React.FC<ApprovalCenterViewProps> = ({
               </button>
               <button
                 onClick={handleSaveEdit}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold shadow-sm"
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold shadow-sm"
               >
                 Save & Approve Modified Version
               </button>

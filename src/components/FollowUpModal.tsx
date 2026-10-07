@@ -162,7 +162,7 @@ export const FollowUpModal: React.FC<FollowUpModalProps> = ({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all shadow-md shadow-indigo-600/20"
+              className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all shadow-md shadow-indigo-600/20"
             >
               Save Follow-Up
             </button>

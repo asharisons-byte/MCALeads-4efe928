@@ -335,7 +335,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   <span
                     className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono ${
                       step === s.num
-                        ? 'bg-indigo-600 text-white font-bold'
+                        ? 'bg-blue-600 text-white font-bold'
                         : step > s.num
                         ? 'bg-emerald-600/30 text-emerald-400'
                         : 'bg-slate-800 text-slate-400'
@@ -414,7 +414,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   onClick={() => setInputMode('upload')}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                     inputMode === 'upload'
-                      ? 'bg-indigo-600 text-white shadow-sm'
+                      ? 'bg-blue-600 text-white shadow-sm'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -426,7 +426,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   onClick={() => setInputMode('sheets')}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                     inputMode === 'sheets'
-                      ? 'bg-indigo-600 text-white shadow-sm'
+                      ? 'bg-blue-600 text-white shadow-sm'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -438,7 +438,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   onClick={() => setInputMode('paste')}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                     inputMode === 'paste'
-                      ? 'bg-indigo-600 text-white shadow-sm'
+                      ? 'bg-blue-600 text-white shadow-sm'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -450,7 +450,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   onClick={() => setInputMode('preset')}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
                     inputMode === 'preset'
-                      ? 'bg-indigo-600 text-white shadow-sm'
+                      ? 'bg-blue-600 text-white shadow-sm'
                       : 'text-slate-400 hover:text-white'
                   }`}
                 >
@@ -508,7 +508,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   </div>
                   <button
                     type="button"
-                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md"
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md"
                   >
                     Browse Files on Computer
                   </button>
@@ -618,7 +618,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                       type="button"
                       disabled={!pastedContent.trim() || isProcessing}
                       onClick={handleProcessPastedData}
-                      className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-2 shadow-md"
+                      className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-xs font-bold flex items-center gap-2 shadow-md"
                     >
                       <span>Process &amp; Map Data</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -708,7 +708,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   </button>
                   <button
                     onClick={handleLoadAttachedCCBLeads}
-                    className="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                    className="px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm"
                   >
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     <span>Reload 202 CCB Leads</span>
@@ -986,7 +986,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
 
               <div className="w-full max-w-md bg-slate-800 rounded-full h-3 overflow-hidden mt-4">
                 <div
-                  className="bg-indigo-600 h-full rounded-full transition-all duration-300"
+                  className="bg-blue-600 h-full rounded-full transition-all duration-300"
                   style={{ width: `${importProgress}%` }}
                 />
               </div>
@@ -1065,7 +1065,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
             {step === 2 && (
               <button
                 onClick={handleProceedToPreview}
-                className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5"
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5"
               >
                 <span>Preview &amp; Dedupe</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -1075,7 +1075,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
             {step === 3 && (
               <button
                 onClick={() => setStep(4)}
-                className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5"
+                className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5"
               >
                 <span>Continue to Validation</span>
                 <ArrowRight className="w-3.5 h-3.5" />
@@ -1098,7 +1098,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   onClose();
                   resetImport();
                 }}
-                className="px-5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold"
+                className="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold"
               >
                 View Leads in CRM
               </button>

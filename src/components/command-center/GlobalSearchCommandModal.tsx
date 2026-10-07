@@ -68,27 +68,27 @@ export const GlobalSearchCommandModal: React.FC<GlobalSearchCommandModalProps> =
     : leads.slice(0, 5);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-slate-900/50 backdrop-blur-xs p-4">
-      <div className="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[80vh]">
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 bg-mca-hover/50 backdrop-blur-xs p-4">
+      <div className="bg-mca-card rounded-xl max-w-xl w-full shadow-2xl border border-white/10 overflow-hidden flex flex-col max-h-[80vh]">
         {/* Search Input */}
-        <div className="p-4 border-b border-slate-100 flex items-center gap-3">
-          <Search className="w-5 h-5 text-slate-400 shrink-0" />
+        <div className="p-4 border-b border-white/5 flex items-center gap-3">
+          <Search className="w-5 h-5 text-slate-500 shrink-0" />
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search contractor leads, phone, city, or commands..."
-            className="w-full text-sm outline-hidden placeholder-slate-400 text-slate-900"
+            className="w-full text-sm outline-hidden placeholder-slate-500 text-white"
           />
           {query && (
-            <button onClick={() => setQuery('')} className="text-slate-400 hover:text-slate-600">
+            <button onClick={() => setQuery('')} className="text-slate-500 hover:text-slate-300">
               <X className="w-4 h-4" />
             </button>
           )}
           <button
             onClick={onClose}
-            className="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-100 text-slate-500 hover:bg-slate-200"
+            className="px-2 py-0.5 rounded text-[11px] font-mono bg-mca-hover text-slate-400 hover:bg-slate-700"
           >
             ESC
           </button>
@@ -98,7 +98,7 @@ export const GlobalSearchCommandModal: React.FC<GlobalSearchCommandModalProps> =
         <div className="p-3 space-y-4 flex-1 overflow-y-auto">
           {/* Quick Command Shortcuts */}
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-1.5">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 px-2 mb-1.5">
               Quick Commands
             </div>
             <div className="grid grid-cols-2 gap-1.5 text-xs">
@@ -107,9 +107,9 @@ export const GlobalSearchCommandModal: React.FC<GlobalSearchCommandModalProps> =
                   onClose();
                   onAddNewLead();
                 }}
-                className="p-2 rounded-lg border border-slate-100 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 text-left flex items-center gap-2 text-slate-800 transition-colors"
+                className="p-2 rounded-lg border border-white/5 bg-mca-void/40 hover:bg-indigo-950/50 hover:border-indigo-800/50 text-left flex items-center gap-2 text-slate-100 transition-colors"
               >
-                <Plus className="w-4 h-4 text-indigo-600" />
+                <Plus className="w-4 h-4 text-indigo-400" />
                 <span>Add New Contractor Lead</span>
               </button>
               <button
@@ -117,9 +117,9 @@ export const GlobalSearchCommandModal: React.FC<GlobalSearchCommandModalProps> =
                   onClose();
                   onOpenAIDispatch();
                 }}
-                className="p-2 rounded-lg border border-slate-100 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 text-left flex items-center gap-2 text-slate-800 transition-colors"
+                className="p-2 rounded-lg border border-white/5 bg-mca-void/40 hover:bg-indigo-950/50 hover:border-indigo-800/50 text-left flex items-center gap-2 text-slate-100 transition-colors"
               >
-                <Radio className="w-4 h-4 text-indigo-600" />
+                <Radio className="w-4 h-4 text-indigo-400" />
                 <span>Launch Sophia AI Call</span>
               </button>
               <button
@@ -127,9 +127,9 @@ export const GlobalSearchCommandModal: React.FC<GlobalSearchCommandModalProps> =
                   onClose();
                   onOpenDialer();
                 }}
-                className="p-2 rounded-lg border border-slate-100 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 text-left flex items-center gap-2 text-slate-800 transition-colors"
+                className="p-2 rounded-lg border border-white/5 bg-mca-void/40 hover:bg-indigo-950/50 hover:border-indigo-800/50 text-left flex items-center gap-2 text-slate-100 transition-colors"
               >
-                <Phone className="w-4 h-4 text-emerald-600" />
+                <Phone className="w-4 h-4 text-emerald-400" />
                 <span>Open CRM Dialer</span>
               </button>
               <button
@@ -137,9 +137,9 @@ export const GlobalSearchCommandModal: React.FC<GlobalSearchCommandModalProps> =
                   onClose();
                   onOpenFollowUpQueue();
                 }}
-                className="p-2 rounded-lg border border-slate-100 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 text-left flex items-center gap-2 text-slate-800 transition-colors"
+                className="p-2 rounded-lg border border-white/5 bg-mca-void/40 hover:bg-indigo-950/50 hover:border-indigo-800/50 text-left flex items-center gap-2 text-slate-100 transition-colors"
               >
-                <Calendar className="w-4 h-4 text-amber-600" />
+                <Calendar className="w-4 h-4 text-amber-400" />
                 <span>View Follow-Up Queue</span>
               </button>
             </div>
@@ -147,12 +147,12 @@ export const GlobalSearchCommandModal: React.FC<GlobalSearchCommandModalProps> =
 
           {/* Lead Search Results */}
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-2 mb-1.5">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500 px-2 mb-1.5">
               Contractor Leads ({filteredLeads.length})
             </div>
 
             {filteredLeads.length === 0 ? (
-              <div className="p-4 text-center text-xs text-slate-400">
+              <div className="p-4 text-center text-xs text-slate-500">
                 No matching leads found for "{query}".
               </div>
             ) : (
@@ -164,27 +164,27 @@ export const GlobalSearchCommandModal: React.FC<GlobalSearchCommandModalProps> =
                       onClose();
                       onSelectLead(lead.lead_id);
                     }}
-                    className="p-2.5 rounded-lg hover:bg-indigo-50/70 hover:border-indigo-200 border border-transparent flex items-center justify-between transition-colors cursor-pointer group"
+                    className="p-2.5 rounded-lg hover:bg-indigo-950/70 hover:border-indigo-800/50 border border-transparent flex items-center justify-between transition-colors cursor-pointer group"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-7 h-7 rounded-md bg-slate-100 flex items-center justify-center text-slate-600 shrink-0">
+                      <div className="w-7 h-7 rounded-md bg-mca-hover flex items-center justify-center text-slate-300 shrink-0">
                         <Building className="w-4 h-4" />
                       </div>
                       <div className="min-w-0">
-                        <div className="text-xs font-bold text-slate-900 group-hover:text-indigo-700 truncate">
+                        <div className="text-xs font-bold text-white group-hover:text-indigo-300 truncate">
                           {lead.business_name}
                         </div>
-                        <div className="text-[11px] text-slate-500 truncate">
+                        <div className="text-[11px] text-slate-400 truncate">
                           {lead.city || 'Portland'}, OR • {lead.niche} • Score {lead.lead_score}/100
                         </div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0 text-xs">
-                      <span className="px-2 py-0.5 rounded-md font-medium bg-slate-100 text-slate-700 text-[10px]">
+                      <span className="px-2 py-0.5 rounded-md font-medium bg-mca-hover text-slate-200 text-[10px]">
                         {lead.pipeline_stage}
                       </span>
-                      <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-indigo-600" />
+                      <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-indigo-400" />
                     </div>
                   </div>
                 ))}
@@ -194,11 +194,11 @@ export const GlobalSearchCommandModal: React.FC<GlobalSearchCommandModalProps> =
         </div>
 
         {/* Footer */}
-        <div className="p-3 border-t border-slate-100 bg-slate-50 flex items-center justify-between text-[11px] text-slate-500">
+        <div className="p-3 border-t border-white/5 bg-mca-void/40 flex items-center justify-between text-[11px] text-slate-400">
           <span>Search by contractor business name, city, or CCB trade</span>
           <div className="flex items-center gap-2">
             <span>Press</span>
-            <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-white border border-slate-200 rounded">
+            <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-mca-card border border-white/10 rounded">
               ESC
             </kbd>
             <span>to close</span>

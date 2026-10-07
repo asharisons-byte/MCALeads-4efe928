@@ -219,7 +219,7 @@ export const FollowUpQueueView: React.FC<FollowUpQueueViewProps> = ({
 
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/20"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/20"
           >
             <Plus className="w-4 h-4" />
             <span>Create Follow-Up</span>
@@ -537,7 +537,7 @@ export const FollowUpQueueView: React.FC<FollowUpQueueViewProps> = ({
               </button>
               <button
                 onClick={handleSaveReschedule}
-                className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-colors"
+                className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-colors"
               >
                 Save New Date
               </button>
@@ -685,7 +685,7 @@ export const FollowUpQueueView: React.FC<FollowUpQueueViewProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/20"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-600/20"
                 >
                   Save Task
                 </button>

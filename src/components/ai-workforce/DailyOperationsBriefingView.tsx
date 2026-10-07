@@ -95,7 +95,7 @@ export const DailyOperationsBriefingView: React.FC<DailyOperationsBriefingViewPr
         <button
           onClick={handleGenerateFresh}
           disabled={isGenerating}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold flex items-center space-x-2 transition-colors shadow-md shrink-0"
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold flex items-center space-x-2 transition-colors shadow-md shrink-0"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isGenerating ? 'animate-spin' : ''}`} />
           <span>{isGenerating ? 'Synthesizing...' : 'Generate Fresh Briefing'}</span>

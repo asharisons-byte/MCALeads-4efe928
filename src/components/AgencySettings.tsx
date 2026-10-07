@@ -83,7 +83,7 @@ export const AgencySettings: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setConfig({ ...config, round_robin_enabled: !config.round_robin_enabled })}
-                  className={`w-12 h-6 rounded-full p-1 transition-colors ${config.round_robin_enabled ? 'bg-indigo-600' : 'bg-slate-700'}`}
+                  className={`w-12 h-6 rounded-full p-1 transition-colors ${config.round_robin_enabled ? 'bg-blue-600' : 'bg-slate-700'}`}
                 >
                   <div className={`w-4 h-4 rounded-full bg-white transition-transform ${config.round_robin_enabled ? 'translate-x-6' : 'translate-x-0'}`} />
                 </button>
@@ -383,7 +383,7 @@ export const AgencySettings: React.FC = () => {
           </div>
           <button
             type="submit"
-            className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold flex items-center gap-2 shadow-md shadow-indigo-600/20"
+            className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold flex items-center gap-2 shadow-md shadow-indigo-600/20"
           >
             <Save className="w-4 h-4" />
             <span>Save Agency Settings</span>

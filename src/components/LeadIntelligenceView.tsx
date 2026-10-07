@@ -281,7 +281,7 @@ export const LeadIntelligenceView: React.FC<LeadIntelligenceViewProps> = ({
           <button
             onClick={handleRunBulkScoring}
             disabled={isBulkScoring}
-            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-xs font-bold text-white shadow-md flex items-center gap-2 transition-all"
+            className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-xs font-bold text-white shadow-md flex items-center gap-2 transition-all"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isBulkScoring ? 'animate-spin' : ''}`} />
             <span>{isBulkScoring ? 'Scoring Leads...' : 'Analyze & Score All Leads'}</span>
@@ -322,7 +322,7 @@ export const LeadIntelligenceView: React.FC<LeadIntelligenceViewProps> = ({
               onClick={() => setActiveTab(tab.id as SubTab)}
               className={`px-4 py-2.5 rounded-lg text-xs font-semibold whitespace-nowrap flex items-center gap-2 transition-all ${
                 activeTab === tab.id
-                  ? 'bg-indigo-600 text-white font-bold shadow-sm'
+                  ? 'bg-blue-600 text-white font-bold shadow-sm'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
               }`}
             >
@@ -616,7 +616,7 @@ export const LeadIntelligenceView: React.FC<LeadIntelligenceViewProps> = ({
                       {onOpenAICall && (
                         <button
                           onClick={() => onOpenAICall(lead)}
-                          className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1 transition-colors"
+                          className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold flex items-center gap-1 transition-colors"
                         >
                           <Bot className="w-3 h-3" />
                           <span>AI Call</span>
@@ -694,7 +694,7 @@ export const LeadIntelligenceView: React.FC<LeadIntelligenceViewProps> = ({
                       <td className="py-3.5 px-4 text-right">
                         <button
                           onClick={() => onSelectLead(lead)}
-                          className="px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors"
+                          className="px-3 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors"
                         >
                           Investigate
                         </button>
@@ -794,7 +794,7 @@ export const LeadIntelligenceView: React.FC<LeadIntelligenceViewProps> = ({
               </button>
               <button
                 type="submit"
-                className="px-4 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white shadow-md transition-colors"
+                className="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white shadow-md transition-colors"
               >
                 Save Weights
               </button>

@@ -164,7 +164,7 @@ export const PlaybooksView: React.FC<PlaybooksViewProps> = ({
                   setRunningPlaybook(pb);
                   setTargetLeadId(leads[0]?.lead_id || '');
                 }}
-                className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-colors shadow-sm"
+                className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-colors shadow-sm"
               >
                 <Zap className="w-3.5 h-3.5" />
                 <span>Execute on Lead</span>
@@ -224,7 +224,7 @@ export const PlaybooksView: React.FC<PlaybooksViewProps> = ({
               <button
                 onClick={handleLaunchPlaybook}
                 disabled={isExecuting}
-                className="px-4 py-1.5 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow-sm"
+                className="px-4 py-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 shadow-sm"
               >
                 {isExecuting ? (
                   <span>Executing Playbook...</span>

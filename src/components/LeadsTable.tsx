@@ -380,7 +380,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           {onOpenAddLead && (
             <button
               onClick={onOpenAddLead}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[var(--secondary-container)] hover:bg-indigo-500 text-xs font-bold text-white shadow-md shadow-none transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[var(--secondary-container)] hover:bg-blue-500 text-xs font-bold text-white shadow-md shadow-none transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Add Lead</span>
@@ -391,7 +391,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             href="https://drive.google.com/drive/folders/13CDyT2NXYzZtZ-2Jj-TX3Fh6pQz9Dvi7?usp=sharing"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-none bg-emerald-950/40 hover:bg-emerald-900/50 text-[var(--primary-fixed-dim)] border border-[rgba(0,255,157,0.15)] text-xs font-semibold transition-colors cursor-pointer shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/50 text-[var(--primary-fixed-dim)] border border-[rgba(0,255,157,0.15)] text-xs font-semibold transition-colors cursor-pointer shadow-sm"
           >
             <FolderOpen className="w-3.5 h-3.5 text-[var(--primary-container)]" />
             <span>Go to Excel Sheet</span>
@@ -400,7 +400,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
           <button
             onClick={() => setShowColumnConverter(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-bright)]/80 hover:border-slate-600 hover:bg-[var(--surface-container)] text-xs font-semibold text-[var(--on-surface)] hover:text-[var(--on-surface)] transition-colors cursor-pointer shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--surface-container-lowest)] border border-[var(--hud-border-bright)]/80 hover:border-slate-600 hover:bg-[var(--surface-container)] text-xs font-semibold text-[var(--on-surface)] hover:text-[var(--on-surface)] transition-colors cursor-pointer shadow-sm"
           >
             <Table className="w-3.5 h-3.5 text-[var(--secondary)]" />
             <span>Convert Columns</span>
@@ -425,7 +425,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               </div>
 
               {isImportMenuOpen && (
-                <div className="absolute right-0 mt-1.5 w-72 bg-[#0e1322] border border-[var(--hud-border-bright)] rounded-none shadow-2xl p-1.5 z-40 space-y-1 text-xs">
+                <div className="absolute right-0 mt-1.5 w-72 bg-[#0e1322] border border-[var(--hud-border-bright)] rounded-lg shadow-2xl p-1.5 z-40 space-y-1 text-xs">
                   <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--outline)] border-b border-[var(--hud-border-base)]">
                     Select Import Source
                   </div>
@@ -464,7 +464,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
           <button
             onClick={() => handleExport('xlsx')}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] text-xs font-semibold text-slate-300 hover:text-white hover:border-slate-700 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] text-xs font-semibold text-slate-300 hover:text-white hover:border-slate-700 transition-all cursor-pointer"
           >
             <Download className="w-3.5 h-3.5 text-[var(--outline)]" />
             <span>Export</span>
@@ -513,7 +513,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               placeholder="Search by name, owner, niche, gaps..."
-              className="w-full bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] rounded-none pl-9 pr-4 py-2 text-xs text-[var(--on-surface)] focus:outline-none focus:border-indigo-500 transition-all placeholder:text-slate-500"
+              className="w-full bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] rounded-lg pl-9 pr-4 py-2 text-xs text-[var(--on-surface)] focus:outline-none focus:border-indigo-500 transition-all placeholder:text-slate-500"
             />
           </div>
           <button
@@ -535,7 +535,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         <div className="p-4 rounded-xl bg-[var(--surface-container-lowest)]/90 border border-[var(--hud-border-base)] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
           <div>
             <label className="block text-[var(--outline)] font-semibold mb-1.5">Pipeline Stage</label>
-            <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-none p-2 text-[var(--on-surface)]">
+            <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-lg p-2 text-[var(--on-surface)]">
               <option value="All">All Stages</option>
               <option value="New Lead">New Lead</option>
               <option value="Contacted">Contacted</option>
@@ -548,21 +548,21 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           </div>
           <div>
             <label className="block text-[var(--outline)] font-semibold mb-1.5">Niche / Industry</label>
-            <select value={nicheFilter} onChange={(e) => setNicheFilter(e.target.value)} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-none p-2 text-[var(--on-surface)]">
+            <select value={nicheFilter} onChange={(e) => setNicheFilter(e.target.value)} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-lg p-2 text-[var(--on-surface)]">
               <option value="All">All Niches</option>
               {uniqueNiches.map((n) => <option key={n} value={n}>{n}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-[var(--outline)] font-semibold mb-1.5">Assigned To</label>
-            <select value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-none p-2 text-[var(--on-surface)]">
+            <select value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-lg p-2 text-[var(--on-surface)]">
               <option value="All">All Owners</option>
               {uniqueOwners.map((o) => <option key={o} value={o}>{o}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-[var(--outline)] font-semibold mb-1.5">Country</label>
-            <select value={countryFilter} onChange={(e) => setCountryFilter(e.target.value)} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-none p-2 text-[var(--on-surface)]">
+            <select value={countryFilter} onChange={(e) => setCountryFilter(e.target.value)} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-lg p-2 text-[var(--on-surface)]">
               <option value="All">All Countries</option>
               {uniqueCountries.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
@@ -570,8 +570,8 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           <div>
             <label className="block text-[var(--outline)] font-semibold mb-1.5">Score Range</label>
             <div className="flex gap-2">
-              <input type="number" value={scoreRange[0]} onChange={(e) => setScoreRange([Number(e.target.value), scoreRange[1]])} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-none p-2 text-[var(--on-surface)]" min="0" max="100" />
-              <input type="number" value={scoreRange[1]} onChange={(e) => setScoreRange([scoreRange[0], Number(e.target.value)])} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-none p-2 text-[var(--on-surface)]" min="0" max="100" />
+              <input type="number" value={scoreRange[0]} onChange={(e) => setScoreRange([Number(e.target.value), scoreRange[1]])} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-lg p-2 text-[var(--on-surface)]" min="0" max="100" />
+              <input type="number" value={scoreRange[1]} onChange={(e) => setScoreRange([scoreRange[0], Number(e.target.value)])} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-lg p-2 text-[var(--on-surface)]" min="0" max="100" />
             </div>
           </div>
           <div className="flex items-end">
@@ -583,7 +583,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       )}
 
       {/* CRM Table */}
-      <div className="rounded-none border border-[var(--hud-border-base)] bg-[var(--hud-graphite)] overflow-hidden shadow-xl flex-1 min-h-0 overflow-y-auto">
+      <div className="rounded-lg border border-[var(--hud-border-base)] bg-[var(--hud-graphite)] overflow-hidden shadow-xl flex-1 min-h-0 overflow-y-auto">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
@@ -772,7 +772,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 <select
                   value={selectedMemberId}
                   onChange={(e) => setSelectedMemberId(e.target.value)}
-                  className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-none p-2.5 text-xs text-[var(--on-surface)] focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-lg p-2.5 text-xs text-[var(--on-surface)] focus:outline-none focus:border-indigo-500"
                 >
                   <option value="">— Select a team member —</option>
                   {teamMembers.map((m) => (
@@ -817,7 +817,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               <h3 className="text-sm font-bold text-white">Bulk Update Stage ({selectedLeadIds.size} Leads)</h3>
               <button onClick={() => setShowBulkStageModal(false)} className="text-[var(--outline)] hover:text-white"><X className="w-4 h-4" /></button>
             </div>
-            <select value={bulkStageTarget} onChange={(e) => setBulkStageTarget(e.target.value as PipelineStage)} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-none p-2.5 text-xs text-[var(--on-surface)]">
+            <select value={bulkStageTarget} onChange={(e) => setBulkStageTarget(e.target.value as PipelineStage)} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-lg p-2.5 text-xs text-[var(--on-surface)]">
               <option value="New Lead">New Lead</option>
               <option value="Contacted">Contacted</option>
               <option value="Audit Sent">Audit Sent</option>
@@ -837,7 +837,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   setShowBulkStageModal(false);
                   setIsBulkUpdating(false);
                 }}
-                className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-500 disabled:opacity-50"
+                className="px-4 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-500 disabled:opacity-50"
               >
                 {isBulkUpdating ? 'Updating...' : 'Update Leads'}
               </button>

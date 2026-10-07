@@ -346,7 +346,7 @@ export const ExcelColumnConverterModal: React.FC<ExcelColumnConverterModalProps>
                   href={SUITE_DRIVE_FOLDER_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition-colors cursor-pointer"
                 >
                   <span>Open Folder in Drive</span>
                   <ExternalLink className="w-3 h-3" />
@@ -688,7 +688,7 @@ export const ExcelColumnConverterModal: React.FC<ExcelColumnConverterModalProps>
                     href={SUITE_DRIVE_FOLDER_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-lg shadow-indigo-900/30 transition-all cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold shadow-lg shadow-indigo-900/30 transition-all cursor-pointer"
                   >
                     <span>Open in Google Drive</span>
                     <ExternalLink className="w-4 h-4" />

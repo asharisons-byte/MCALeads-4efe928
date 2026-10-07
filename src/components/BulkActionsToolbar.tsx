@@ -52,7 +52,7 @@ export const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
   if (selectedCount === 0) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-1 bg-indigo-950/60 border border-[rgba(139,92,246,0.2)] px-3 py-2 rounded-none mb-3">
+    <div className="flex flex-wrap items-center gap-1 bg-indigo-950/60 border border-[rgba(139,92,246,0.2)] px-3 py-2 rounded-lg mb-3">
       {/* Selection count badge */}
       <span className="text-xs font-bold text-[var(--secondary)] font-mono bg-indigo-800/50 px-2 py-0.5 rounded-full mr-1">
         {selectedCount} selected

@@ -195,28 +195,28 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
 
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden my-4">
+    <div className="fixed inset-0 z-50 bg-mca-hover/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-mca-card rounded-xl border border-white/10 shadow-2xl max-w-4xl w-full max-h-[92vh] flex flex-col overflow-hidden my-4">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
+        <div className="px-6 py-4 border-b border-white/10 flex items-center justify-between bg-mca-void/80">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-600">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
               <Award className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-slate-900">{currentClient.business_name}</h2>
+                <h2 className="text-lg font-bold text-white">{currentClient.business_name}</h2>
                 <span
                   className={`px-2 py-0.5 rounded text-xs font-bold ${
                     currentClient.status === 'Active'
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : 'bg-amber-100 text-amber-800'
+                      ? 'bg-emerald-950 text-emerald-300'
+                      : 'bg-amber-950 text-amber-300'
                   }`}
                 >
                   {currentClient.status}
                 </span>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-slate-400">
                 Marketing Charm Agency Client • MRR: ${currentClient.actual_mrr.toLocaleString()}/mo • Contract: {currentClient.contract_length}
               </p>
             </div>
@@ -224,20 +224,20 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-1.5 text-slate-500 hover:text-slate-200 hover:bg-mca-hover rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Buttons */}
-        <div className="px-6 border-b border-slate-200 flex gap-2 bg-white">
+        <div className="px-6 border-b border-white/10 flex gap-2 bg-mca-card">
           <button
             onClick={() => setActiveTab('handoff_brief')}
             className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
               activeTab === 'handoff_brief'
-                ? 'border-emerald-600 text-emerald-600'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
+                ? 'border-emerald-600 text-emerald-400'
+                : 'border-transparent text-slate-300 hover:text-white'
             }`}
           >
             <FileText className="w-4 h-4" />
@@ -247,8 +247,8 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             onClick={() => setActiveTab('onboarding')}
             className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
               activeTab === 'onboarding'
-                ? 'border-emerald-600 text-emerald-600'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
+                ? 'border-emerald-600 text-emerald-400'
+                : 'border-transparent text-slate-300 hover:text-white'
             }`}
           >
             <ListChecks className="w-4 h-4" />
@@ -258,8 +258,8 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             onClick={() => setActiveTab('client_portal')}
             className={`py-3 px-3 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${
               activeTab === 'client_portal'
-                ? 'border-purple-600 text-purple-600'
-                : 'border-transparent text-slate-600 hover:text-slate-900'
+                ? 'border-purple-600 text-purple-400'
+                : 'border-transparent text-slate-300 hover:text-white'
             }`}
           >
             <ShieldCheck className="w-4 h-4" />
@@ -270,35 +270,35 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Key Metrics Banner */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-mca-void/40 border border-white/10 text-xs">
             <div>
-              <span className="text-slate-500 block mb-0.5">Active MRR</span>
-              <span className="text-base font-bold text-slate-900">
+              <span className="text-slate-400 block mb-0.5">Active MRR</span>
+              <span className="text-base font-bold text-white">
                 ${currentClient.actual_mrr.toLocaleString()}/mo
               </span>
             </div>
             <div>
-              <span className="text-slate-500 block mb-0.5">Setup Fee Paid</span>
-              <span className="text-base font-bold text-slate-900">
+              <span className="text-slate-400 block mb-0.5">Setup Fee Paid</span>
+              <span className="text-base font-bold text-white">
                 ${currentClient.setup_fee.toLocaleString()}
               </span>
             </div>
             <div>
-              <span className="text-slate-500 block mb-0.5">Commencement</span>
-              <span className="text-base font-bold text-slate-900">
+              <span className="text-slate-400 block mb-0.5">Commencement</span>
+              <span className="text-base font-bold text-white">
                 {currentClient.contract_start_date}
               </span>
             </div>
             <div>
-              <span className="text-slate-500 block mb-0.5">Onboarding Progress</span>
+              <span className="text-slate-400 block mb-0.5">Onboarding Progress</span>
               <div className="flex items-center gap-2 mt-1">
-                <div className="flex-1 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                <div className="flex-1 bg-slate-700 rounded-full h-1.5 overflow-hidden">
                   <div
                     className="bg-emerald-500 h-full rounded-full transition-all"
                     style={{ width: `${progressPct}%` }}
                   />
                 </div>
-                <span className="font-bold text-slate-900">{progressPct}%</span>
+                <span className="font-bold text-white">{progressPct}%</span>
               </div>
             </div>
           </div>
@@ -306,42 +306,42 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
           {activeTab === 'handoff_brief' ? (
             /* CLIENT HANDOFF BRIEF */
             <div className="space-y-6 max-w-3xl mx-auto">
-              <div className="p-4 rounded-xl bg-slate-900 text-white space-y-1">
+              <div className="p-4 rounded-xl bg-mca-hover text-white space-y-1">
                 <div className="text-xs font-bold uppercase tracking-wider text-emerald-400">
                   Fulfillment & Account Management Blueprint
                 </div>
                 <h3 className="text-base font-bold">Client Handoff Brief</h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   Synthesized from Sophia's qualification, verified digital audit, and accepted proposal.
                 </p>
               </div>
 
               {/* Business & Contacts */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1 text-xs">
-                  <span className="font-bold text-slate-800 uppercase tracking-wider block mb-1">
+                <div className="p-4 rounded-xl bg-mca-void/40 border border-white/10 space-y-1 text-xs">
+                  <span className="font-bold text-slate-100 uppercase tracking-wider block mb-1">
                     Business Profile
                   </span>
-                  <p className="text-slate-700">{currentClient.handoff_brief.business_information}</p>
+                  <p className="text-slate-200">{currentClient.handoff_brief.business_information}</p>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-1 text-xs">
-                  <span className="font-bold text-slate-800 uppercase tracking-wider block mb-1">
+                <div className="p-4 rounded-xl bg-mca-void/40 border border-white/10 space-y-1 text-xs">
+                  <span className="font-bold text-slate-100 uppercase tracking-wider block mb-1">
                     Primary Contacts
                   </span>
-                  <p className="text-slate-700">{currentClient.handoff_brief.primary_contacts}</p>
+                  <p className="text-slate-200">{currentClient.handoff_brief.primary_contacts}</p>
                 </div>
               </div>
 
               {/* Services Purchased */}
-              <div className="p-4 rounded-xl border border-slate-200 space-y-2">
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+              <div className="p-4 rounded-xl border border-white/10 space-y-2">
+                <h4 className="text-xs font-bold text-white uppercase tracking-wider">
                   Services Sold & Active Retainer Scope
                 </h4>
                 <div className="flex flex-wrap gap-2">
                   {currentClient.services.map((s, idx) => (
                     <span
                       key={idx}
-                      className="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200"
+                      className="px-3 py-1 rounded-lg text-xs font-bold bg-emerald-950/50 text-emerald-300 border border-emerald-800/50"
                     >
                       ✓ {s}
                     </span>
@@ -351,28 +351,28 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
 
               {/* Promises Made & Objections Resolved */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-2 text-xs">
-                  <h4 className="font-bold text-slate-900 uppercase tracking-wider">
+                <div className="p-4 rounded-xl bg-mca-card border border-white/10 space-y-2 text-xs">
+                  <h4 className="font-bold text-white uppercase tracking-wider">
                     Promises & Commitments Made
                   </h4>
-                  <ul className="space-y-1.5 text-slate-700">
+                  <ul className="space-y-1.5 text-slate-200">
                     {currentClient.handoff_brief.promises_made.map((p, idx) => (
                       <li key={idx} className="flex items-start gap-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                         <span>{p}</span>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                <div className="p-4 rounded-xl bg-white border border-slate-200 space-y-2 text-xs">
-                  <h4 className="font-bold text-slate-900 uppercase tracking-wider">
+                <div className="p-4 rounded-xl bg-mca-card border border-white/10 space-y-2 text-xs">
+                  <h4 className="font-bold text-white uppercase tracking-wider">
                     Objections Resolved During Sales
                   </h4>
-                  <ul className="space-y-1.5 text-slate-700">
+                  <ul className="space-y-1.5 text-slate-200">
                     {currentClient.handoff_brief.objections_resolved.map((obj, idx) => (
                       <li key={idx} className="flex items-start gap-1.5">
-                        <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0 mt-0.5" />
+                        <ShieldCheck className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
                         <span>{obj}</span>
                       </li>
                     ))}
@@ -381,13 +381,13 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
               </div>
 
               {/* Recommended Onboarding Steps */}
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
-                <h4 className="font-bold text-slate-900 uppercase tracking-wider">
+              <div className="p-4 rounded-xl bg-mca-void/40 border border-white/10 space-y-2 text-xs">
+                <h4 className="font-bold text-white uppercase tracking-wider">
                   Recommended Fulfillment Steps
                 </h4>
                 <div className="space-y-1">
                   {currentClient.handoff_brief.recommended_onboarding_steps.map((st, idx) => (
-                    <p key={idx} className="text-slate-700 font-medium">{st}</p>
+                    <p key={idx} className="text-slate-200 font-medium">{st}</p>
                   ))}
                 </div>
               </div>
@@ -397,14 +397,14 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             <div className="space-y-4 max-w-3xl mx-auto">
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">
+                  <h3 className="text-sm font-bold text-white uppercase tracking-wider">
                     Onboarding Implementation Checklist
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-400">
                     Complete these tasks to activate full client management
                   </p>
                 </div>
-                <span className="text-xs font-bold text-slate-700">
+                <span className="text-xs font-bold text-slate-200">
                   {completedTasks} of {totalTasks} Completed
                 </span>
               </div>
@@ -415,8 +415,8 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                     key={task.id}
                     className={`p-4 rounded-xl border transition-all ${
                       task.completed
-                        ? 'bg-slate-50 border-slate-200 opacity-75'
-                        : 'bg-white border-slate-200 shadow-sm'
+                        ? 'bg-mca-void/40 border-white/10 opacity-75'
+                        : 'bg-mca-card border-white/10 shadow-sm'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
@@ -425,28 +425,28 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                           type="checkbox"
                           checked={task.completed}
                           onChange={() => handleToggleTask(task.id, task.completed)}
-                          className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 mt-1 cursor-pointer"
+                          className="w-4 h-4 rounded text-emerald-400 focus:ring-emerald-500 mt-1 cursor-pointer"
                         />
                         <div>
                           <div className="flex items-center gap-2">
                             <h4
                               className={`text-sm font-bold ${
-                                task.completed ? 'line-through text-slate-500' : 'text-slate-900'
+                                task.completed ? 'line-through text-slate-400' : 'text-white'
                               }`}
                             >
                               {task.title}
                             </h4>
-                            <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700">
+                            <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-mca-hover text-slate-200">
                               {task.category}
                             </span>
                           </div>
-                          <p className="text-xs text-slate-600 mt-1">{task.description}</p>
+                          <p className="text-xs text-slate-300 mt-1">{task.description}</p>
                         </div>
                       </div>
 
                       <div className="text-right shrink-0 text-xs">
-                        <span className="text-slate-400 block">Due: {task.due_date}</span>
-                        <span className="text-slate-500 font-medium">{task.assignee}</span>
+                        <span className="text-slate-500 block">Due: {task.due_date}</span>
+                        <span className="text-slate-400 font-medium">{task.assignee}</span>
                       </div>
                     </div>
                   </div>
@@ -457,7 +457,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
             /* CLIENT PORTAL MANAGEMENT TAB (PHASE 4B) */
             <div className="space-y-6">
               {/* Action Toolbar */}
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-slate-900 to-purple-950 text-white border border-purple-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="p-4 rounded-xl bg-gradient-to-r from-slate-900 to-purple-950 text-white border border-purple-900/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="w-4 h-4 text-purple-400" />
@@ -466,7 +466,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                       Isolated Client Tenant
                     </span>
                   </div>
-                  <p className="text-xs text-slate-300">
+                  <p className="text-xs text-slate-600">
                     Manage client credentials, govern shared files, and inspect engagement analytics.
                   </p>
                 </div>
@@ -514,17 +514,17 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
               {/* Portal Analytics Widget (Section 39) */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                    <Activity className="w-3.5 h-3.5 text-purple-600" />
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <Activity className="w-3.5 h-3.5 text-purple-400" />
                     <span>Client Portal Analytics & Engagement</span>
                   </h4>
                   <span
                     className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                       portalAnalytics?.engagement_level === 'High'
-                        ? 'bg-emerald-100 text-emerald-800'
+                        ? 'bg-emerald-950 text-emerald-300'
                         : portalAnalytics?.engagement_level === 'Moderate'
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'bg-slate-100 text-slate-700'
+                        ? 'bg-blue-950 text-blue-300'
+                        : 'bg-mca-hover text-slate-200'
                     }`}
                   >
                     Engagement: {portalAnalytics?.engagement_level || 'Moderate'}
@@ -532,67 +532,67 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                    <span className="text-slate-500 block text-[11px]">Total Logins</span>
-                    <span className="text-base font-bold text-slate-900 mt-0.5 block">
+                  <div className="p-3 rounded-xl bg-mca-void/40 border border-white/10 text-xs">
+                    <span className="text-slate-400 block text-[11px]">Total Logins</span>
+                    <span className="text-base font-bold text-white mt-0.5 block">
                       {portalAnalytics?.total_logins || 0}
                     </span>
-                    <span className="text-[10px] text-slate-400">
+                    <span className="text-[10px] text-slate-500">
                       Last: {portalAnalytics?.last_login_at ? new Date(portalAnalytics.last_login_at).toLocaleDateString() : 'Never'}
                     </span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                    <span className="text-slate-500 block text-[11px]">Reports Viewed</span>
-                    <span className="text-base font-bold text-purple-600 mt-0.5 block">
+                  <div className="p-3 rounded-xl bg-mca-void/40 border border-white/10 text-xs">
+                    <span className="text-slate-400 block text-[11px]">Reports Viewed</span>
+                    <span className="text-base font-bold text-purple-400 mt-0.5 block">
                       {portalAnalytics?.reports_viewed_count || 0}
                     </span>
-                    <span className="text-[10px] text-purple-700">Monthly Performance</span>
+                    <span className="text-[10px] text-purple-300">Monthly Performance</span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                    <span className="text-slate-500 block text-[11px]">Docs Downloaded</span>
-                    <span className="text-base font-bold text-slate-900 mt-0.5 block">
+                  <div className="p-3 rounded-xl bg-mca-void/40 border border-white/10 text-xs">
+                    <span className="text-slate-400 block text-[11px]">Docs Downloaded</span>
+                    <span className="text-base font-bold text-white mt-0.5 block">
                       {portalAnalytics?.documents_downloaded_count || 0}
                     </span>
-                    <span className="text-[10px] text-slate-400">Shared Deliverables</span>
+                    <span className="text-[10px] text-slate-500">Shared Deliverables</span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                    <span className="text-slate-500 block text-[11px]">Pending Approvals</span>
-                    <span className="text-base font-bold text-amber-600 mt-0.5 block">
+                  <div className="p-3 rounded-xl bg-mca-void/40 border border-white/10 text-xs">
+                    <span className="text-slate-400 block text-[11px]">Pending Approvals</span>
+                    <span className="text-base font-bold text-amber-400 mt-0.5 block">
                       {portalAnalytics?.pending_approvals_count || 0}
                     </span>
-                    <span className="text-[10px] text-amber-700">Sign-Offs Required</span>
+                    <span className="text-[10px] text-amber-300">Sign-Offs Required</span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                    <span className="text-slate-500 block text-[11px]">Open Requests</span>
-                    <span className="text-base font-bold text-indigo-600 mt-0.5 block">
+                  <div className="p-3 rounded-xl bg-mca-void/40 border border-white/10 text-xs">
+                    <span className="text-slate-400 block text-[11px]">Open Requests</span>
+                    <span className="text-base font-bold text-indigo-400 mt-0.5 block">
                       {portalAnalytics?.open_requests_count || 0}
                     </span>
-                    <span className="text-[10px] text-indigo-700">In Ops Pipeline</span>
+                    <span className="text-[10px] text-indigo-300">In Ops Pipeline</span>
                   </div>
                 </div>
               </div>
 
               {/* Invite Form Accordion */}
               {showInviteForm && (
-                <div className="p-4 rounded-xl bg-purple-50 border border-purple-200 space-y-3">
+                <div className="p-4 rounded-xl bg-purple-950/50 border border-purple-800/50 space-y-3">
                   <div className="flex items-center justify-between">
                     <h5 className="text-xs font-bold text-purple-950">
                       Send Portal Invitation to Client Stakeholder
                     </h5>
                     <button
                       onClick={() => setShowInviteForm(false)}
-                      className="text-purple-600 hover:text-purple-900 text-xs"
+                      className="text-purple-400 hover:text-purple-300 text-xs"
                     >
                       Close
                     </button>
                   </div>
 
                   {inviteFeedback && (
-                    <div className="p-2 rounded bg-emerald-100 text-emerald-800 text-xs font-semibold">
+                    <div className="p-2 rounded bg-emerald-950 text-emerald-300 text-xs font-semibold">
                       {inviteFeedback}
                     </div>
                   )}
@@ -604,7 +604,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                       required
                       value={inviteName}
                       onChange={(e) => setInviteName(e.target.value)}
-                      className="p-2 rounded-lg border border-purple-200 bg-white"
+                      className="p-2 rounded-lg border border-purple-800/50 bg-mca-card"
                     />
                     <input
                       type="email"
@@ -612,13 +612,13 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                       required
                       value={inviteEmail}
                       onChange={(e) => setInviteEmail(e.target.value)}
-                      className="p-2 rounded-lg border border-purple-200 bg-white"
+                      className="p-2 rounded-lg border border-purple-800/50 bg-mca-card"
                     />
                     <div className="flex gap-2">
                       <select
                         value={inviteRole}
                         onChange={(e) => setInviteRole(e.target.value as any)}
-                        className="p-2 rounded-lg border border-purple-200 bg-white flex-1"
+                        className="p-2 rounded-lg border border-purple-800/50 bg-mca-card flex-1"
                       >
                         <option value="Client Admin">Client Admin</option>
                         <option value="Client Owner">Client Owner</option>
@@ -638,15 +638,15 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
               {/* Client Users Section (Section 37) */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-slate-700" />
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <Users className="w-3.5 h-3.5 text-slate-200" />
                     <span>Authorized Client Users ({portalUsers.length})</span>
                   </h4>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 overflow-hidden text-xs">
+                <div className="rounded-xl border border-white/10 overflow-hidden text-xs">
                   <table className="w-full text-left">
-                    <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                    <thead className="bg-mca-void/40 text-slate-400 font-semibold border-b border-white/10">
                       <tr>
                         <th className="p-3">User</th>
                         <th className="p-3">Email</th>
@@ -655,17 +655,17 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                         <th className="p-3 text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-white/5">
                       {portalUsers.map((u) => (
-                        <tr key={u.user_id} className="hover:bg-slate-50/60">
-                          <td className="p-3 font-bold text-slate-900">{u.name}</td>
-                          <td className="p-3 font-mono text-slate-600">{u.email}</td>
+                        <tr key={u.user_id} className="hover:bg-mca-void/60">
+                          <td className="p-3 font-bold text-white">{u.name}</td>
+                          <td className="p-3 font-mono text-slate-300">{u.email}</td>
                           <td className="p-3">
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800">
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-950 text-purple-300">
                               {u.role}
                             </span>
                           </td>
-                          <td className="p-3 text-slate-500 font-mono text-[11px]">
+                          <td className="p-3 text-slate-400 font-mono text-[11px]">
                             {u.last_login ? new Date(u.last_login).toLocaleDateString() : 'Never'}
                           </td>
                           <td className="p-3 text-right">
@@ -675,7 +675,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                                   removeClientUser(u.user_id);
                                   refreshPortalData();
                                 }}
-                                className="text-slate-400 hover:text-rose-600 transition-colors p-1"
+                                className="text-slate-500 hover:text-rose-400 transition-colors p-1"
                                 title="Revoke User"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -692,13 +692,13 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
               {/* Document Sharing Governance (Section 38) */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                    <FolderLock className="w-3.5 h-3.5 text-slate-700" />
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                    <FolderLock className="w-3.5 h-3.5 text-slate-200" />
                     <span>Content Sharing Governance ({portalDocs.length} items)</span>
                   </h4>
                   <button
                     onClick={() => setShowDocForm(!showDocForm)}
-                    className="text-xs font-bold text-purple-600 hover:text-purple-700 flex items-center gap-1"
+                    className="text-xs font-bold text-purple-400 hover:text-purple-300 flex items-center gap-1"
                   >
                     <Plus className="w-3 h-3" />
                     <span>Share Document</span>
@@ -708,7 +708,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                 {showDocForm && (
                   <form
                     onSubmit={handleAddDocument}
-                    className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3 text-xs"
+                    className="p-4 rounded-xl bg-mca-void/40 border border-white/10 space-y-3 text-xs"
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <input
@@ -717,12 +717,12 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                         required
                         value={newDocTitle}
                         onChange={(e) => setNewDocTitle(e.target.value)}
-                        className="p-2 rounded-lg border border-slate-300 bg-white"
+                        className="p-2 rounded-lg border border-white/15 bg-mca-card"
                       />
                       <select
                         value={newDocCategory}
                         onChange={(e) => setNewDocCategory(e.target.value as any)}
-                        className="p-2 rounded-lg border border-slate-300 bg-white"
+                        className="p-2 rounded-lg border border-white/15 bg-mca-card"
                       >
                         <option value="Deliverables">Deliverables</option>
                         <option value="Reports">Reports</option>
@@ -734,7 +734,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                       <select
                         value={newDocVisibility}
                         onChange={(e) => setNewDocVisibility(e.target.value as any)}
-                        className="p-2 rounded-lg border border-slate-300 bg-white"
+                        className="p-2 rounded-lg border border-white/15 bg-mca-card"
                       >
                         <option value="Share with Client">Share with Client (Portal)</option>
                         <option value="Shared with Specific Client User">Specific Client User Only</option>
@@ -745,7 +745,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                       <button
                         type="button"
                         onClick={() => setShowDocForm(false)}
-                        className="px-3 py-1.5 text-slate-500"
+                        className="px-3 py-1.5 text-slate-400"
                       >
                         Cancel
                       </button>
@@ -759,9 +759,9 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                   </form>
                 )}
 
-                <div className="rounded-xl border border-slate-200 overflow-hidden text-xs">
+                <div className="rounded-xl border border-white/10 overflow-hidden text-xs">
                   <table className="w-full text-left">
-                    <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                    <thead className="bg-mca-void/40 text-slate-400 font-semibold border-b border-white/10">
                       <tr>
                         <th className="p-3">File Name</th>
                         <th className="p-3">Category</th>
@@ -770,12 +770,12 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                         <th className="p-3 text-right">Downloads</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-white/5">
                       {portalDocs.map((doc) => (
-                        <tr key={doc.document_id} className="hover:bg-slate-50/60">
-                          <td className="p-3 font-bold text-slate-900">{doc.title}</td>
-                          <td className="p-3 text-slate-600">{doc.category}</td>
-                          <td className="p-3 font-mono uppercase text-slate-500">{doc.file_type}</td>
+                        <tr key={doc.document_id} className="hover:bg-mca-void/60">
+                          <td className="p-3 font-bold text-white">{doc.title}</td>
+                          <td className="p-3 text-slate-300">{doc.category}</td>
+                          <td className="p-3 font-mono uppercase text-slate-400">{doc.file_type}</td>
                           <td className="p-3">
                             <select
                               value={doc.visibility}
@@ -785,10 +785,10 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                               }}
                               className={`text-xs font-semibold px-2 py-0.5 rounded border ${
                                 doc.visibility === 'Share with Client'
-                                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                                  ? 'bg-emerald-950/50 text-emerald-300 border-emerald-700/60'
                                   : doc.visibility === 'Shared with Specific Client User'
-                                  ? 'bg-indigo-50 text-indigo-800 border-indigo-300'
-                                  : 'bg-rose-50 text-rose-800 border-rose-300'
+                                  ? 'bg-indigo-950/50 text-indigo-300 border-indigo-700/60'
+                                  : 'bg-rose-950/50 text-rose-300 border-rose-700/60'
                               }`}
                             >
                               <option value="Share with Client">Share with Client</option>
@@ -796,7 +796,7 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
                               <option value="Internal Only">Internal Only (Hidden)</option>
                             </select>
                           </td>
-                          <td className="p-3 text-right font-mono font-bold text-slate-600">
+                          <td className="p-3 text-right font-mono font-bold text-slate-300">
                             {doc.download_count}
                           </td>
                         </tr>
@@ -808,24 +808,24 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
 
               {/* Portal Activity Audit Log (Section 37) */}
               <div className="space-y-3">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                  <Activity className="w-3.5 h-3.5 text-slate-700" />
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                  <Activity className="w-3.5 h-3.5 text-slate-200" />
                   <span>Portal Activity Audit Trail</span>
                 </h4>
 
-                <div className="rounded-xl border border-slate-200 overflow-hidden max-h-52 overflow-y-auto text-xs divide-y divide-slate-100">
+                <div className="rounded-xl border border-white/10 overflow-hidden max-h-52 overflow-y-auto text-xs divide-y divide-white/5">
                   {portalActivities.map((act) => (
-                    <div key={act.activity_id} className="p-3 flex items-center justify-between hover:bg-slate-50">
+                    <div key={act.activity_id} className="p-3 flex items-center justify-between hover:bg-mca-void/40">
                       <div>
-                        <span className="font-bold text-slate-900 block">{act.user_name}</span>
-                        <span className="text-[11px] text-slate-400 font-mono">
+                        <span className="font-bold text-white block">{act.user_name}</span>
+                        <span className="text-[11px] text-slate-500 font-mono">
                           {new Date(act.created_at).toLocaleString()}
                         </span>
                       </div>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-800 border border-purple-200">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-950/50 text-purple-300 border border-purple-800/50">
                         {act.activity_type}
                       </span>
-                      <span className="text-slate-600 max-w-xs truncate">{act.details}</span>
+                      <span className="text-slate-300 max-w-xs truncate">{act.details}</span>
                     </div>
                   ))}
                 </div>
@@ -835,13 +835,13 @@ export const ClientDetailModal: React.FC<ClientDetailModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
-          <span className="text-xs text-slate-500 font-mono">
+        <div className="px-6 py-4 border-t border-white/10 bg-mca-void/40 flex items-center justify-between">
+          <span className="text-xs text-slate-400 font-mono">
             Client ID: {currentClient.client_id}
           </span>
           <button
             onClick={onClose}
-            className="px-5 py-2 rounded-xl text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white transition-colors"
+            className="px-5 py-2 rounded-xl text-xs font-semibold bg-mca-hover hover:bg-slate-800 text-white transition-colors"
           >
             Close Client File
           </button>

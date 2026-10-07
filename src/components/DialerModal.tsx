@@ -926,7 +926,7 @@ ${callScript.closing}
                   onClick={() => setShowKeypad(!showKeypad)}
                   className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors ${
                     showKeypad
-                      ? 'bg-indigo-600 text-white'
+                      ? 'bg-blue-600 text-white'
                       : 'text-slate-400 hover:text-white hover:bg-slate-800'
                   }`}
                   title="Toggle numeric dial pad"
@@ -1217,7 +1217,7 @@ ${callScript.closing}
                         selectedOutcome === outcome
                           ? outcome === 'Do Not Contact'
                             ? 'bg-rose-600 text-white shadow-sm'
-                            : 'bg-indigo-600 text-white shadow-sm'
+                            : 'bg-blue-600 text-white shadow-sm'
                           : outcome === 'Do Not Contact'
                           ? 'bg-slate-900 text-rose-400 border border-rose-500/30 hover:bg-rose-950/40'
                           : 'bg-slate-900 text-slate-300 border border-slate-800 hover:bg-slate-800 hover:text-white'

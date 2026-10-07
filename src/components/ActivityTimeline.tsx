@@ -232,7 +232,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveSubView('timeline')}
-            className={`px-3.5 py-1.5 rounded-none text-xs font-bold transition-all ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
               activeSubView === 'timeline'
                 ? 'bg-[var(--secondary-container)] text-white shadow-sm'
                 : 'bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] text-[var(--outline)] hover:text-slate-200'
@@ -243,7 +243,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
 
           <button
             onClick={() => setActiveSubView('stage_history')}
-            className={`px-3.5 py-1.5 rounded-none text-xs font-bold transition-all ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
               activeSubView === 'stage_history'
                 ? 'bg-[var(--secondary-container)] text-white shadow-sm'
                 : 'bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] text-[var(--outline)] hover:text-slate-200'
@@ -254,7 +254,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
 
           <button
             onClick={() => setActiveSubView('comms_log')}
-            className={`px-3.5 py-1.5 rounded-none text-xs font-bold transition-all ${
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
               activeSubView === 'comms_log'
                 ? 'bg-[var(--secondary-container)] text-white shadow-sm'
                 : 'bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] text-[var(--outline)] hover:text-slate-200'
@@ -267,7 +267,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
         {onAddNoteClick && (
           <button
             onClick={onAddNoteClick}
-            className="px-3 py-1.5 rounded-none bg-[var(--surface-container)] hover:bg-slate-700/80 border border-[var(--hud-border-bright)] text-xs font-semibold text-slate-200 flex items-center gap-1.5 self-start sm:self-auto"
+            className="px-3 py-1.5 rounded-lg bg-[var(--surface-container)] hover:bg-slate-700/80 border border-[var(--hud-border-bright)] text-xs font-semibold text-slate-200 flex items-center gap-1.5 self-start sm:self-auto"
           >
             <FileText className="w-3.5 h-3.5 text-[var(--secondary)]" />
             <span>Write Quick Note</span>
@@ -327,7 +327,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                     </div>
 
                     {/* Event Card */}
-                    <div className="p-4 rounded-none bg-[var(--surface-container-lowest)]/70 border border-[var(--hud-border-base)] hover:border-[var(--hud-border-bright)]/80 transition-all space-y-2">
+                    <div className="p-4 rounded-xl bg-[var(--surface-container-lowest)]/70 border border-[var(--hud-border-base)] hover:border-[var(--hud-border-bright)]/80 transition-all space-y-2">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-xs font-bold text-white tracking-tight">
@@ -386,7 +386,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                           </button>
 
                           {isExpanded && (
-                            <div className="mt-2.5 p-4 rounded-none bg-slate-950 border border-[var(--hud-border-base)] space-y-3">
+                            <div className="mt-2.5 p-4 rounded-lg bg-slate-950 border border-[var(--hud-border-base)] space-y-3">
                               <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-[var(--hud-border-base)] text-xs">
                                 <div>
                                   <span className="text-[var(--outline)]">Recipient: </span>
@@ -414,7 +414,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                                   <span className="text-[var(--outline)] text-xs font-semibold block mb-1">
                                     Email Body:
                                   </span>
-                                  <div className="p-3 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] text-xs text-[var(--on-surface-variant)] whitespace-pre-wrap font-sans leading-relaxed">
+                                  <div className="p-3 rounded-lg bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] text-xs text-[var(--on-surface-variant)] whitespace-pre-wrap font-sans leading-relaxed">
                                     {act.metadata.email_body}
                                   </div>
                                 </div>
@@ -430,7 +430,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                                     )}&body=${encodeURIComponent(act.metadata.email_body || '')}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="px-3 py-1.5 rounded-none bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm"
+                                    className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm"
                                   >
                                     <ExternalLink className="w-3.5 h-3.5" />
                                     <span>Open in Gmail</span>
@@ -463,7 +463,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                           </button>
 
                           {isExpanded && (
-                            <div className="mt-2 p-3 rounded-none bg-slate-950 border border-[var(--hud-border-base)] text-[11px] font-mono text-[var(--on-surface-variant)] space-y-1">
+                            <div className="mt-2 p-3 rounded-lg bg-slate-950 border border-[var(--hud-border-base)] text-[11px] font-mono text-[var(--on-surface-variant)] space-y-1">
                               {Object.entries(act.metadata ?? {}).map(([key, val]) => (
                                 <div key={key} className="flex gap-2">
                                   <span className="text-[var(--outline)] capitalize">{key.replace(/_/g, ' ')}:</span>
@@ -481,7 +481,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                 );
               })
             ) : (
-              <div className="p-8 text-center text-xs text-[var(--outline)] rounded-none bg-[var(--surface-container-lowest)]/30 border border-[var(--hud-border-base)]/60">
+              <div className="p-8 text-center text-xs text-[var(--outline)] rounded-xl bg-[var(--surface-container-lowest)]/30 border border-[var(--hud-border-base)]/60">
                 No activities recorded in this filter category.
               </div>
             )}
@@ -492,7 +492,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
       {/* VIEW 2: PIPELINE STAGE HISTORY */}
       {activeSubView === 'stage_history' && (
         <div className="space-y-4">
-          <div className="p-4 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)]">
+          <div className="p-4 rounded-xl bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)]">
             <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)] mb-1">
               Historical Stage Transition Audit Log
             </h4>
@@ -506,7 +506,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
               lead.stage_history.map((entry, idx) => (
                 <div
                   key={entry.id || idx}
-                  className="p-4 rounded-none bg-[var(--surface-container-lowest)]/70 border border-[var(--hud-border-base)] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  className="p-4 rounded-xl bg-[var(--surface-container-lowest)]/70 border border-[var(--hud-border-base)] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -532,7 +532,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                 </div>
               ))
             ) : (
-              <div className="p-4 rounded-none bg-[var(--surface-container-lowest)]/50 border border-[var(--hud-border-base)] text-xs text-[var(--outline)]">
+              <div className="p-4 rounded-xl bg-[var(--surface-container-lowest)]/50 border border-[var(--hud-border-base)] text-xs text-[var(--outline)]">
                 Stage set to <strong className="text-[var(--primary-container)]">{lead.pipeline_stage}</strong> on import.
               </div>
             )}
@@ -543,7 +543,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
       {/* VIEW 3: COMMUNICATION RECORDS */}
       {activeSubView === 'comms_log' && (
         <div className="space-y-4">
-          <div className="p-4 rounded-none bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] flex items-center justify-between">
+          <div className="p-4 rounded-xl bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] flex items-center justify-between">
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-[var(--on-surface-variant)] mb-1">
                 Communication Entity Records
@@ -562,7 +562,7 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
               communications.map((comm) => (
                 <div
                   key={comm.communication_id}
-                  className="p-4 rounded-none bg-[var(--surface-container-lowest)]/70 border border-[var(--hud-border-base)] space-y-2"
+                  className="p-4 rounded-xl bg-[var(--surface-container-lowest)]/70 border border-[var(--hud-border-base)] space-y-2"
                 >
                   <div className="flex items-center justify-between flex-wrap gap-2">
                     <div className="flex items-center gap-2">
@@ -584,13 +584,13 @@ export const ActivityTimeline: React.FC<ActivityTimelineProps> = ({
                     </div>
                   )}
 
-                  <p className="text-xs text-[var(--on-surface-variant)] leading-relaxed font-mono bg-slate-950 p-3 rounded-none border border-[var(--hud-border-base)]">
+                  <p className="text-xs text-[var(--on-surface-variant)] leading-relaxed font-mono bg-slate-950 p-3 rounded-lg border border-[var(--hud-border-base)]">
                     {comm.content}
                   </p>
                 </div>
               ))
             ) : (
-              <div className="p-8 text-center text-xs text-[var(--outline)] rounded-none bg-[var(--surface-container-lowest)]/30 border border-[var(--hud-border-base)]/60">
+              <div className="p-8 text-center text-xs text-[var(--outline)] rounded-xl bg-[var(--surface-container-lowest)]/30 border border-[var(--hud-border-base)]/60">
                 No direct communications logged for this lead yet. Use the Action Bar above (Call, AI Call, SMS, Email) to dispatch or log.
               </div>
             )}

@@ -566,7 +566,7 @@ export const IntegrationsView: React.FC = () => {
                 <button
                   onClick={handleSimulateCallWebhook}
                   disabled={simulatingCall}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-all disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold transition-all disabled:opacity-50"
                 >
                   <Play className={`w-3.5 h-3.5 ${simulatingCall ? 'animate-spin' : ''}`} />
                   <span>{simulatingCall ? 'Dispatching...' : 'Dispatch Call Webhook'}</span>

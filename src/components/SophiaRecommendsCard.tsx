@@ -119,7 +119,7 @@ export const SophiaRecommendsCard: React.FC<SophiaRecommendsCardProps> = ({
 
             <button
               onClick={() => onExecuteAction(recommendation.action)}
-              className="px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-xs font-bold text-white transition-all shadow-md shadow-indigo-600/25 flex items-center gap-1.5"
+              className="px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-bold text-white transition-all shadow-md shadow-indigo-600/25 flex items-center gap-1.5"
             >
               {getChannelIcon(recommendation.channel)}
               <span>Execute {recommendation.action}</span>
