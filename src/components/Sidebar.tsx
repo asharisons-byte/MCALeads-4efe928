@@ -96,7 +96,7 @@ const NavItem: React.FC<NavItemProps> = ({ id, active, onClick, icon, iconClass 
       <i className={`fa-solid ${icon} w-4 text-center shrink-0 ${active ? '' : iconClass}`}></i>
       <span className="truncate">{label}</span>
     </span>
-    {badgeEl ? badgeEl : active ? <i className="fa-solid fa-circle text-[6px] animate-pulse"></i> : null}
+    {active ? <i className="fa-solid fa-circle text-[6px] animate-pulse"></i> : null}
   </button>
 );
 
@@ -162,7 +162,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 onClick={go('command_center')}
                 icon="fa-terminal"
                 label="Command Center"
-                badgeEl={<span className={badge.phaseBlue}>Phase 5A</span>}
               />
             )}
             {!isSalesRep && (
@@ -180,7 +179,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={go('leads')}
               icon="fa-user-plus"
               label="Leads"
-              badgeEl={<span className={badge.count}>{leadsCount}</span>}
             />
             <NavItem
               id="nav-import-leads"
@@ -188,7 +186,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={go('import_leads')}
               icon="fa-file-import"
               label="Import Leads"
-              badgeEl={<span className={badge.csv}>.CSV</span>}
             />
             <NavItem
               id="nav-lead-lists"
@@ -204,11 +201,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div>
           <GroupHeader
             title="AI Workforce"
-            tag={
-              <span className="text-[9px] bg-purple-950 text-purple-400 px-1 rounded border border-purple-800/40">
-                Phase 4A
-              </span>
-            }
           />
           <nav className="space-y-0.5">
             {!isSalesRep && (
@@ -219,7 +211,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 icon="fa-microchip"
                 iconClass="text-purple-400"
                 label="Agency AI Workforce"
-                badgeEl={<span className={badge.agents}>7 Agents</span>}
               />
             )}
             <NavItem
@@ -228,11 +219,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={go('ai_approvals')}
               icon="fa-shield-halved"
               label="Approval Center"
-              badgeEl={
-                <span className={approvalsCount > 0 ? badge.approvalsPending : badge.countMuted}>
-                  {approvalsCount}
-                </span>
-              }
             />
           </nav>
         </div>
@@ -241,7 +227,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div>
           <GroupHeader
             title="Client Experience"
-            tag={<span className="text-[9px] bg-slate-800 text-slate-400 px-1 rounded">Phase 4B</span>}
           />
           <nav className="space-y-0.5">
             <NavItem
@@ -251,7 +236,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               icon="fa-window-maximize"
               iconClass="text-cyan-400"
               label="Client Portal"
-              badgeEl={<span className={badge.whiteLabel}>White-Label</span>}
             />
             <NavItem
               id="nav-audits-proposals"
@@ -259,7 +243,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={go('audits_proposals')}
               icon="fa-file-signature"
               label="Audits & Proposals"
-              badgeEl={<span className={badge.phaseAmber}>Phase 2C</span>}
             />
           </nav>
         </div>
@@ -297,7 +280,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={go('lead_scoring')}
               icon="fa-ranking-star"
               iconClass="text-amber-400"
-              label="Lead Scoring (0–100)"
+              label="Lead Scoring"
             />
             <NavItem
               id="nav-opportunities"
@@ -306,7 +289,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               icon="fa-fire"
               iconClass="text-amber-500"
               label="Opportunities"
-              badgeEl={<span className={badge.hot}>{hotCount} Hot</span>}
             />
           </nav>
         </div>
@@ -322,7 +304,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               icon="fa-phone-volume"
               iconClass="text-mca-neonGreen"
               label="MCA Dialer LIVE"
-              badgeEl={callsCount > 0 ? <span className={badge.live}>{callsCount}</span> : undefined}
             />
             <NavItem
               id="nav-sms-outreach"
@@ -330,7 +311,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={go('sms')}
               icon="fa-comments"
               label="SMS Swarm"
-              badgeEl={smsCount > 0 ? <span className={badge.cyan}>{smsCount}</span> : undefined}
             />
             <NavItem
               id="nav-email-outreach"
@@ -338,7 +318,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onClick={go('email_outreach')}
               icon="fa-envelope"
               label="Email Outreach"
-              badgeEl={draftsCount > 0 ? <span className={badge.blue}>{draftsCount}</span> : undefined}
             />
             <NavItem
               id="nav-pipeline"
@@ -355,7 +334,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
               icon="fa-clock"
               iconClass="text-amber-400"
               label="Follow-Up Queue"
-              badgeEl={followUpsCount > 0 ? <span className={badge.amber}>{followUpsCount}</span> : undefined}
             />
           </nav>
         </div>
