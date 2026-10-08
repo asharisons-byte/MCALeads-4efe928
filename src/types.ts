@@ -399,6 +399,7 @@ export interface AIEnrichmentData {
 }
 
 export interface Lead {
+  id: number;
   lead_id: string;
   business_name: string;
   contact_name?: string;

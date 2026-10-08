@@ -20,7 +20,7 @@ import { BulkActionsToolbar } from './BulkActionsToolbar';
 import { BulkTagModal } from './BulkTagModal';
 import { BulkProgressOverlay } from './BulkProgressOverlay';
 import { BulkQueueController, BulkProgress } from '../services/bulkQueueService';
-import { Lead } from '../types';
+import { Lead, ActivityEvent } from '../types';
 import { sendOutboundSMS, generateSophiaSMS } from '../services/messagingService';
 import { generateSophiaEmail, markEmailPrepared, saveEmailDraft, buildGmailComposeUrl } from '../services/emailService';
 import { checkAIBackend, runAICall, INTER_CALL_PAUSE_MS, bulkSleep } from '../services/bulkAICallService';
@@ -30,6 +30,7 @@ import { updateLead, addActivity } from '../services/leadService';
 
 interface LeadsPageProps {
   leads: Lead[];
+  activities: ActivityEvent[];
   selectedLeadIds: Set<string>;
   onSelectionChange: (ids: Set<string>) => void;
   onSelectLead: (lead: Lead) => void;
@@ -72,7 +73,7 @@ function nextStage(current?: string): string {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
-  const { leads, selectedLeadIds, activeBulkProgress, setActiveBulkProgress } = props;
+  const { leads, activities, selectedLeadIds, activeBulkProgress, setActiveBulkProgress } = props;
 
   const [showTagModal, setShowTagModal] = useState(false);
   const activeControllerRef = useRef<BulkQueueController | null>(null);
@@ -398,7 +399,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
         selectedCount={selectedLeadIds.size}
       />
 
-      <LeadsTable {...props} />
+      <LeadsTable {...props} activities={activities} />
     </div>
   );
 };

@@ -36,7 +36,7 @@ import {
   Send,
   Mail,
 } from 'lucide-react';
-import { Lead, PipelineStage, ViewFilterType } from '../types';
+import { Lead, PipelineStage, ViewFilterType, ActivityEvent } from '../types';
 import * as XLSX from 'xlsx';
 import { ExcelColumnConverterModal } from './ExcelColumnConverterModal';
 import { logGmbStatus } from '../utils/gmbDiagnostic';
@@ -49,6 +49,7 @@ interface TeamMember {
 
 interface LeadsTableProps {
   leads: Lead[];
+  activities: ActivityEvent[];
   selectedLeadIds: Set<string>;
   onSelectionChange: (ids: Set<string>) => void;
   onSelectLead: (lead: Lead) => void;
@@ -76,6 +77,7 @@ async function getAuthToken(): Promise<string | null> {
 
 export const LeadsTable: React.FC<LeadsTableProps> = ({
   leads,
+  activities,
   onSelectLead,
   onOpenImport,
   onOpenAddLead,
@@ -597,6 +599,9 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     className="rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
                   />
                 </th>
+                <th onClick={() => handleSort('lead_id')} className="p-2.5 cursor-pointer hover:text-white min-w-[100px]">
+                  <div className="flex items-center gap-1.5"><span>Serial No.</span><ArrowUpDown className="w-3 h-3" /></div>
+                </th>
                 <th onClick={() => handleSort('business_name')} className="p-2.5 cursor-pointer hover:text-white min-w-[160px]">
                   <div className="flex items-center gap-1.5"><span>Business</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
@@ -613,9 +618,12 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   <div className="flex items-center justify-end gap-1.5"><span>Retainer</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
                 <th className="p-2.5 text-center min-w-[90px]">Stage</th>
-                {/* NEW: Assigned To column */}
                 <th onClick={() => handleSort('owner')} className="p-2.5 cursor-pointer hover:text-white min-w-[120px]">
                   <div className="flex items-center gap-1.5"><span>Assigned To</span><ArrowUpDown className="w-3 h-3" /></div>
+                </th>
+                <th className="p-2.5 min-w-[100px]">1st Connection Attempt</th>
+                <th onClick={() => handleSort('created_at')} className="p-2.5 cursor-pointer hover:text-white min-w-[100px]">
+                  <div className="flex items-center gap-1.5"><span>Lead Added</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
                 <th className="p-2.5 text-center min-w-[60px]">Actions</th>
               </tr>
@@ -623,7 +631,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             <tbody className="divide-y divide-[var(--hud-border-dim)]">
               {paginatedLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={14} className="p-12 text-center text-[var(--outline)]">
+                  <td colSpan={16} className="p-12 text-center text-[var(--outline)]">
                     <div className="flex flex-col items-center gap-3">
                       <Search className="w-10 h-10 text-slate-600" />
                       <p className="font-semibold">No leads match your current filters.</p>
@@ -651,6 +659,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                             className="rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
                           />
                         </td>
+                        <td className="p-2.5 font-mono text-[10px] text-slate-400">{lead.id}</td>
                         <td className="p-2.5 min-w-[160px]">
                           <div onClick={(e) => { e.stopPropagation(); onSelectLead(lead); }} className="cursor-pointer group-hover:text-[var(--secondary)] font-bold text-slate-100 flex items-center gap-1.5">
                             <span className="truncate max-w-[140px]">{lead.business_name}</span>
@@ -694,12 +703,23 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                             {lead.pipeline_stage}
                           </span>
                         </td>
-                        {/* Assigned To */}
                         <td className="p-2.5 min-w-[120px]">
                           <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-medium truncate max-w-[110px] block ${ownerBadgeColor(lead.owner || '')}`}>
                             {lead.owner || 'Unassigned'}
                           </span>
                         </td>
+                        <td className="p-2.5 text-[10px] text-slate-500">
+                          {(() => {
+                            const leadActivities = activities
+                              .filter((a) => a.lead_id === lead.lead_id)
+                              .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+                            const firstContact = leadActivities.find((a) => 
+                              ['call_completed', 'email_sent', 'sms_sent', 'call_connected'].includes(a.type)
+                            );
+                            return firstContact ? `${new Date(firstContact.timestamp).toLocaleDateString()} ${new Date(firstContact.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} — ${firstContact.metadata?.call_outcome || 'Connected'}` : 'N/A';
+                          })()}
+                        </td>
+                        <td className="p-2.5 text-[10px] text-slate-400 font-mono">{lead.created_at ? new Date(lead.created_at).toLocaleDateString() : '—'}</td>
                         <td className="p-2.5 text-center min-w-[60px]">
                           <button onClick={(e) => { e.stopPropagation(); onSelectLead(lead); }} className="text-xs text-[var(--secondary)] hover:text-[var(--secondary)] font-semibold">View</button>
                         </td>

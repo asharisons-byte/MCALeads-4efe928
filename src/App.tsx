@@ -672,6 +672,7 @@ export function App() {
             currentTab === 'opportunities' ? (
             <LeadsPage
               leads={leads}
+              activities={activities}
               selectedLeadIds={selectedLeadIds}
               onSelectionChange={setSelectedLeadIds}
               onSelectLead={(lead) => setSelectedLead(lead)}

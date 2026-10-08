@@ -143,6 +143,7 @@ export function mapDbLeadToModel(dbLead: any): Lead {
   const raw = dbLead.rawPayload || dbLead.original_data || {};
   return {
     ...raw,
+    id: dbLead.id,
     lead_id: dbLead.leadId || dbLead.lead_id || raw.lead_id,
     business_name: dbLead.businessName || dbLead.business_name || raw.business_name,
     contact_name: dbLead.contactName || dbLead.contact_name || raw.contact_name || dbLead.businessName || raw.business_name,
