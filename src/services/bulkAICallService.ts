@@ -12,6 +12,7 @@
  */
 
 import type { Lead } from '../types';
+import { buildCallResearch } from './callResearch';
 
 export const AI_BACKEND_URL: string =
   (import.meta as any).env?.VITE_AI_BACKEND_URL || 'http://localhost:8000';
@@ -139,6 +140,9 @@ export async function runAICall(lead: Lead, signal?: AbortSignal): Promise<BulkC
         callObjective: 'Qualify and book a discovery call',
         primaryCTA: 'Schedule 15-min discovery call',
         opportunity: lead.opportunity_angle || lead.recommended_service || '',
+        research: buildCallResearch(lead),
+        contactName: lead.contact_name || '',
+        website: lead.website || '',
         painPoints: [],
         discoveryQuestions: [],
         objectionHandlers: {},
