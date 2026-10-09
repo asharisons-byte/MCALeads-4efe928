@@ -41,6 +41,10 @@ import * as XLSX from 'xlsx';
 import { ExcelColumnConverterModal } from './ExcelColumnConverterModal';
 import { logGmbStatus } from '../utils/gmbDiagnostic';
 
+function getActivities(): ActivityEvent[] {
+  return [];
+}
+
 interface TeamMember {
   id: number;
   displayName: string;
@@ -686,7 +690,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                         <td className="p-2.5 whitespace-nowrap text-[var(--on-surface-variant)]">{lead.phone || '—'}</td>
                         <td className="p-2.5 whitespace-nowrap">
                           <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                            (!lead.gmb_status || lead.gmb_status === 'No GMB' || lead.gmb_status === 'Missing')
+                            (!lead.gmb_status || lead.gmb_status === 'No GMB')
                               ? 'bg-rose-900/40 text-rose-300'
                               : lead.gmb_status === 'Thin GMB'
                               ? 'bg-amber-900/40 text-amber-300'
