@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useMemo } from 'react';
 import { onAuthStateChanged, signInWithPopup, User } from 'firebase/auth';
 import { auth, googleAuthProvider } from './lib/firebase';
 import { Sidebar, NavigationItem } from './components/Sidebar';
@@ -187,6 +187,13 @@ export function App() {
     }
     initData();
   }, [firebaseUser]);
+
+  useLayoutEffect(() => {
+    const container = document.querySelector('.hud-main-content');
+    if (container) {
+      container.scrollTop = 0;
+    }
+  }, [currentTab, selectedLead]);
 
 
 
