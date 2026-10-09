@@ -3757,168 +3757,168 @@ Provide a clear, client-friendly explanation:`;
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// POST /api/call-callback — Receives completed AI call data from SophiaAICallModal
-// and Python backend webhook, writes to Neon calls + callTranscripts tables.
+// AI call persistence.
+//   POST /api/call-callback            (browser modal)       — no secret
+//   POST /api/call-callback/webhook    (Python voice agent)  — requires X-MCA-Secret
+//   POST /api/call-callback/recording  (Python voice agent)  — requires X-MCA-Secret
+// FIXES vs previous version:
+//  * the /webhook route used `app._router.handle` which does not exist in Express 5 -> every agent
+//    callback was a 500; both routes now call the same function directly.
+//  * idempotent on externalCallId (modal + agent both report the same call -> one row, not two).
+//  * 'agreed' / 'audit' no longer move a lead to "Meeting Booked" (a bare "ok" was doing that).
+//  * recording links are stored (calls.recording_url) and attached even if they arrive after the call row.
 // ─────────────────────────────────────────────────────────────────────────────
+const AI_OUTCOME_LABELS: Record<string, string> = {
+  hot: 'Hot', qualified: 'Qualified', interested: 'Interested', follow_up: 'Follow-Up',
+  callback_requested: 'Callback Requested', video_requested: 'Audit Requested',
+  not_interested: 'Not Interested', no_response: 'No Response', voicemail: 'Voicemail',
+  no_answer: 'No Answer', unclear: 'Unclear', failed_call: 'Failed Call',
+};
+
+function checkAgentSecret(req: express.Request): boolean {
+  const secret = req.headers['x-mca-secret'];
+  return !process.env.WEBAPP_SECRET || secret === process.env.WEBAPP_SECRET;
+}
+
+function stableRecordingUrl(callControlId: string, fallback: string): string {
+  const base = process.env.AI_BACKEND_PUBLIC_URL || process.env.VITE_AI_BACKEND_URL || '';
+  // Telnyx links expire in ~10 min; this URL asks the voice agent for a fresh one on every play.
+  return base && callControlId ? `${base.replace(/\/$/, '')}/api/call/${encodeURIComponent(callControlId)}/recording?redirect=1` : fallback;
+}
+
+async function saveAiCall(body: any) {
+  const {
+    leadId, leadName, leadPhone, callControlId, turns = [], outcome = 'unclear', outcomeCategory = '',
+    evidence = '', auditStatus = '', capturedEmail = '', capturedPhone = '', callbackWhen = '',
+    duration = 0, answered, endedAt, agentName = 'Sophia', callObjective = '', primaryCTA = '',
+  } = body;
+  if (!leadId || !leadPhone) return { http: 400, body: { error: 'leadId and leadPhone are required' } };
+
+  const { db } = await import('./src/db/index.js');
+  const { schema } = await import('./src/db/index.js');
+  if (!db) return { http: 200, body: { status: 'skipped', reason: 'no-db' } };
+  const { eq, sql: sqlExpr } = await import('drizzle-orm');
+
+  let numericLeadId: number | null = null;
+  try {
+    const leadRows: any[] = await db.execute(sqlExpr`SELECT id FROM leads WHERE lead_id = ${leadId} OR id::text = ${String(leadId)} LIMIT 1`);
+    if (leadRows.length > 0) numericLeadId = leadRows[0].id;
+  } catch (_) {
+    const parsed = parseInt(String(leadId), 10);
+    if (!isNaN(parsed)) numericLeadId = parsed;
+  }
+  if (!numericLeadId) return { http: 200, body: { status: 'skipped', reason: 'lead-not-found' } };
+
+  const t = (turns as Array<{ role: string; content: string }>);
+  const fullTranscript = t.map(x => `${x.role === 'assistant' ? agentName : 'Prospect'}: ${x.content}`).join('\n');
+  const cat = String(outcomeCategory || outcome || 'unclear').toLowerCase();
+  const label = AI_OUTCOME_LABELS[cat] || String(outcome);
+  const nextSteps = [
+    auditStatus ? `Audit: ${auditStatus}` : '',
+    capturedEmail ? `Email: ${capturedEmail}` : '',
+    capturedPhone ? `Phone: ${capturedPhone}` : '',
+    callbackWhen ? `Callback: ${callbackWhen}` : '',
+  ].filter(Boolean).join(' | ') || primaryCTA || 'No action required';
+  const aiSummary = `Outcome: ${label}${evidence ? ` (${evidence})` : ''}. ${t.filter(x => x.role === 'assistant').length} Sophia turns.`
+    + (callObjective ? ` Objective: ${callObjective}.` : '');
+  const status = cat === 'failed_call' || cat === 'no_answer' ? 'Failed' : 'Completed';
+  const endedDate = endedAt ? new Date(endedAt) : new Date();
+  const dur = Math.round(Number(duration) || 0);
+
+  // ── idempotent: one row per Telnyx call ──
+  let callRow: any = null;
+  if (callControlId) {
+    const existing = await db.select().from(schema.calls).where(eq(schema.calls.externalCallId, callControlId)).limit(1);
+    callRow = existing[0] || null;
+  }
+  if (callRow) {
+    // The agent's record (real duration, evidence-based outcome) wins over the browser's timer; never shrink a transcript.
+    const fromAgent = body.hangupReason !== undefined || body.outcomeCategory !== undefined;
+    const patch: any = {};
+    if (fromAgent) Object.assign(patch, { callOutcome: label, aiSummary, status, durationSeconds: dur, endedAt: endedDate });
+    if (fullTranscript.length > (callRow.transcript || '').length) Object.assign(patch, { transcript: fullTranscript, transcriptStatus: 'COMPLETED' });
+    if (Object.keys(patch).length) await db.update(schema.calls).set(patch).where(eq(schema.calls.id, callRow.id));
+    return { http: 200, body: { status: 'updated', callId: callRow.id, leadId: numericLeadId } };
+  }
+
+  const [created] = await db.insert(schema.calls).values({
+    leadId: numericLeadId, phone: leadPhone, contactPhone: leadPhone, direction: 'Outbound',
+    provider: callControlId ? 'Telnyx-Sophia' : 'Sophia-Simulation', externalCallId: callControlId || null,
+    status, durationSeconds: dur, transcript: fullTranscript || null,
+    transcriptStatus: fullTranscript ? 'COMPLETED' : 'NONE', aiSummary, callOutcome: label,
+    startedAt: new Date(endedDate.getTime() - dur * 1000), endedAt: endedDate,
+  }).returning();
+  callRow = created;
+
+  if (callRow && t.length > 0) {
+    await db.insert(schema.callTranscripts).values(t.map((x, i) => ({
+      callId: callRow.id, speaker: x.role === 'assistant' ? `${agentName} (AI)` : 'Contractor',
+      text: x.content, timestampSeconds: String(i * 15), confidence: '0.95',
+    })));
+  }
+  if (callRow) {
+    try {
+      await db.insert(schema.callSummaries).values({
+        callId: callRow.id, agentId: 'sophia', summary: aiSummary, outcome: label,
+        sentiment: ['hot', 'qualified', 'interested', 'video_requested'].includes(cat) ? 'POSITIVE' : 'NEUTRAL',
+        nextSteps, followUpDate: callbackWhen || null,
+      });
+    } catch (e) { console.warn('[call-callback] callSummaries insert skipped:', e); }
+    // Only an explicit meeting moves the pipeline. Audit/video requests are follow-up tasks, not meetings.
+    if (/\b(meeting|appointment)\b/i.test(`${outcome} ${label}`) && !/not/i.test(label)) {
+      try { await db.execute(sqlExpr`UPDATE leads SET pipeline_stage = 'Meeting Booked' WHERE id = ${numericLeadId}`); } catch { /* non-fatal */ }
+    }
+  }
+  return { http: 200, body: { status: 'saved', callId: callRow?.id, transcriptTurns: t.length, leadId: numericLeadId } };
+}
+
 app.post('/api/call-callback', async (req: express.Request, res: express.Response) => {
   try {
-    // Only enforce secret on the external webhook path (called by main.py)
-    // Internal browser calls to /api/call-callback skip this check
-    const isWebhookPath = req.path === '/api/call-callback/webhook';
-    const secret = req.headers['x-mca-secret'];
-    if (isWebhookPath && process.env.WEBAPP_SECRET && secret !== process.env.WEBAPP_SECRET) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    const {
-      leadId,
-      leadName,
-      leadPhone,
-      callControlId,
-      turns = [],
-      outcome = 'Connected - Conversation',
-      duration = 0,
-      endedAt,
-      agentName = 'Sophia',
-      callObjective = '',
-      primaryCTA = '',
-      leadScore = 0,
-      pipelineStage = 'New Lead',
-    } = req.body;
-
-    if (!leadId || !leadPhone) {
-      return res.status(400).json({ error: 'leadId and leadPhone are required' });
-    }
-
-    // Import db at runtime to avoid circular deps at module load time
-    const { db } = await import('./src/db/index.js');
-    const { schema } = await import('./src/db/index.js');
-
-    if (!db) {
-      console.warn('[call-callback] No DB configured — skipping Neon write');
-      return res.json({ status: 'skipped', reason: 'no-db' });
-    }
-
-    // Resolve numeric lead_id (CRM stores integer IDs; leadId may be a string UUID from the frontend)
-    // Try to find the lead in DB by external lead_id string first, then fall back to integer cast
-    let numericLeadId: number | null = null;
-    try {
-      const { eq, sql: sqlExpr } = await import('drizzle-orm');
-      // Attempt to find by string lead_id column if it exists
-      const leadRows: any[] = await db.execute(
-        sqlExpr`SELECT id FROM leads WHERE lead_id = ${leadId} OR id::text = ${String(leadId)} LIMIT 1`
-      );
-      if (leadRows.length > 0) numericLeadId = leadRows[0].id;
-    } catch (_) {
-      // If the query fails (e.g. no lead_id column), try integer cast
-      const parsed = parseInt(String(leadId), 10);
-      if (!isNaN(parsed)) numericLeadId = parsed;
-    }
-
-    if (!numericLeadId) {
-      console.warn(`[call-callback] Could not resolve numeric lead ID for leadId=${leadId}`);
-      return res.json({ status: 'skipped', reason: 'lead-not-found' });
-    }
-
-    // Build full transcript string for the transcript column
-    const fullTranscript = (turns as Array<{role: string; content: string}>)
-      .map(t => `${t.role === 'assistant' ? agentName : 'Prospect'}: ${t.content}`)
-      .join('\n');
-
-    // Build AI summary (first assistant turn = opener, last = close)
-    const assistantTurns = (turns as Array<{role: string; content: string}>).filter(t => t.role === 'assistant');
-    const aiSummary = assistantTurns.length > 0
-      ? `Objective: ${callObjective}. CTA: ${primaryCTA}. Outcome: ${outcome}. ${assistantTurns.length} Sophia turns recorded.`
-      : `AI Call with ${leadName || leadPhone} — ${outcome}`;
-
-    // ── 1. Insert into calls table ─────────────────────────────────────
-    const [callRow] = await db.insert(schema.calls).values({
-      leadId: numericLeadId,
-      phone: leadPhone,
-      contactPhone: leadPhone,
-      direction: 'Outbound',
-      provider: callControlId ? 'Telnyx-Sophia' : 'Sophia-Simulation',
-      externalCallId: callControlId || null,
-      status: 'Completed',
-      durationSeconds: Math.round(duration),
-      transcript: fullTranscript || null,
-      transcriptStatus: fullTranscript ? 'COMPLETED' : 'NONE',
-      aiSummary,
-      callOutcome: outcome,
-      startedAt: endedAt ? new Date(new Date(endedAt).getTime() - duration * 1000) : new Date(),
-      endedAt: endedAt ? new Date(endedAt) : new Date(),
-    }).returning();
-
-    // ── 2. Insert each turn into callTranscripts ───────────────────────
-    if (callRow && turns.length > 0) {
-      const transcriptRows = (turns as Array<{role: string; content: string}>).map((t, i) => ({
-        callId: callRow.id,
-        speaker: t.role === 'assistant' ? `${agentName} (AI)` : 'Contractor',
-        text: t.content,
-        timestampSeconds: String(i * 15),
-        confidence: '0.95',
-      }));
-      await db.insert(schema.callTranscripts).values(transcriptRows);
-      console.log(`[call-callback] ✅ ${transcriptRows.length} transcript turns inserted for call ${callRow.id}`);
-    }
-
-    // ── 3. Insert call summary ─────────────────────────────────────────
-    if (callRow) {
-      const isBooked = ['meeting','booked','appointment','audit','agreed'].some(w => outcome.toLowerCase().includes(w));
-      try {
-        await db.insert(schema.callSummaries).values({
-          callId: callRow.id,
-          agentId: 'sophia',
-          summary: aiSummary,
-          outcome,
-          sentiment: turns.length > 4 ? 'POSITIVE' : 'NEUTRAL',
-          nextSteps: primaryCTA || 'Follow up within 24 hours',
-        });
-      } catch (e) { console.warn('[call-callback] callSummaries insert skipped:', e); }
-
-      // ── 4. Advance lead pipeline stage if meeting/audit booked ────────
-      if (isBooked) {
-        try {
-          const { sql: sqlExpr } = await import('drizzle-orm');
-          await db.execute(
-            sqlExpr`UPDATE leads SET pipeline_stage = 'Meeting Booked' WHERE id = ${numericLeadId}`
-          );
-          console.log(`[call-callback] 🎯 Lead ${numericLeadId} → Meeting Booked`);
-        } catch (e) { /* non-fatal */ }
-      }
-    }
-
-    return res.json({
-      status: 'saved',
-      callId: callRow?.id,
-      transcriptTurns: turns.length,
-      leadId: numericLeadId,
-    });
-
+    const r = await saveAiCall(req.body || {});
+    return res.status(r.http).json(r.body);
   } catch (error: any) {
     console.error('[call-callback] Error:', error);
     return res.status(500).json({ error: error.message || 'Internal server error' });
   }
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// POST /api/call-callback/webhook — Python backend posts here when call ends
-// Same handler, different path — Python backend uses WEBAPP_CALLBACK_URL env var
-// ─────────────────────────────────────────────────────────────────────────────
+// Python voice agent posts here when a call ends (WEBAPP_CALLBACK_URL). Secret is enforced.
 app.post('/api/call-callback/webhook', async (req: express.Request, res: express.Response) => {
-  // Normalize Python backend payload shape to match our main handler
-  const { call_control_id, lead_id, transcript_turns, call_outcome, duration_seconds } = req.body;
-  req.body.callControlId   = req.body.callControlId   || call_control_id;
-  req.body.leadId          = req.body.leadId          || lead_id;
-  req.body.turns           = req.body.turns           || transcript_turns;
-  req.body.outcome         = req.body.outcome         || call_outcome;
-  req.body.duration        = req.body.duration        || duration_seconds;
-  // Forward to main handler logic by re-posting internally
-  return (app as any)._router.handle(
-    { ...req, url: '/api/call-callback', path: '/api/call-callback' } as any,
-    res,
-    () => res.status(404).json({ error: 'not found' })
-  );
+  if (!checkAgentSecret(req)) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const b = req.body || {};
+    // accept the legacy snake_case shape too
+    b.callControlId = b.callControlId || b.call_control_id;
+    b.leadId = b.leadId || b.lead_id;
+    b.turns = b.turns || b.transcript_turns;
+    b.outcome = b.outcome || b.call_outcome;
+    b.duration = b.duration ?? b.duration_seconds;
+    const r = await saveAiCall(b);
+    return res.status(r.http).json(r.body);
+  } catch (error: any) {
+    console.error('[call-callback/webhook] Error:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+});
+
+// Recording link from the voice agent (arrives AFTER hangup). 503 => agent retries (call row not saved yet).
+app.post('/api/call-callback/recording', async (req: express.Request, res: express.Response) => {
+  if (!checkAgentSecret(req)) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const { callControlId, recordingUrl = '' } = req.body || {};
+    if (!callControlId) return res.status(400).json({ error: 'callControlId required' });
+    const { db } = await import('./src/db/index.js');
+    const { schema } = await import('./src/db/index.js');
+    if (!db) return res.json({ status: 'skipped', reason: 'no-db' });
+    const { eq } = await import('drizzle-orm');
+    const existing = await db.select().from(schema.calls).where(eq(schema.calls.externalCallId, callControlId)).limit(1);
+    if (!existing[0]) return res.status(503).json({ error: 'call-not-saved-yet' });
+    await db.update(schema.calls).set({ recordingUrl: stableRecordingUrl(callControlId, recordingUrl) }).where(eq(schema.calls.id, existing[0].id));
+    return res.json({ status: 'attached', callId: existing[0].id });
+  } catch (error: any) {
+    console.error('[call-callback/recording] Error:', error);
+    return res.status(500).json({ error: error.message || 'Internal server error' });
+  }
 });
 
 // Start Server (only for non-Vercel environments)

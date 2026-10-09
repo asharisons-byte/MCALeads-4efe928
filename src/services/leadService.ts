@@ -1,3 +1,4 @@
+import { buildCallResearch } from './callResearch';
 import { EventEmitter } from 'events';
 import {
   Lead,
@@ -662,6 +663,9 @@ export async function executeBulkAICall(
           // Assuming basic objective/CTA if not specifically generated in bulk
           callObjective: 'Qualify and book a discovery call',
           primaryCTA: 'Schedule 15-min discovery call',
+          research: buildCallResearch(lead),
+          contactName: lead.contact_name || '',
+          website: lead.website || '',
         }),
       });
 

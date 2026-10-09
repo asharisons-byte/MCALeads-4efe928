@@ -1,3 +1,4 @@
+import { buildCallResearch } from '../services/callResearch';
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Bot,
@@ -471,6 +472,9 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
           callObjective: strategy?.objective || 'Qualify and book a discovery call',
           primaryCTA: strategy?.call_to_action || 'Schedule 15-min discovery call',
           opportunity: strategy?.primary_opportunity || '',
+          research: buildCallResearch(lead),   // verified facts only; Sophia never invents findings
+          contactName: lead.contact_name || '',
+          website: lead.website || '',
           painPoints,
           discoveryQuestions: discoveryQ,
           objectionHandlers: objections,
@@ -719,6 +723,12 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
               heardVoicemail ? 'reached voicemail' : 'no answer / no conversation'
             } (${callDuration}s). No analysis run.`,
           };
+      // Evidence gate: the voice agent classifies from what was actually said. An LLM summary must not
+      // promote a lead to Hot unless the agent saw an audit request + contact (+ buying signal).
+      const agentCat = String(opts.remoteOutcome || '').toLowerCase();
+      if (agentCat && postAnalysis.interest_level === 'Hot' && !['hot', 'video_requested'].includes(agentCat)) {
+        postAnalysis.interest_level = ['qualified', 'interested', 'follow_up', 'callback_requested'].includes(agentCat) ? 'Warm' : 'Cold';
+      }
       setAnalysis(postAnalysis);
 
       // 2. Build full CallRecord
