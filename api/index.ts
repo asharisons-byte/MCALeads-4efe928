@@ -17,9 +17,9 @@ async function getHandler() {
     try {
       const mod = await import('../dist/server.mjs');
       // server.ts exports `export const app = express()` (named export, no default)
-      handler = mod.app ?? mod.default;
+      handler = mod.app;
       if (!handler) {
-        throw new Error('dist/server.mjs did not export `app` or a default handler');
+        throw new Error('dist/server.mjs did not export `app`');
       }
     } catch (err) {
       initError = err;

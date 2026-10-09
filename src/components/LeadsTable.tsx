@@ -41,10 +41,6 @@ import * as XLSX from 'xlsx';
 import { ExcelColumnConverterModal } from './ExcelColumnConverterModal';
 import { logGmbStatus } from '../utils/gmbDiagnostic';
 
-function getActivities(): ActivityEvent[] {
-  return [];
-}
-
 interface TeamMember {
   id: number;
   displayName: string;
