@@ -100,6 +100,16 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   // State
   const [currentView, setCurrentView] = useState<ViewFilterType>('All Leads');
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
+
+  // Debounce the search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const [stageFilter, setStageFilter] = useState<string>('All');
   const [nicheFilter, setNicheFilter] = useState<string>('All');
   const [countryFilter, setCountryFilter] = useState<string>('All');
@@ -215,8 +225,8 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       if (countryFilter !== 'All' && l.country !== countryFilter) return false;
       if (ownerFilter !== 'All' && l.owner !== ownerFilter) return false;
       if (l.lead_score < scoreRange[0] || l.lead_score > scoreRange[1]) return false;
-      if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
+      if (debouncedSearchQuery.trim()) {
+        const q = debouncedSearchQuery.toLowerCase();
         const matchesName = l.business_name?.toLowerCase().includes(q);
         const matchesContact = l.contact_name?.toLowerCase().includes(q);
         const matchesPhone = l.phone?.toLowerCase().includes(q);
@@ -232,7 +242,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       }
       return true;
     });
-  }, [leads, currentView, stageFilter, nicheFilter, countryFilter, ownerFilter, searchQuery, scoreRange]);
+  }, [leads, currentView, stageFilter, nicheFilter, countryFilter, ownerFilter, debouncedSearchQuery, scoreRange]);
 
   // Sorted Leads
   const sortedLeads = useMemo(() => {
@@ -256,13 +266,17 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
     return sortedLeads.slice(start, start + pageSize);
   }, [sortedLeads, currentPage, pageSize]);
 
-  const handleSort = (field: keyof Lead) => {
+  const sortLeads = (field: keyof Lead, direction?: 'asc' | 'desc') => {
     if (sortField === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+      setSortOrder(direction || (sortOrder === 'asc' ? 'desc' : 'asc'));
     } else {
       setSortField(field);
-      setSortOrder('desc');
+      setSortOrder(direction || 'desc');
     }
+  };
+
+  const handleSort = (field: keyof Lead) => {
+    sortLeads(field);
   };
 
   const handleSelectAll = (checked: boolean) => {
@@ -617,7 +631,9 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 <th onClick={() => handleSort('estimated_retainer')} className="p-2.5 cursor-pointer hover:text-white text-right min-w-[90px]">
                   <div className="flex items-center justify-end gap-1.5"><span>Retainer</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
-                <th className="p-2.5 text-center min-w-[90px]">Stage</th>
+                <th onClick={() => handleSort('pipeline_stage')} className="p-2.5 cursor-pointer hover:text-white text-center min-w-[90px]">
+                  <div className="flex items-center justify-center gap-1.5"><span>Stage</span><ArrowUpDown className="w-3 h-3" /></div>
+                </th>
                 <th onClick={() => handleSort('owner')} className="p-2.5 cursor-pointer hover:text-white min-w-[120px]">
                   <div className="flex items-center gap-1.5"><span>Assigned To</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
