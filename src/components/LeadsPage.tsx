@@ -402,7 +402,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
         selectedCount={selectedLeadIds.size}
       />
 
-      <div className="flex-1 overflow-y-auto flex flex-col h-full">
+      <div className="flex-1 overflow-y-auto flex flex-col">
         <LeadsTable {...props} activities={activities} />
       </div>
     </div>
