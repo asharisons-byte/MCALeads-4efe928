@@ -394,7 +394,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   );
 
   return (
-    <div id="mca-leads-page" className="flex flex-col gap-4 w-full min-h-0">
+    <div id="mca-leads-page" className="flex flex-col gap-4 w-full h-full flex-1 min-h-0">
       {/* Top Header & Summary */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -616,9 +616,9 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       )}
 
       {/* CRM Table */}
-      <div className="rounded-lg border border-[var(--hud-border-base)] bg-[var(--hud-graphite)] overflow-hidden shadow-xl flex-1 min-h-0 flex flex-col">
+      <div className="rounded-lg border border-[var(--hud-border-base)] bg-[var(--hud-graphite)] overflow-hidden shadow-xl flex-1 flex flex-col">
         {PaginationControls}
-        <div className="overflow-x-auto overflow-y-auto flex-1">
+        <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
               <tr className="border-b border-[var(--hud-border-base)] bg-[var(--surface-container)] text-[var(--outline)] font-bold text-[9px] uppercase tracking-[0.12em] sticky top-0 z-20">

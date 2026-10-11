@@ -399,7 +399,9 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
         selectedCount={selectedLeadIds.size}
       />
 
-      <LeadsTable {...props} activities={activities} />
+      <div className="flex-1 min-h-0">
+        <LeadsTable {...props} activities={activities} />
+      </div>
     </div>
   );
 };
