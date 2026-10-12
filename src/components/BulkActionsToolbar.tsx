@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bot, Send, Mail, UserCheck, Sparkles, Trash2, Tag, Phone, ArrowUpRight, ChevronDown } from 'lucide-react';
+import { Bot, Send, Mail, UserCheck, Sparkles, Trash2, Tag, Phone, ArrowUpRight, ChevronDown, FolderOpen } from 'lucide-react';
 
 interface BulkActionsToolbarProps {
   selectedCount: number;
