@@ -506,10 +506,10 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       {/* CRM Table */}
       <div className="rounded-lg border border-[var(--hud-border-base)] bg-[var(--hud-graphite)] overflow-hidden shadow-xl flex-1 flex flex-col min-h-0">
         {PaginationControls}
-        <div className="overflow-x-auto overflow-y-auto flex-1">
+        <div className="flex-1 overflow-auto min-h-0">
           <table className="w-full text-left border-collapse text-xs">
-            <thead>
-              <tr className="border-b border-[var(--hud-border-base)] bg-[var(--surface-container)] text-[var(--outline)] font-bold text-[9px] uppercase tracking-[0.12em] sticky top-0 z-20">
+            <thead className="sticky top-0 z-20">
+              <tr className="border-b border-[var(--hud-border-base)] bg-[var(--surface-container)] text-[var(--outline)] font-bold text-[9px] uppercase tracking-[0.12em]">
                 <th className="p-2.5 w-8 text-center bg-[var(--surface-container)]"></th>
                 <th className="p-2.5 w-8 text-center bg-[var(--surface-container)]">
                   <input
