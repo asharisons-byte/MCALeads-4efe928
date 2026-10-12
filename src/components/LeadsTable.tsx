@@ -394,7 +394,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   );
 
   return (
-    <div id="mca-leads-page" className="flex flex-col gap-4 w-full min-h-0">
+    <div id="mca-leads-page" className="flex flex-col gap-4 w-full h-full min-h-0">
       {/* Top Header & Summary */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[var(--hud-border-base)]">
         <div>
@@ -506,12 +506,11 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       {/* CRM Table */}
       <div className="rounded-lg border border-[var(--hud-border-base)] bg-[var(--hud-graphite)] overflow-hidden shadow-xl flex-1 flex flex-col min-h-0">
         {PaginationControls}
-        <div className="flex-1 overflow-auto min-h-0">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead className="sticky top-0 z-20">
+        <div className="flex-1 overflow-auto min-h-0">          <table className="w-full text-left border-collapse text-xs">
+            <thead className="z-20">
               <tr className="border-b border-[var(--hud-border-base)] bg-[var(--surface-container)] text-[var(--outline)] font-bold text-[9px] uppercase tracking-[0.12em]">
-                <th className="p-2.5 w-8 text-center bg-[var(--surface-container)]"></th>
-                <th className="p-2.5 w-8 text-center bg-[var(--surface-container)]">
+                <th className="p-2.5 w-8 text-center bg-[var(--surface-container)] sticky top-0"></th>
+                <th className="p-2.5 w-8 text-center bg-[var(--surface-container)] sticky top-0">
                   <input
                     type="checkbox"
                     checked={paginatedLeads.length > 0 && paginatedLeads.every((l) => selectedLeadIds.has(l.lead_id))}
@@ -519,35 +518,35 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     className="rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
                   />
                 </th>
-                <th onClick={() => handleSort('lead_id')} className="p-2.5 cursor-pointer hover:text-white min-w-[100px] bg-[var(--surface-container)]">
+                <th onClick={() => handleSort('lead_id')} className="p-2.5 cursor-pointer hover:text-white min-w-[100px] bg-[var(--surface-container)] sticky top-0">
                   <div className="flex items-center gap-1.5"><span>Serial No.</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
-                <th onClick={() => handleSort('business_name')} className="p-2.5 cursor-pointer hover:text-white min-w-[160px] bg-[var(--surface-container)]">
+                <th onClick={() => handleSort('business_name')} className="p-2.5 cursor-pointer hover:text-white min-w-[160px] bg-[var(--surface-container)] sticky top-0">
                   <div className="flex items-center gap-1.5"><span>Business</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
-                <th className="p-2.5 min-w-[90px] bg-[var(--surface-container)]">Location</th>
-                <th className="p-2.5 min-w-[100px] bg-[var(--surface-container)]">Contact</th>
-                <th className="p-2.5 min-w-[80px] bg-[var(--surface-container)]">GMB</th>
-                <th className="p-2.5 min-w-[80px] bg-[var(--surface-container)]">Website</th>
-                <th className="p-2.5 min-w-[120px] bg-[var(--surface-container)]">Gaps</th>
-                <th className="p-2.5 min-w-[120px] bg-[var(--surface-container)]">Opportunity</th>
-                <th onClick={() => handleSort('lead_score')} className="p-2.5 cursor-pointer hover:text-white text-center min-w-[60px] bg-[var(--surface-container)]">
+                <th className="p-2.5 min-w-[90px] bg-[var(--surface-container)] sticky top-0">Location</th>
+                <th className="p-2.5 min-w-[100px] bg-[var(--surface-container)] sticky top-0">Contact</th>
+                <th className="p-2.5 min-w-[80px] bg-[var(--surface-container)] sticky top-0">GMB</th>
+                <th className="p-2.5 min-w-[80px] bg-[var(--surface-container)] sticky top-0">Website</th>
+                <th className="p-2.5 min-w-[120px] bg-[var(--surface-container)] sticky top-0">Gaps</th>
+                <th className="p-2.5 min-w-[120px] bg-[var(--surface-container)] sticky top-0">Opportunity</th>
+                <th onClick={() => handleSort('lead_score')} className="p-2.5 cursor-pointer hover:text-white text-center min-w-[60px] bg-[var(--surface-container)] sticky top-0">
                   <div className="flex items-center justify-center gap-1.5"><span>Score</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
-                <th onClick={() => handleSort('estimated_retainer')} className="p-2.5 cursor-pointer hover:text-white text-right min-w-[90px] bg-[var(--surface-container)]">
+                <th onClick={() => handleSort('estimated_retainer')} className="p-2.5 cursor-pointer hover:text-white text-right min-w-[90px] bg-[var(--surface-container)] sticky top-0">
                   <div className="flex items-center justify-end gap-1.5"><span>Retainer</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
-                <th onClick={() => handleSort('pipeline_stage')} className="p-2.5 cursor-pointer hover:text-white text-center min-w-[90px] bg-[var(--surface-container)]">
+                <th onClick={() => handleSort('pipeline_stage')} className="p-2.5 cursor-pointer hover:text-white text-center min-w-[90px] bg-[var(--surface-container)] sticky top-0">
                   <div className="flex items-center justify-center gap-1.5"><span>Stage</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
-                <th onClick={() => handleSort('owner')} className="p-2.5 cursor-pointer hover:text-white min-w-[120px] bg-[var(--surface-container)]">
+                <th onClick={() => handleSort('owner')} className="p-2.5 cursor-pointer hover:text-white min-w-[120px] bg-[var(--surface-container)] sticky top-0">
                   <div className="flex items-center gap-1.5"><span>Assigned To</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
-                <th className="p-2.5 min-w-[100px] bg-[var(--surface-container)]">1st Connection Attempt</th>
-                <th onClick={() => handleSort('created_at')} className="p-2.5 cursor-pointer hover:text-white min-w-[100px] bg-[var(--surface-container)]">
+                <th className="p-2.5 min-w-[100px] bg-[var(--surface-container)] sticky top-0">1st Connection Attempt</th>
+                <th onClick={() => handleSort('created_at')} className="p-2.5 cursor-pointer hover:text-white min-w-[100px] bg-[var(--surface-container)] sticky top-0">
                   <div className="flex items-center gap-1.5"><span>Lead Added</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
-                <th className="p-2.5 text-center min-w-[60px] bg-[var(--surface-container)]">Actions</th>
+                <th className="p-2.5 text-center min-w-[60px] bg-[var(--surface-container)] sticky top-0">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--hud-border-dim)]">
@@ -567,12 +566,9 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   const isExpanded = expandedLeadId === lead.lead_id;
                   return (
                     <React.Fragment key={lead.lead_id}>
-                      <tr 
-                        onClick={() => onSelectLead(lead)}
-                        className={`hover:bg-[var(--surface-container)]/40 transition-colors group ${isSelected ? 'bg-[rgba(0,255,157,0.04)]' : ''} cursor-pointer`}
-                      >
+                      <tr className={`hover:bg-[var(--surface-container)]/40 transition-colors group ${isSelected ? 'bg-[rgba(0,255,157,0.04)]' : ''}`}>
                         <td className="p-2.5 text-center">
-                          <button onClick={(e) => { e.stopPropagation(); setExpandedLeadId(isExpanded ? null : lead.lead_id); }}>
+                          <button onClick={() => setExpandedLeadId(isExpanded ? null : lead.lead_id)}>
                             {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-[var(--outline)]" /> : <ChevronDown className="w-3.5 h-3.5 text-[var(--outline)]" />}
                           </button>
                         </td>
@@ -586,7 +582,13 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                         </td>
                         <td className="p-2.5 font-mono text-[10px] text-slate-400">{lead.id}</td>
                         <td className="p-2.5 min-w-[160px]">
-                          <div className="group-hover:text-[var(--secondary)] font-bold text-slate-100 flex items-center gap-1.5">
+                          <div 
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              onSelectLead(lead);
+                            }} 
+                            className="cursor-pointer group-hover:text-[var(--secondary)] font-bold text-slate-100 flex items-center gap-1.5"
+                          >
                             <span className="truncate max-w-[140px]">{lead.business_name}</span>
                             {lead.is_hot_target && <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400 flex-shrink-0" />}
                           </div>
@@ -646,7 +648,15 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                         </td>
                         <td className="p-2.5 text-[10px] text-slate-400 font-mono">{lead.created_at ? new Date(lead.created_at).toLocaleDateString() : '—'}</td>
                         <td className="p-2.5 text-center min-w-[60px]">
-                          <span className="text-xs text-[var(--secondary)] font-semibold">View</span>
+                          <button 
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              onSelectLead(lead);
+                            }} 
+                            className="text-xs text-[var(--secondary)] hover:text-[var(--secondary)] font-semibold"
+                          >
+                            View
+                          </button>
                         </td>
                       </tr>
                       {isExpanded && (
