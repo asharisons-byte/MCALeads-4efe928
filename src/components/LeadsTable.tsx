@@ -586,8 +586,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                           <div 
                             onClick={(e) => { 
                               e.stopPropagation(); 
-                              if (lead) onSelectLead(lead); 
-                              else console.error('Attempted to select null lead');
+                              onSelectLead(lead);
                             }} 
                             className="cursor-pointer group-hover:text-[var(--secondary)] font-bold text-slate-100 flex items-center gap-1.5"
                           >
@@ -653,8 +652,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                           <button 
                             onClick={(e) => { 
                               e.stopPropagation(); 
-                              if (lead) onSelectLead(lead);
-                              else console.error('Attempted to select null lead');
+                              onSelectLead(lead);
                             }} 
                             className="text-xs text-[var(--secondary)] hover:text-[var(--secondary)] font-semibold"
                           >
