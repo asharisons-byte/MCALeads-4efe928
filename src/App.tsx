@@ -525,7 +525,7 @@ export function App() {
         />
 
         {/* View Routing */}
-        <main className="hud-main-content flex-1 flex flex-col overflow-y-auto">
+        <main className="hud-main-content flex-1 flex flex-col overflow-y-auto min-h-0">
           {selectedLead ? (
             <LeadDetail
               lead={selectedLead}
