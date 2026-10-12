@@ -502,12 +502,12 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           {/* ... Advanced filters ... */}
         </div>
       )}
-
       {/* CRM Table */}
-      <div className="rounded-lg border border-[var(--hud-border-base)] bg-[var(--hud-graphite)] overflow-hidden shadow-xl flex-1 flex flex-col min-h-0">
+      <div className="rounded-lg border border-[var(--hud-border-base)] bg-[var(--hud-graphite)] overflow-hidden shadow-xl flex-1 flex flex-col h-full">
         {PaginationControls}
-        <div className="flex-1 overflow-auto min-h-0">          <table className="w-full text-left border-collapse text-xs">
-            <thead className="z-20">
+        <div className="flex-1 overflow-auto">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead className="z-10">
               <tr className="border-b border-[var(--hud-border-base)] bg-[var(--surface-container)] text-[var(--outline)] font-bold text-[9px] uppercase tracking-[0.12em]">
                 <th className="p-2.5 w-8 text-center bg-[var(--surface-container)] sticky top-0"></th>
                 <th className="p-2.5 w-8 text-center bg-[var(--surface-container)] sticky top-0">
