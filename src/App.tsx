@@ -490,7 +490,7 @@ export function App() {
   }
 
   return (
-    <div id="mca-app-root" className="flex h-screen text-slate-300 antialiased overflow-hidden font-sans selection:bg-mca-neonGreen selection:text-black">
+    <div id="mca-app-root" className="flex h-screen text-slate-300 antialiased font-sans selection:bg-mca-neonGreen selection:text-black">
       {/* Sidebar */}
       <Sidebar
         currentTab={currentTab}
@@ -510,7 +510,7 @@ export function App() {
       />
       
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-mca-bg">
+      <div className="flex-1 flex flex-col h-full min-w-0 bg-mca-bg">
         {/* Header */}
         <Header
           searchQuery={searchQuery}
