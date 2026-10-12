@@ -583,7 +583,14 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                         </td>
                         <td className="p-2.5 font-mono text-[10px] text-slate-400">{lead.id}</td>
                         <td className="p-2.5 min-w-[160px]">
-                          <div onClick={(e) => { e.stopPropagation(); onSelectLead(lead); }} className="cursor-pointer group-hover:text-[var(--secondary)] font-bold text-slate-100 flex items-center gap-1.5">
+                          <div 
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              if (lead) onSelectLead(lead); 
+                              else console.error('Attempted to select null lead');
+                            }} 
+                            className="cursor-pointer group-hover:text-[var(--secondary)] font-bold text-slate-100 flex items-center gap-1.5"
+                          >
                             <span className="truncate max-w-[140px]">{lead.business_name}</span>
                             {lead.is_hot_target && <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400 flex-shrink-0" />}
                           </div>
@@ -643,7 +650,16 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                         </td>
                         <td className="p-2.5 text-[10px] text-slate-400 font-mono">{lead.created_at ? new Date(lead.created_at).toLocaleDateString() : '—'}</td>
                         <td className="p-2.5 text-center min-w-[60px]">
-                          <button onClick={(e) => { e.stopPropagation(); onSelectLead(lead); }} className="text-xs text-[var(--secondary)] hover:text-[var(--secondary)] font-semibold">View</button>
+                          <button 
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              if (lead) onSelectLead(lead);
+                              else console.error('Attempted to select null lead');
+                            }} 
+                            className="text-xs text-[var(--secondary)] hover:text-[var(--secondary)] font-semibold"
+                          >
+                            View
+                          </button>
                         </td>
                       </tr>
                       {isExpanded && (
