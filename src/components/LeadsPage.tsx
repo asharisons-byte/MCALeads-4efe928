@@ -379,6 +379,9 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
         onBulkTag={() => setShowTagModal(true)}
         onBulkAssign={handleBulkAssign}
         onBulkMoveStage={handleBulkMoveStage}
+        onBulkArchive={() => props.onBulkUpdateStage(Array.from(selectedLeadIds), 'Archived')}
+        onBulkChangeStage={handleBulkMoveStage}
+        onBulkAddToCampaign={() => console.log('Add to Campaign')}
       />
 
       {activeBulkProgress && (
@@ -399,7 +402,9 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
         selectedCount={selectedLeadIds.size}
       />
 
-      <LeadsTable {...props} activities={activities} />
+      <div className="flex-1 overflow-y-auto">
+        <LeadsTable {...props} activities={activities} />
+      </div>
     </div>
   );
 };

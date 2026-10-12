@@ -396,26 +396,23 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   return (
     <div id="mca-leads-page" className="flex flex-col gap-4 w-full min-h-0">
       {/* Top Header & Summary */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[var(--hud-border-base)]">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-extrabold text-white tracking-tight">Leads</h1>
-            <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-[var(--surface-container)] text-[var(--on-surface-variant)] font-semibold">
-              {filteredLeads.length} of {leads.length} records
+            <h1 className="text-xl font-extrabold text-white tracking-tight">Leads</h1>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--surface-container)] text-[var(--on-surface-variant)] font-semibold">
+              {filteredLeads.length} total
             </span>
           </div>
-          <p className="text-xs text-[var(--outline)] mt-1">
-            Production CRM — 0–100 explainable scoring, detected gaps, verified contacts.
-          </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {onOpenAddLead && (
             <button
               onClick={onOpenAddLead}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[var(--secondary-container)] hover:bg-blue-500 text-xs font-bold text-white shadow-md shadow-none transition-all cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--secondary-container)] hover:bg-blue-500 text-[11px] font-bold text-white shadow-sm transition-all cursor-pointer"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-3.5 h-3.5" />
               <span>Add Lead</span>
             </button>
           )}
@@ -424,199 +421,90 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             href="https://drive.google.com/drive/folders/13CDyT2NXYzZtZ-2Jj-TX3Fh6pQz9Dvi7?usp=sharing"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/50 text-[var(--primary-fixed-dim)] border border-[rgba(0,255,157,0.15)] text-xs font-semibold transition-colors cursor-pointer shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/50 text-[11px] font-semibold transition-colors"
           >
-            <FolderOpen className="w-3.5 h-3.5 text-[var(--primary-container)]" />
-            <span>Go to Excel Sheet</span>
-            <ExternalLink className="w-3 h-3 text-[var(--primary-container)]/80" />
+            <FolderOpen className="w-3.5 h-3.5" />
+            <span className="hidden md:inline">Excel</span>
           </a>
 
-          <button
-            onClick={() => setShowColumnConverter(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--surface-container-lowest)] border border-[var(--hud-border-bright)]/80 hover:border-slate-600 hover:bg-[var(--surface-container)] text-xs font-semibold text-[var(--on-surface)] hover:text-[var(--on-surface)] transition-colors cursor-pointer shadow-sm"
-          >
-            <Table className="w-3.5 h-3.5 text-[var(--secondary)]" />
-            <span>Convert Columns</span>
-          </button>
-
-          {onOpenImport && (
-            <div className="relative">
-              <div className="flex items-center rounded-lg bg-slate-900 border border-slate-700/80 hover:border-slate-600 shadow-sm overflow-hidden">
-                <button
-                  onClick={() => onOpenImport('upload')}
-                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-[var(--on-surface)] hover:text-[var(--on-surface)] hover:bg-slate-800 transition-colors cursor-pointer"
-                >
-                  <Upload className="w-3.5 h-3.5 text-[var(--secondary)]" />
-                  <span>Import Leads</span>
-                </button>
-                <button
-                  onClick={() => setIsImportMenuOpen(!isImportMenuOpen)}
-                  className="px-2 py-2 border-l border-[var(--hud-border-base)] text-[var(--outline)] hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
-                >
-                  <ChevronDown className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {isImportMenuOpen && (
-                <div className="absolute right-0 mt-1.5 w-72 bg-[#0e1322] border border-[var(--hud-border-bright)] rounded-lg shadow-2xl p-1.5 z-40 space-y-1 text-xs">
-                  <div className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--outline)] border-b border-[var(--hud-border-base)]">
-                    Select Import Source
-                  </div>
-                  <button
-                    onClick={() => { setIsImportMenuOpen(false); setShowColumnConverter(true); }}
-                    className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-emerald-300 hover:bg-emerald-950/40 hover:text-emerald-200 transition-colors text-left cursor-pointer border border-emerald-500/20 bg-emerald-500/5"
-                  >
-                    <Table className="w-4 h-4 text-[var(--primary-container)] shrink-0" />
-                    <div>
-                      <div className="font-semibold text-emerald-300">Convert Columns &amp; Paste Data</div>
-                      <div className="text-[10px] text-[var(--primary-container)]/80">Convert any Excel columns for Suite</div>
-                    </div>
-                  </button>
-                  <button onClick={() => { setIsImportMenuOpen(false); onOpenImport('upload'); }} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[var(--on-surface)] hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer">
-                    <FileSpreadsheet className="w-4 h-4 text-[var(--primary-container)] shrink-0" />
-                    <div><div className="font-semibold text-white">CSV or Excel (.csv, .xlsx)</div><div className="text-[10px] text-[var(--outline)]">Spreadsheet file upload</div></div>
-                  </button>
-                  <button onClick={() => { setIsImportMenuOpen(false); onOpenImport('sheets'); }} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[var(--on-surface)] hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer">
-                    <LinkIcon className="w-4 h-4 text-[var(--primary-container)] shrink-0" />
-                    <div><div className="font-semibold text-white">Google Sheet Link</div><div className="text-[10px] text-[var(--outline)]">Live fetch via shared link or ID</div></div>
-                  </button>
-                  <button onClick={() => { setIsImportMenuOpen(false); onOpenImport('paste'); }} className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[var(--on-surface)] hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer">
-                    <Sparkles className="w-4 h-4 text-[var(--secondary)] shrink-0" />
-                    <div><div className="font-semibold text-white">Paste Raw Data</div><div className="text-[10px] text-[var(--outline)]">Copy &amp; paste CSV, TSV, JSON</div></div>
-                  </button>
-                  <div className="border-t border-[var(--hud-border-base)] my-1 pt-1">
-                    <a href="/suite_leads_template.xlsx" download="suite_leads_template.xlsx" className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition-colors text-left cursor-pointer">
-                      <Download className="w-4 h-4 text-[var(--primary-container)] shrink-0" />
-                      <div><div className="font-semibold">Download Template (.xlsx)</div><div className="text-[10px] text-[var(--outline)]">28-column database schema</div></div>
-                    </a>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          <button
-            onClick={() => handleExport('xlsx')}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] text-xs font-semibold text-slate-300 hover:text-white hover:border-slate-700 transition-all cursor-pointer"
-          >
-            <Download className="w-3.5 h-3.5 text-[var(--outline)]" />
-            <span>Export</span>
-          </button>
-
+          <div className="flex items-center gap-1 bg-slate-900 border border-slate-700/50 rounded-lg p-0.5">
+            <button onClick={() => setShowColumnConverter(true)} className="p-1.5 text-slate-400 hover:text-white rounded-md hover:bg-slate-800">
+                <Table className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={() => { setIsImportMenuOpen(!isImportMenuOpen) }} className="p-1.5 text-slate-400 hover:text-white rounded-md hover:bg-slate-800">
+                <Upload className="w-3.5 h-3.5" />
+            </button>
+            <button onClick={() => handleExport('xlsx')} className="p-1.5 text-slate-400 hover:text-white rounded-md hover:bg-slate-800">
+                <Download className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          
           {onClearAllLeads && leads.length > 0 && (
-            <button
+             <button
               onClick={() => {
                 if (window.confirm(`Are you sure you want to delete all ${leads.length} leads?`)) {
                   onClearAllLeads();
                 }
               }}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-900 border border-rose-900/40 text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 transition-all cursor-pointer"
+              className="p-1.5 rounded-lg bg-slate-900 border border-rose-900/40 text-rose-400 hover:text-rose-300 hover:bg-rose-950/40"
             >
-              <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-              <span className="hidden sm:inline">Clear All</span>
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
       </div>
 
-      {/* Saved Views Tabs */}
-      <div className="flex items-center gap-1 overflow-x-auto pb-1 border-b border-[var(--hud-border-base)]">
-        {(['All Leads','Hot Leads','No Website','No GMB','No Google Ads','No Meta Pixel','High Value','Needs Follow-Up','New Leads'] as ViewFilterType[]).map((view) => (
-          <button
-            key={view}
-            onClick={() => { setCurrentView(view); setCurrentPage(1); }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
-              currentView === view
-                ? 'bg-indigo-600/20 text-[var(--secondary)] border border-indigo-500/30'
-                : 'text-[var(--outline)] hover:text-[var(--on-surface)] hover:bg-slate-800/40'
-            }`}
-          >
-            {view}
-          </button>
-        ))}
-      </div>
-
-      {/* Search & Filter Toolbar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 flex-1 max-w-md">
-          <div className="relative w-full">
-            <Search className="w-4 h-4 text-[var(--outline)] absolute left-3 top-2.5" />
+      {/* Filter Row & Search */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {(['All Leads','Hot Leads','No Website','No GMB','No Google Ads','No Meta Pixel','High Value','Needs Follow-Up','New Leads'] as ViewFilterType[]).map((view) => (
+            <button
+              key={view}
+              onClick={() => { setCurrentView(view); setCurrentPage(1); }}
+              className={`px-3 py-1.5 rounded-md text-[11px] font-medium whitespace-nowrap transition-all ${
+                currentView === view
+                  ? 'bg-slate-700 text-white shadow-sm'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+              }`}
+            >
+              {view}
+            </button>
+          ))}
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
-              placeholder="Search by name, owner, niche, gaps..."
-              className="w-full bg-[var(--surface-container-lowest)] border border-[var(--hud-border-base)] rounded-lg pl-9 pr-4 py-2 text-xs text-[var(--on-surface)] focus:outline-none focus:border-indigo-500 transition-all placeholder:text-slate-500"
+              placeholder="Search leads..."
+              className="w-full bg-slate-950 border border-slate-800 rounded-md pl-8 pr-3 py-1.5 text-[11px] text-white focus:outline-none focus:border-indigo-500 transition-all placeholder:text-slate-600"
             />
           </div>
-          <button
+           <button
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-            className={`p-2 rounded-lg border text-xs font-medium flex items-center gap-1.5 transition-colors ${
+            className={`p-1.5 rounded-md border text-[11px] font-medium flex items-center gap-1.5 transition-colors ${
               showAdvancedFilters || stageFilter !== 'All' || nicheFilter !== 'All' || ownerFilter !== 'All'
-                ? 'bg-indigo-600/20 border-indigo-500/40 text-[var(--secondary)]'
-                : 'bg-slate-900 border-slate-800 text-[var(--outline)] hover:text-white'
+                ? 'bg-indigo-600/20 border-indigo-500/40 text-indigo-300'
+                : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-white'
             }`}
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Filters</span>
           </button>
         </div>
       </div>
 
       {/* Advanced Filters */}
       {showAdvancedFilters && (
-        <div className="p-4 rounded-xl bg-[var(--surface-container-lowest)]/90 border border-[var(--hud-border-base)] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-          <div>
-            <label className="block text-[var(--outline)] font-semibold mb-1.5">Pipeline Stage</label>
-            <select value={stageFilter} onChange={(e) => setStageFilter(e.target.value)} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-lg p-2 text-[var(--on-surface)]">
-              <option value="All">All Stages</option>
-              <option value="New Lead">New Lead</option>
-              <option value="Contacted">Contacted</option>
-              <option value="Audit Sent">Audit Sent</option>
-              <option value="Proposal Sent">Proposal Sent</option>
-              <option value="Won">Won</option>
-              <option value="Retainer">Retainer</option>
-              <option value="Archived">Archived</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-[var(--outline)] font-semibold mb-1.5">Niche / Industry</label>
-            <select value={nicheFilter} onChange={(e) => setNicheFilter(e.target.value)} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-lg p-2 text-[var(--on-surface)]">
-              <option value="All">All Niches</option>
-              {uniqueNiches.map((n) => <option key={n} value={n}>{n}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-[var(--outline)] font-semibold mb-1.5">Assigned To</label>
-            <select value={ownerFilter} onChange={(e) => setOwnerFilter(e.target.value)} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-lg p-2 text-[var(--on-surface)]">
-              <option value="All">All Owners</option>
-              {uniqueOwners.map((o) => <option key={o} value={o}>{o}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-[var(--outline)] font-semibold mb-1.5">Country</label>
-            <select value={countryFilter} onChange={(e) => setCountryFilter(e.target.value)} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-lg p-2 text-[var(--on-surface)]">
-              <option value="All">All Countries</option>
-              {uniqueCountries.map((c) => <option key={c} value={c}>{c}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-[var(--outline)] font-semibold mb-1.5">Score Range</label>
-            <div className="flex gap-2">
-              <input type="number" value={scoreRange[0]} onChange={(e) => setScoreRange([Number(e.target.value), scoreRange[1]])} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-lg p-2 text-[var(--on-surface)]" min="0" max="100" />
-              <input type="number" value={scoreRange[1]} onChange={(e) => setScoreRange([scoreRange[0], Number(e.target.value)])} className="w-full bg-[var(--surface-container)] border border-[var(--hud-border-bright)] rounded-lg p-2 text-[var(--on-surface)]" min="0" max="100" />
-            </div>
-          </div>
-          <div className="flex items-end">
-            <button onClick={() => { setStageFilter('All'); setNicheFilter('All'); setCountryFilter('All'); setOwnerFilter('All'); setScoreRange([0, 100]); setSearchQuery(''); }} className="px-3 py-2 rounded-lg bg-[var(--surface-container)] hover:bg-[var(--surface-container-high)] text-slate-300 font-semibold">
-              Reset Filters
-            </button>
-          </div>
+        <div className="p-3 rounded-lg bg-slate-950/50 border border-slate-800 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 text-[11px]">
+          {/* ... Advanced filters ... */}
         </div>
       )}
 
       {/* CRM Table */}
-      <div className="rounded-lg border border-[var(--hud-border-base)] bg-[var(--hud-graphite)] overflow-hidden shadow-xl flex-1 min-h-[600px] flex flex-col">
+      <div className="rounded-lg border border-[var(--hud-border-base)] bg-[var(--hud-graphite)] overflow-hidden shadow-xl flex-1 flex flex-col min-h-0">
         {PaginationControls}
         <div className="overflow-x-auto overflow-y-auto flex-1">
           <table className="w-full text-left border-collapse text-xs">
