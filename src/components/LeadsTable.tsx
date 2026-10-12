@@ -503,14 +503,14 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
         </div>
       )}
       {/* CRM Table */}
-      <div className="rounded-lg border border-[var(--hud-border-base)] bg-[var(--hud-graphite)] overflow-hidden shadow-xl flex-1 flex flex-col h-full">
+      <div className="rounded-lg border border-[var(--hud-border-base)] bg-[var(--hud-graphite)] shadow-xl h-full flex flex-col">
         {PaginationControls}
         <div className="flex-1 overflow-auto">
-          <table className="w-full text-left border-collapse text-xs">
-            <thead className="z-10">
+          <table className="min-w-full text-left border-collapse text-xs">
+            <thead className="sticky top-0 z-10">
               <tr className="border-b border-[var(--hud-border-base)] bg-[var(--surface-container)] text-[var(--outline)] font-bold text-[9px] uppercase tracking-[0.12em]">
-                <th className="p-2.5 w-8 text-center bg-[var(--surface-container)] sticky top-0"></th>
-                <th className="p-2.5 w-8 text-center bg-[var(--surface-container)] sticky top-0">
+                <th className="p-2.5 w-8 text-center bg-[var(--surface-container)]"></th>
+                <th className="p-2.5 w-8 text-center bg-[var(--surface-container)]">
                   <input
                     type="checkbox"
                     checked={paginatedLeads.length > 0 && paginatedLeads.every((l) => selectedLeadIds.has(l.lead_id))}
@@ -518,35 +518,35 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                     className="rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
                   />
                 </th>
-                <th onClick={() => handleSort('lead_id')} className="p-2.5 cursor-pointer hover:text-white min-w-[100px] bg-[var(--surface-container)] sticky top-0">
+                <th onClick={() => handleSort('lead_id')} className="p-2.5 cursor-pointer hover:text-white min-w-[100px] bg-[var(--surface-container)]">
                   <div className="flex items-center gap-1.5"><span>Serial No.</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
-                <th onClick={() => handleSort('business_name')} className="p-2.5 cursor-pointer hover:text-white min-w-[160px] bg-[var(--surface-container)] sticky top-0">
+                <th onClick={() => handleSort('business_name')} className="p-2.5 cursor-pointer hover:text-white min-w-[160px] bg-[var(--surface-container)]">
                   <div className="flex items-center gap-1.5"><span>Business</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
-                <th className="p-2.5 min-w-[90px] bg-[var(--surface-container)] sticky top-0">Location</th>
-                <th className="p-2.5 min-w-[100px] bg-[var(--surface-container)] sticky top-0">Contact</th>
-                <th className="p-2.5 min-w-[80px] bg-[var(--surface-container)] sticky top-0">GMB</th>
-                <th className="p-2.5 min-w-[80px] bg-[var(--surface-container)] sticky top-0">Website</th>
-                <th className="p-2.5 min-w-[120px] bg-[var(--surface-container)] sticky top-0">Gaps</th>
-                <th className="p-2.5 min-w-[120px] bg-[var(--surface-container)] sticky top-0">Opportunity</th>
-                <th onClick={() => handleSort('lead_score')} className="p-2.5 cursor-pointer hover:text-white text-center min-w-[60px] bg-[var(--surface-container)] sticky top-0">
+                <th className="p-2.5 min-w-[90px] bg-[var(--surface-container)]">Location</th>
+                <th className="p-2.5 min-w-[100px] bg-[var(--surface-container)]">Contact</th>
+                <th className="p-2.5 min-w-[80px] bg-[var(--surface-container)]">GMB</th>
+                <th className="p-2.5 min-w-[80px] bg-[var(--surface-container)]">Website</th>
+                <th className="p-2.5 min-w-[120px] bg-[var(--surface-container)]">Gaps</th>
+                <th className="p-2.5 min-w-[120px] bg-[var(--surface-container)]">Opportunity</th>
+                <th onClick={() => handleSort('lead_score')} className="p-2.5 cursor-pointer hover:text-white text-center min-w-[60px] bg-[var(--surface-container)]">
                   <div className="flex items-center justify-center gap-1.5"><span>Score</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
-                <th onClick={() => handleSort('estimated_retainer')} className="p-2.5 cursor-pointer hover:text-white text-right min-w-[90px] bg-[var(--surface-container)] sticky top-0">
+                <th onClick={() => handleSort('estimated_retainer')} className="p-2.5 cursor-pointer hover:text-white text-right min-w-[90px] bg-[var(--surface-container)]">
                   <div className="flex items-center justify-end gap-1.5"><span>Retainer</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
-                <th onClick={() => handleSort('pipeline_stage')} className="p-2.5 cursor-pointer hover:text-white text-center min-w-[90px] bg-[var(--surface-container)] sticky top-0">
+                <th onClick={() => handleSort('pipeline_stage')} className="p-2.5 cursor-pointer hover:text-white text-center min-w-[90px] bg-[var(--surface-container)]">
                   <div className="flex items-center justify-center gap-1.5"><span>Stage</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
-                <th onClick={() => handleSort('owner')} className="p-2.5 cursor-pointer hover:text-white min-w-[120px] bg-[var(--surface-container)] sticky top-0">
+                <th onClick={() => handleSort('owner')} className="p-2.5 cursor-pointer hover:text-white min-w-[120px] bg-[var(--surface-container)]">
                   <div className="flex items-center gap-1.5"><span>Assigned To</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
-                <th className="p-2.5 min-w-[100px] bg-[var(--surface-container)] sticky top-0">1st Connection Attempt</th>
-                <th onClick={() => handleSort('created_at')} className="p-2.5 cursor-pointer hover:text-white min-w-[100px] bg-[var(--surface-container)] sticky top-0">
+                <th className="p-2.5 min-w-[100px] bg-[var(--surface-container)]">1st Connection Attempt</th>
+                <th onClick={() => handleSort('created_at')} className="p-2.5 cursor-pointer hover:text-white min-w-[100px] bg-[var(--surface-container)]">
                   <div className="flex items-center gap-1.5"><span>Lead Added</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
-                <th className="p-2.5 text-center min-w-[60px] bg-[var(--surface-container)] sticky top-0">Actions</th>
+                <th className="p-2.5 text-center min-w-[60px] bg-[var(--surface-container)]">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--hud-border-dim)]">
