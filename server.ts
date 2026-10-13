@@ -2769,6 +2769,7 @@ app.post('/api/telephony/calls/start', async (req, res) => {
   try {
     const {
       leadId,
+      serialNo,
       businessName,
       contactName,
       phoneNumber,
@@ -2776,6 +2777,9 @@ app.post('/api/telephony/calls/start', async (req, res) => {
       leadScore,
       opportunity,
       estimatedRetainer,
+      location,
+      pipelineStage,
+      research,
     } = req.body;
 
     if (!phoneNumber) {
@@ -2784,6 +2788,7 @@ app.post('/api/telephony/calls/start', async (req, res) => {
 
     const session = await telephonyManager.startCall({
       leadId,
+      serialNo,
       businessName,
       contactName,
       phoneNumber,
@@ -2791,6 +2796,9 @@ app.post('/api/telephony/calls/start', async (req, res) => {
       leadScore,
       opportunity,
       estimatedRetainer,
+      location,
+      pipelineStage,
+      research,
     });
 
     res.json({ success: true, session });
