@@ -50,74 +50,55 @@ export class TelnyxVoiceProvider implements VoiceProvider {
     
     const normalizedTo = phoneResult.e164;
 
-    // If Telnyx API key is present in environment, call the real Telnyx Call Control v2 API
-    if (this.apiKey) {
-      const response = await fetch('https://api.telnyx.com/v2/calls', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.apiKey}`,
-        },
-        body: JSON.stringify({
-          to: normalizedTo,
-          from: fromNumber,
-          connection_id: process.env.TELNYX_CONNECTION_ID,
-          custom_headers: [
-            { name: 'X-MCA-Call-ID', value: params.callId },
-          ],
-          client_state: Buffer.from(JSON.stringify({ callId: params.callId })).toString('base64'),
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const callControlId = data.data?.call_control_id;
-
-        console.log('[PSTN] Destination call created, call_control_id:', callControlId);
-
-        // Bridge the agent into the call
-        const agentPhone = process.env.TELNYX_AGENT_PHONE_NUMBER;
-        if (agentPhone && callControlId) {
-          console.log('[PSTN] Bridging agent phone:', agentPhone);
-          const bridgeRes = await fetch(
-            `https://api.telnyx.com/v2/calls/${callControlId}/actions/transfer`,
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${this.apiKey}`,
-              },
-              body: JSON.stringify({
-                to: agentPhone,
-                from: fromNumber,
-              }),
-            }
-          );
-          if (!bridgeRes.ok) {
-            const bridgeErr = await bridgeRes.json().catch(() => ({}));
-            console.warn('[PSTN] Agent bridge failed:', bridgeRes.status, bridgeErr);
-          } else {
-            console.log('[PSTN] Agent bridge initiated successfully');
-          }
-        } else {
-          console.warn('[PSTN] TELNYX_AGENT_PHONE_NUMBER not set — no agent audio bridge');
-        }
-
-        return {
-          providerCallId: callControlId,
-          status: 'CALLING',
-        };
-      } else {
-        const errData = await response.json().catch(() => ({}));
-        const telnyxErr = errData?.errors?.[0]?.detail || JSON.stringify(errData);
-        if (response.status === 422) {
-          throw new Error(`Telnyx Configuration Error (422): ${telnyxErr}. Please check your TELNYX_CONNECTION_ID in your environment variables.`);
-        }
-        throw new Error(`Telnyx API Error: ${response.status} - ${telnyxErr}`);
-      }
+    // Route through Sophia AI agent (/api/outbound/call) so that:
+    //   1. Sophia owns the Telnyx dial (correct webhook URL, AMD, recording)
+    //   2. serialNo is stored in client_state and Redis → CRM lookup works
+    //   3. Greeting TTS is pre-rendered before the phone is picked up
+    const sophiaUrl = (process.env.AI_BACKEND_URL || '').replace(/\/$/, '');
+    if (!sophiaUrl) {
+      throw new Error('AI_BACKEND_URL is not configured. Set it to http://mca-agent:8000 (or the public URL).');
     }
-    
-    throw new Error('TELNYX_API_KEY is not configured on the server.');
+
+    const meta = params.metadata || {};
+    const sophiaPayload: Record<string, any> = {
+      leadPhone:     normalizedTo,
+      leadName:      meta.businessName || '',
+      serialNo:      meta.serialNo     || '',
+      leadId:        meta.leadId        || '',
+      location:      meta.location      || '',
+      pipelineStage: meta.pipelineStage || 'New Lead',
+      research:      meta.research      || {},
+    };
+
+    console.log(`[Telephony] Routing dial through Sophia: ${sophiaUrl}/api/outbound/call | serial=${sophiaPayload.serialNo} leadId=${sophiaPayload.leadId}`);
+
+    const sophiaRes = await fetch(`${sophiaUrl}/api/outbound/call`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // WEBAPP_SECRET is the shared secret Sophia checks on /api/outbound/call
+        ...(process.env.WEBAPP_SECRET ? { 'x-mca-secret': process.env.WEBAPP_SECRET } : {}),
+      },
+      body: JSON.stringify(sophiaPayload),
+    });
+
+    if (!sophiaRes.ok) {
+      const errText = await sophiaRes.text().catch(() => '');
+      throw new Error(`Sophia dial failed (${sophiaRes.status}): ${errText.slice(0, 200)}`);
+    }
+
+    const sophiaData = await sophiaRes.json();
+    // Sophia returns { status, callControlId, callSessionId, leadName, leadPhone, spokenName }
+    const callControlId: string = sophiaData.callControlId || sophiaData.call_control_id || '';
+    if (!callControlId) {
+      throw new Error(`Sophia returned no callControlId: ${JSON.stringify(sophiaData).slice(0, 200)}`);
+    }
+
+    console.log(`[Telephony] Sophia accepted dial | callControlId=${callControlId}`);
+    return {
+      providerCallId: callControlId,
+      status: 'CALLING',
+    };
   }
 
   public async terminateCall(providerCallId: string): Promise<{ success: boolean; status: string }> {
@@ -277,6 +258,7 @@ class TelephonyServerManager {
 
   public async startCall(params: {
     leadId?: string;
+    serialNo?: string;
     businessName?: string;
     contactName?: string;
     phoneNumber: string;
@@ -284,6 +266,9 @@ class TelephonyServerManager {
     leadScore?: number;
     opportunity?: string;
     estimatedRetainer?: number;
+    location?: string;
+    pipelineStage?: string;
+    research?: Record<string, any>;
   }): Promise<ServerCallSession> {
     const callId = `call_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     
@@ -295,7 +280,14 @@ class TelephonyServerManager {
     const result = await this.voiceProvider.initiateCall({
       to: params.phoneNumber,
       callId,
-      metadata: { leadId: params.leadId },
+      metadata: {
+        leadId: params.leadId,
+        serialNo: params.serialNo,
+        businessName: params.businessName,
+        location: params.location,
+        pipelineStage: params.pipelineStage,
+        research: params.research,
+      },
     });
 
     const now = Date.now();
