@@ -3800,6 +3800,7 @@ async function saveAiCall(body: any) {
     evidence = '', auditStatus = '', capturedEmail = '', capturedPhone = '', callbackWhen = '',
     duration = 0, answered, endedAt, agentName = 'Sophia', callObjective = '', primaryCTA = '',
   } = body;
+  console.log('[saveAiCall] Received payload:', JSON.stringify({ leadId, leadName, leadPhone }));
   if (!leadId || !leadPhone) return { http: 400, body: { error: 'leadId and leadPhone are required' } };
 
   const { db } = await import('./src/db/index.js');
@@ -3821,6 +3822,14 @@ async function saveAiCall(body: any) {
       if (phoneRows.length > 0) numericLeadId = phoneRows[0].id;
     } catch (e) {
       console.error('[saveAiCall] Fallback phone lookup failed:', e);
+    }
+  }
+  if (!numericLeadId && leadName) {
+    try {
+      const nameRows: any[] = await db.execute(sqlExpr`SELECT id FROM leads WHERE business_name ILIKE ${leadName} LIMIT 1`);
+      if (nameRows.length > 0) numericLeadId = nameRows[0].id;
+    } catch (e) {
+      console.error('[saveAiCall] Fallback name lookup failed:', e);
     }
   }
   if (!numericLeadId) return { http: 200, body: { status: 'skipped', reason: 'lead-not-found' } };
