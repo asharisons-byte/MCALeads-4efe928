@@ -96,6 +96,7 @@ export const TelephonyService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           leadId: lead?.lead_id,
+          serialNo: lead?.id != null ? String(lead.id) : undefined,
           businessName: lead?.business_name || 'Prospect Contact',
           contactName: lead?.contact_name,
           phoneNumber,
@@ -103,6 +104,14 @@ export const TelephonyService = {
           leadScore: lead?.lead_score,
           opportunity: lead?.opportunity_angle || lead?.recommended_service,
           estimatedRetainer: lead?.estimated_retainer,
+          location: lead?.city || '',
+          pipelineStage: lead?.pipeline_stage || 'New Lead',
+          research: lead?.gmb_status || lead?.website_status ? {
+            verified: true,
+            gmbStatus: lead?.gmb_status,
+            websiteStatus: lead?.website_status,
+            gmbReviewCount: lead?.gmb_review_count,
+          } : undefined,
         }),
       });
       if (res.ok) {
