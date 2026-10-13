@@ -3811,14 +3811,17 @@ async function saveAiCall(body: any) {
   let numericLeadId: number | null = null;
   try {
     const leadRows: any[] = await db.execute(sqlExpr`SELECT id FROM leads WHERE lead_id = ${leadId} OR id::text = ${String(leadId)} LIMIT 1`);
+    console.log(`[saveAiCall] Database lookup for leadId "${leadId}" (type: ${typeof leadId}) returned:`, JSON.stringify(leadRows));
     if (leadRows.length > 0) numericLeadId = leadRows[0].id;
-  } catch (_) {
+  } catch (err) {
+    console.error(`[saveAiCall] Database query error for leadId "${leadId}":`, err);
     const parsed = parseInt(String(leadId), 10);
     if (!isNaN(parsed)) numericLeadId = parsed;
   }
   if (!numericLeadId && leadPhone) {
     try {
       const phoneRows: any[] = await db.execute(sqlExpr`SELECT id FROM leads WHERE phone = ${leadPhone} OR phone_e164 = ${leadPhone} LIMIT 1`);
+      console.log(`[saveAiCall] Fallback phone lookup for "${leadPhone}" returned:`, JSON.stringify(phoneRows));
       if (phoneRows.length > 0) numericLeadId = phoneRows[0].id;
     } catch (e) {
       console.error('[saveAiCall] Fallback phone lookup failed:', e);
@@ -3827,6 +3830,7 @@ async function saveAiCall(body: any) {
   if (!numericLeadId && leadName) {
     try {
       const nameRows: any[] = await db.execute(sqlExpr`SELECT id FROM leads WHERE business_name ILIKE ${leadName} LIMIT 1`);
+      console.log(`[saveAiCall] Fallback name lookup for "${leadName}" returned:`, JSON.stringify(nameRows));
       if (nameRows.length > 0) numericLeadId = nameRows[0].id;
     } catch (e) {
       console.error('[saveAiCall] Fallback name lookup failed:', e);
