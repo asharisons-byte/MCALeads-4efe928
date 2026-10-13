@@ -3808,14 +3808,41 @@ async function saveAiCall(body: any) {
   const { eq, sql: sqlExpr } = await import('drizzle-orm');
 
   let numericLeadId: number | null = null;
+  
+  // 1. Prioritize ID Lookup
   try {
     const leadRows: any[] = await db.execute(sqlExpr`SELECT id FROM leads WHERE lead_id = ${leadId} OR id::text = ${String(leadId)} LIMIT 1`);
-    if (leadRows.length > 0) numericLeadId = leadRows[0].id;
-  } catch (_) {
+    if (leadRows.length > 0) {
+      numericLeadId = leadRows[0].id;
+    } else {
+      console.log(`[saveAiCall] Primary lead lookup failed for ID: ${leadId}`);
+    }
+  } catch (err) {
+    console.error(`[saveAiCall] Primary lookup query error for ID: ${leadId}`, err);
     const parsed = parseInt(String(leadId), 10);
     if (!isNaN(parsed)) numericLeadId = parsed;
   }
-  if (!numericLeadId) return { http: 200, body: { status: 'skipped', reason: 'lead-not-found' } };
+
+  // 2. Fallback Phone Lookup
+  if (!numericLeadId && leadPhone) {
+    console.log(`[saveAiCall] Attempting fallback lookup by phone: ${leadPhone}`);
+    try {
+      const phoneRows: any[] = await db.execute(sqlExpr`SELECT id FROM leads WHERE phone = ${leadPhone} OR phone_e164 = ${leadPhone} LIMIT 1`);
+      if (phoneRows.length > 0) {
+        numericLeadId = phoneRows[0].id;
+      } else {
+        console.warn(`[saveAiCall] Fallback phone lookup failed for phone: ${leadPhone}`);
+      }
+    } catch (e) {
+      console.error('[saveAiCall] Fallback phone lookup query error:', e);
+    }
+  }
+
+  // 3. Final Check
+  if (!numericLeadId) {
+    console.error(`[saveAiCall] Critical: Could not resolve lead. leadId=${leadId}, leadPhone=${leadPhone}`);
+    return { http: 200, body: { status: 'skipped', reason: 'lead-not-found' } };
+  }
 
   const t = (turns as Array<{ role: string; content: string }>);
   const fullTranscript = t.map(x => `${x.role === 'assistant' ? agentName : 'Prospect'}: ${x.content}`).join('\n');
@@ -3919,8 +3946,14 @@ app.post('/api/call-callback/recording', async (req: express.Request, res: expre
     const { schema } = await import('./src/db/index.js');
     if (!db) return res.json({ status: 'skipped', reason: 'no-db' });
     const { eq } = await import('drizzle-orm');
-    const existing = await db.select().from(schema.calls).where(eq(schema.calls.externalCallId, callControlId)).limit(1);
-    if (!existing[0]) return res.status(503).json({ error: 'call-not-saved-yet' });
+    let existing: any[] = [];
+    // Retry loop for recording event arrival race condition
+    for (let attempt = 0; attempt < 3; attempt++) {
+      existing = await db.select().from(schema.calls).where(eq(schema.calls.externalCallId, callControlId)).limit(1);
+      if (existing.length > 0) break;
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+    if (existing.length === 0) return res.status(503).json({ error: 'call-not-saved-yet-after-retry' });
     await db.update(schema.calls).set({ recordingUrl: stableRecordingUrl(callControlId, recordingUrl) }).where(eq(schema.calls.id, existing[0].id));
     return res.json({ status: 'attached', callId: existing[0].id });
   } catch (error: any) {
