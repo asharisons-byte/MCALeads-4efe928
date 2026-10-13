@@ -3808,41 +3808,22 @@ async function saveAiCall(body: any) {
   const { eq, sql: sqlExpr } = await import('drizzle-orm');
 
   let numericLeadId: number | null = null;
-  
-  // 1. Prioritize ID Lookup
   try {
     const leadRows: any[] = await db.execute(sqlExpr`SELECT id FROM leads WHERE lead_id = ${leadId} OR id::text = ${String(leadId)} LIMIT 1`);
-    if (leadRows.length > 0) {
-      numericLeadId = leadRows[0].id;
-    } else {
-      console.log(`[saveAiCall] Primary lead lookup failed for ID: ${leadId}`);
-    }
-  } catch (err) {
-    console.error(`[saveAiCall] Primary lookup query error for ID: ${leadId}`, err);
+    if (leadRows.length > 0) numericLeadId = leadRows[0].id;
+  } catch (_) {
     const parsed = parseInt(String(leadId), 10);
     if (!isNaN(parsed)) numericLeadId = parsed;
   }
-
-  // 2. Fallback Phone Lookup
   if (!numericLeadId && leadPhone) {
-    console.log(`[saveAiCall] Attempting fallback lookup by phone: ${leadPhone}`);
     try {
       const phoneRows: any[] = await db.execute(sqlExpr`SELECT id FROM leads WHERE phone = ${leadPhone} OR phone_e164 = ${leadPhone} LIMIT 1`);
-      if (phoneRows.length > 0) {
-        numericLeadId = phoneRows[0].id;
-      } else {
-        console.warn(`[saveAiCall] Fallback phone lookup failed for phone: ${leadPhone}`);
-      }
+      if (phoneRows.length > 0) numericLeadId = phoneRows[0].id;
     } catch (e) {
-      console.error('[saveAiCall] Fallback phone lookup query error:', e);
+      console.error('[saveAiCall] Fallback phone lookup failed:', e);
     }
   }
-
-  // 3. Final Check
-  if (!numericLeadId) {
-    console.error(`[saveAiCall] Critical: Could not resolve lead. leadId=${leadId}, leadPhone=${leadPhone}`);
-    return { http: 200, body: { status: 'skipped', reason: 'lead-not-found' } };
-  }
+  if (!numericLeadId) return { http: 200, body: { status: 'skipped', reason: 'lead-not-found' } };
 
   const t = (turns as Array<{ role: string; content: string }>);
   const fullTranscript = t.map(x => `${x.role === 'assistant' ? agentName : 'Prospect'}: ${x.content}`).join('\n');
