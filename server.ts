@@ -3937,13 +3937,15 @@ app.post('/api/call-callback/recording', async (req: express.Request, res: expre
     if (!db) return res.json({ status: 'skipped', reason: 'no-db' });
     const { eq } = await import('drizzle-orm');
     let existing: any[] = [];
-    // Retry loop for recording event arrival race condition
-    for (let attempt = 0; attempt < 3; attempt++) {
+    let delay = 1000;
+    // Exponential backoff retry loop for recording event arrival race condition
+    for (let attempt = 0; attempt < 5; attempt++) {
       existing = await db.select().from(schema.calls).where(eq(schema.calls.externalCallId, callControlId)).limit(1);
       if (existing.length > 0) break;
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      delay *= 2;
     }
-    if (existing.length === 0) return res.status(503).json({ error: 'call-not-saved-yet-after-retry' });
+    if (existing.length === 0) return res.status(503).json({ error: 'call-not-saved-yet-after-exponential-retry' });
     await db.update(schema.calls).set({ recordingUrl: stableRecordingUrl(callControlId, recordingUrl) }).where(eq(schema.calls.id, existing[0].id));
     return res.json({ status: 'attached', callId: existing[0].id });
   } catch (error: any) {
