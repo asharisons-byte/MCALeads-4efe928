@@ -3828,8 +3828,17 @@ async function saveAiCall(body: any) {
   // 2. Fallback to leadId (text field)
   if (!numericLeadId && leadId) {
     try {
-      const leadRows: any[] = await db.execute(sqlExpr`SELECT id FROM leads WHERE lead_id = ${leadId} OR id::text = ${String(leadId)} OR business_name ILIKE ${leadId} LIMIT 1`);
-      console.log(`[saveAiCall] Database lookup for leadId "${leadId}" returned:`, JSON.stringify(leadRows));
+      const cleanLeadId = String(leadId).replace(/^MCA-/, '');
+      const leadRows: any[] = await db.execute(sqlExpr`
+        SELECT id FROM leads 
+        WHERE lead_id = ${String(leadId)} 
+        OR lead_id = ${cleanLeadId}
+        OR id::text = ${String(leadId)} 
+        OR id::text = ${cleanLeadId}
+        OR business_name ILIKE ${String(leadId)} 
+        LIMIT 1
+      `);
+      console.log(`[saveAiCall] Database lookup for leadId "${leadId}" (clean: ${cleanLeadId}) returned:`, JSON.stringify(leadRows));
       if (leadRows.length > 0) numericLeadId = leadRows[0].id;
     } catch (err) {
       console.error(`[saveAiCall] Database query error for leadId "${leadId}":`, err);
