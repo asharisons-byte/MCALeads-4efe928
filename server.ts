@@ -3923,7 +3923,30 @@ async function saveAiCall(body: any) {
         sentiment: ['hot', 'qualified', 'interested', 'video_requested'].includes(cat) ? 'POSITIVE' : 'NEUTRAL',
         nextSteps, followUpDate: callbackWhen || null,
       });
-    } catch (e) { console.warn('[call-callback] callSummaries insert skipped:', e); }
+      
+      // Automatic pipeline advancement: New Lead -> Contacted
+      const leadResult = await db.select({ stage: schema.leads.pipelineStage }).from(schema.leads).where(eq(schema.leads.id, numericLeadId));
+      if (leadResult.length > 0 && leadResult[0].stage === 'New Lead') {
+        await db.execute(sqlExpr`UPDATE leads SET pipeline_stage = 'Contacted' WHERE id = ${numericLeadId}`);
+        await db.insert(schema.activities).values({
+          leadId: numericLeadId,
+          activityType: 'pipeline_stage_changed',
+          title: 'Stage Changed to Contacted',
+          description: 'Automatically advanced from New Lead to Contacted following a successful phone connection.',
+          metadata: { previous_stage: 'New Lead', new_stage: 'Contacted', reason: `Call connected with outcome: ${outcome}` },
+        });
+        console.log(`[saveAiCall] Automatically advanced lead ${numericLeadId} to Contacted.`);
+      }
+      
+      // Log the call completion activity
+      await db.insert(schema.activities).values({
+        leadId: numericLeadId,
+        activityType: 'call_completed',
+        title: `Call Completed: ${label}`,
+        description: aiSummary,
+        metadata: { call_id: callRow.id, outcome: label, duration: dur },
+      });
+    } catch (e) { console.warn('[call-callback] callSummaries/stage/activity update failed:', e); }
     // Only an explicit meeting moves the pipeline. Audit/video requests are follow-up tasks, not meetings.
     if (/\b(meeting|appointment)\b/i.test(`${outcome} ${label}`) && !/not/i.test(label)) {
       try { await db.execute(sqlExpr`UPDATE leads SET pipeline_stage = 'Meeting Booked' WHERE id = ${numericLeadId}`); } catch { /* non-fatal */ }
@@ -3971,16 +3994,16 @@ app.post('/api/call-callback/recording', async (req: express.Request, res: expre
     const { schema } = await import('./src/db/index.js');
     if (!db) return res.json({ status: 'skipped', reason: 'no-db' });
     const { eq } = await import('drizzle-orm');
+    // Faster retry loop to prevent Vercel timeout
     let existing: any[] = [];
-    let delay = 1000;
-    // Exponential backoff retry loop for recording event arrival race condition
-    for (let attempt = 0; attempt < 5; attempt++) {
+    let delay = 500;
+    for (let attempt = 0; attempt < 3; attempt++) {
       existing = await db.select().from(schema.calls).where(eq(schema.calls.externalCallId, callControlId)).limit(1);
       if (existing.length > 0) break;
       await new Promise((resolve) => setTimeout(resolve, delay));
       delay *= 2;
     }
-    if (existing.length === 0) return res.status(503).json({ error: 'call-not-saved-yet-after-exponential-retry' });
+    if (existing.length === 0) return res.status(503).json({ error: 'call-not-saved-yet-after-retry' });
     await db.update(schema.calls).set({ recordingUrl: stableRecordingUrl(callControlId, recordingUrl) }).where(eq(schema.calls.id, existing[0].id));
     return res.json({ status: 'attached', callId: existing[0].id });
   } catch (error: any) {
