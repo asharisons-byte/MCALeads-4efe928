@@ -3998,7 +3998,7 @@ app.post('/api/call-callback/recording', async (req: express.Request, res: expre
     let existing: any[] = [];
     let delay = 500;
     for (let attempt = 0; attempt < 3; attempt++) {
-      existing = await db.select().from(schema.calls).where(eq(schema.calls.externalCallId, callControlId)).limit(1);
+      existing = await db.select({id: schema.calls.id}).from(schema.calls).where(eq(schema.calls.externalCallId, callControlId)).limit(1);
       if (existing.length > 0) break;
       await new Promise((resolve) => setTimeout(resolve, delay));
       delay *= 2;
