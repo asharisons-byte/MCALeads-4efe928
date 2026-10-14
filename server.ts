@@ -3796,12 +3796,15 @@ function stableRecordingUrl(callControlId: string, fallback: string): string {
 
 async function saveAiCall(body: any) {
   const {
-    leadId, leadName, leadPhone, callControlId, turns = [], outcome = 'unclear', outcomeCategory = '',
+    leadId, serialNo, leadName, leadPhone, callControlId, turns = [], outcome = 'unclear', outcomeCategory = '',
     evidence = '', auditStatus = '', capturedEmail = '', capturedPhone = '', callbackWhen = '',
     duration = 0, answered, endedAt, agentName = 'Sophia', callObjective = '', primaryCTA = '',
   } = body;
-  console.log('[saveAiCall] Received payload:', JSON.stringify({ leadId, leadName, leadPhone }));
-  if (!leadId || !leadPhone) return { http: 400, body: { error: 'leadId and leadPhone are required' } };
+  console.log('[saveAiCall] Full payload:', JSON.stringify(body));
+  
+  if ((!leadId && !serialNo) || !leadPhone) {
+    return { http: 400, body: { error: 'leadId/serialNo and leadPhone are required' } };
+  }
 
   const { db } = await import('./src/db/index.js');
   const { schema } = await import('./src/db/index.js');
@@ -3809,15 +3812,31 @@ async function saveAiCall(body: any) {
   const { eq, sql: sqlExpr } = await import('drizzle-orm');
 
   let numericLeadId: number | null = null;
-  try {
-    const leadRows: any[] = await db.execute(sqlExpr`SELECT id FROM leads WHERE lead_id = ${leadId} OR id::text = ${String(leadId)} OR business_name ILIKE ${leadId} LIMIT 1`);
-    console.log(`[saveAiCall] Database lookup for leadId "${leadId}" (type: ${typeof leadId}) returned:`, JSON.stringify(leadRows));
-    if (leadRows.length > 0) numericLeadId = leadRows[0].id;
-  } catch (err) {
-    console.error(`[saveAiCall] Database query error for leadId "${leadId}":`, err);
-    const parsed = parseInt(String(leadId), 10);
-    if (!isNaN(parsed)) numericLeadId = parsed;
+
+  // 1. Prioritize serialNo (database ID)
+  if (serialNo) {
+    const serialParsed = parseInt(String(serialNo), 10);
+    if (!isNaN(serialParsed)) {
+      const serialRows: any[] = await db.execute(sqlExpr`SELECT id FROM leads WHERE id = ${serialParsed} LIMIT 1`);
+      if (serialRows.length > 0) {
+        numericLeadId = serialRows[0].id;
+        console.log(`[saveAiCall] Matched via serialNo: ${serialNo} -> id: ${numericLeadId}`);
+      }
+    }
   }
+
+  // 2. Fallback to leadId (text field)
+  if (!numericLeadId && leadId) {
+    try {
+      const leadRows: any[] = await db.execute(sqlExpr`SELECT id FROM leads WHERE lead_id = ${leadId} OR id::text = ${String(leadId)} OR business_name ILIKE ${leadId} LIMIT 1`);
+      console.log(`[saveAiCall] Database lookup for leadId "${leadId}" returned:`, JSON.stringify(leadRows));
+      if (leadRows.length > 0) numericLeadId = leadRows[0].id;
+    } catch (err) {
+      console.error(`[saveAiCall] Database query error for leadId "${leadId}":`, err);
+    }
+  }
+
+  // 3. Fallback to Phone
   if (!numericLeadId && leadPhone) {
     try {
       const phoneRows: any[] = await db.execute(sqlExpr`SELECT id FROM leads WHERE phone = ${leadPhone} OR phone_e164 = ${leadPhone} LIMIT 1`);
@@ -3827,6 +3846,8 @@ async function saveAiCall(body: any) {
       console.error('[saveAiCall] Fallback phone lookup failed:', e);
     }
   }
+
+  // 4. Fallback to Business Name
   if (!numericLeadId && leadName) {
     try {
       const nameRows: any[] = await db.execute(sqlExpr`SELECT id FROM leads WHERE business_name ILIKE ${leadName} LIMIT 1`);
@@ -3836,6 +3857,7 @@ async function saveAiCall(body: any) {
       console.error('[saveAiCall] Fallback name lookup failed:', e);
     }
   }
+
   if (!numericLeadId) return { http: 200, body: { status: 'skipped', reason: 'lead-not-found' } };
 
   const t = (turns as Array<{ role: string; content: string }>);
