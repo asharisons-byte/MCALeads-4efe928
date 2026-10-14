@@ -95,22 +95,53 @@ export function App() {
   const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
   const [currentTab, setCurrentTab] = useState<NavigationItem>('dashboard');
   const [currentPage, setCurrentPage] = useState(1);
+  const [filters, setFilters] = useState<{ stages: string[], locations: string[] }>({ stages: [], locations: [] });
 
-  // Global search filtering
+  // Global search and filter logic
+  const filteredLeads = useMemo(() => {
+    let result = leads;
+    
+    // Search
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (l) =>
+          l.lead_id?.toLowerCase().includes(q) ||
+          l.business_name.toLowerCase().includes(q) ||
+          l.city?.toLowerCase().includes(q) ||
+          l.state?.toLowerCase().includes(q) ||
+          l.county?.toLowerCase().includes(q) ||
+          l.contact_name?.toLowerCase().includes(q) ||
+          l.email?.toLowerCase().includes(q) ||
+          l.phone?.toLowerCase().includes(q) ||
+          l.gmb_status?.toLowerCase().includes(q) ||
+          l.website?.toLowerCase().includes(q) ||
+          l.gaps?.some(g => g.toLowerCase().includes(q)) ||
+          l.opportunity_angle?.toLowerCase().includes(q) ||
+          l.recommended_service?.toLowerCase().includes(q) ||
+          String(l.lead_score).includes(q) ||
+          String(l.estimated_retainer).includes(q) ||
+          l.pipeline_stage.toLowerCase().includes(q) ||
+          l.owner.toLowerCase().includes(q) ||
+          new Date(l.created_at).toLocaleDateString().toLowerCase().includes(q)
+      );
+    }
+
+    // Filters
+    if (filters.stages.length > 0) {
+      result = result.filter(lead => filters.stages.includes(lead.pipeline_stage || 'Unknown'));
+    }
+    if (filters.locations.length > 0) {
+      result = result.filter(lead => filters.locations.includes(lead.city || 'Unknown'));
+    }
+
+    return result;
+  }, [leads, searchQuery, filters]);
+  // Global search results for header dropdown
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
-    const q = searchQuery.toLowerCase();
-    return (leads || []).filter(
-      (l) =>
-        l.business_name.toLowerCase().includes(q) ||
-        l.phone?.toLowerCase().includes(q) ||
-        l.email?.toLowerCase().includes(q) ||
-        l.niche?.toLowerCase().includes(q) ||
-        l.city?.toLowerCase().includes(q) ||
-        l.lead_id?.toLowerCase().includes(q) ||
-        l.opportunity_angle?.toLowerCase().includes(q)
-    );
-  }, [leads, searchQuery]);
+    return filteredLeads.slice(0, 6);
+  }, [filteredLeads, searchQuery]);
 
   // Open agency action alerts (drives the footer dock badge)
   const agencyAlertsCount = useMemo(() => {
@@ -522,6 +553,9 @@ export function App() {
             setSearchQuery('');
           }}
           notificationsCount={activities.length}
+          filters={filters}
+          onFilterChange={setFilters}
+          leads={leads}
         />
 
         {/* View Routing */}
@@ -678,7 +712,7 @@ export function App() {
             currentTab === 'lead_scoring' ||
             currentTab === 'opportunities' ? (
             <LeadsPage
-              leads={leads}
+              leads={filteredLeads}
               activities={activities}
               selectedLeadIds={selectedLeadIds}
               onSelectionChange={setSelectedLeadIds}

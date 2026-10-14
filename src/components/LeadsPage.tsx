@@ -1,19 +1,3 @@
-/**
- * LeadsPage — hosts LeadsTable + all Bulk Actions, fully wired end-to-end.
- *
- * Bulk Action strategy:
- *  AI Call      → places each call through the Python backend (/api/outbound/call, same as
- *                 SophiaAICallModal) and waits for it to end before dialing the next lead.
- *                 Cancel hangs up the call in progress.
- *  Manual Call  → opens props.onOpenDialer(lead), user clicks "Next Lead" in overlay to advance
- *  SMS          → generateSophiaSMS() + sendOutboundSMS(), 5-min BST gap between each send
- *  Email        → generateSophiaEmail() + markEmailPrepared() + Gmail compose, 5-min BST gap
- *  Bulk Tag     → updateLead(id, { tags: [tag] }) for all selected
- *  Assign       → onBulkUpdateStage(ids, 'Contacted')
- *  Advance Stage → advances each lead one stage forward
- *  Enrich AI    → delegates to parent onTriggerAIEnrichment
- */
-
 import React, { useState, useRef, useCallback } from 'react';
 import { LeadsTable } from './LeadsTable';
 import { BulkActionsToolbar } from './BulkActionsToolbar';
@@ -403,7 +387,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       />
 
       <div className="flex-1 flex flex-col min-h-0">
-        <LeadsTable {...props} activities={activities} />
+        <LeadsTable {...props} leads={leads} activities={activities} />
       </div>
     </div>
   );

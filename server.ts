@@ -3810,7 +3810,7 @@ async function saveAiCall(body: any) {
 
   let numericLeadId: number | null = null;
   try {
-    const leadRows: any[] = await db.execute(sqlExpr`SELECT id FROM leads WHERE lead_id = ${leadId} OR id::text = ${String(leadId)} LIMIT 1`);
+    const leadRows: any[] = await db.execute(sqlExpr`SELECT id FROM leads WHERE lead_id = ${leadId} OR id::text = ${String(leadId)} OR business_name ILIKE ${leadId} LIMIT 1`);
     console.log(`[saveAiCall] Database lookup for leadId "${leadId}" (type: ${typeof leadId}) returned:`, JSON.stringify(leadRows));
     if (leadRows.length > 0) numericLeadId = leadRows[0].id;
   } catch (err) {

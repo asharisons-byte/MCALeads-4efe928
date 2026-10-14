@@ -542,7 +542,9 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 <th onClick={() => handleSort('owner')} className="p-2.5 cursor-pointer hover:text-white min-w-[120px] bg-[var(--surface-container)]">
                   <div className="flex items-center gap-1.5"><span>Assigned To</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
-                <th className="p-2.5 min-w-[100px] bg-[var(--surface-container)]">1st Connection Attempt</th>
+                <th onClick={() => handleSort('first_connection_attempt' as any)} className="p-2.5 cursor-pointer hover:text-white min-w-[100px] bg-[var(--surface-container)]">
+                  <div className="flex items-center gap-1.5"><span>1st Connection Attempt</span><ArrowUpDown className="w-3 h-3" /></div>
+                </th>
                 <th onClick={() => handleSort('created_at')} className="p-2.5 cursor-pointer hover:text-white min-w-[100px] bg-[var(--surface-container)]">
                   <div className="flex items-center gap-1.5"><span>Lead Added</span><ArrowUpDown className="w-3 h-3" /></div>
                 </th>
