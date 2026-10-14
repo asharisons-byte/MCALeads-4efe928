@@ -3808,8 +3808,9 @@ async function saveAiCall(body: any) {
 
   const { db } = await import('./src/db/index.js');
   const { schema } = await import('./src/db/index.js');
+  const { markDbLeadContacted } = await import('./src/db/repository.js');
   if (!db) return { http: 200, body: { status: 'skipped', reason: 'no-db' } };
-  const { eq, sql: sqlExpr } = await import('drizzle-orm');
+  const { eq, and, gte, sql: sqlExpr } = await import('drizzle-orm');
 
   let numericLeadId: number | null = null;
 
@@ -3891,16 +3892,64 @@ async function saveAiCall(body: any) {
     const existing = await db.select().from(schema.calls).where(eq(schema.calls.externalCallId, callControlId)).limit(1);
     callRow = existing[0] || null;
   }
+  
+  if (!callRow && numericLeadId && leadPhone) {
+    // Deduplicate: if a call to this lead from this phone exists within the last 5 minutes,
+    // treat it as the same call (browser posted before agent posted with CID)
+    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const recentCalls = await db.select()
+      .from(schema.calls)
+      .where(
+        and(
+          eq(schema.calls.leadId, numericLeadId),
+          eq(schema.calls.phone, leadPhone),
+          gte(schema.calls.startedAt, fiveMinAgo)
+        )
+      )
+      .limit(1);
+    if (recentCalls.length > 0) {
+      callRow = recentCalls[0];
+      console.log('[saveAiCall] Dedup match by lead+phone+time | existing callId:', callRow.id);
+    }
+  }
   if (callRow) {
     // The agent's record (real duration, evidence-based outcome) wins over the browser's timer; never shrink a transcript.
     const fromAgent = body.hangupReason !== undefined || body.outcomeCategory !== undefined;
     const patch: any = {};
     if (fromAgent) Object.assign(patch, { callOutcome: label, aiSummary, status, durationSeconds: dur, endedAt: endedDate });
+    if (callControlId && !callRow.externalCallId) Object.assign(patch, { externalCallId: callControlId });
     if (fullTranscript.length > (callRow.transcript || '').length) Object.assign(patch, { transcript: fullTranscript, transcriptStatus: 'COMPLETED' });
     if (Object.keys(patch).length) await db.update(schema.calls).set(patch).where(eq(schema.calls.id, callRow.id));
+    
+    // Log activity on update
+    if (fromAgent) {
+      try {
+        await db.insert(schema.activities).values({
+          leadId: numericLeadId,
+          activityType: 'ai_call_made',
+          title: `AI Call Update — ${label}`,
+          description: aiSummary,
+          metadata: {
+            callId: callRow.id,
+            call_outcome: label,
+            duration: dur,
+            outcome_category: cat,
+            agent: agentName,
+          },
+          createdAt: endedDate,
+        });
+      } catch (actErr: any) {
+        console.warn('[saveAiCall] Activity insert (update) skipped:', actErr?.message);
+      }
+    }
+    
+    if (numericLeadId && cat !== 'failed_call') {
+      await markDbLeadContacted(numericLeadId, { channel: 'Call', reason: `AI outbound call update — outcome: ${label}` }).catch((e: any) => console.warn('[saveAiCall] markDbLeadContacted (update) failed:', e?.message));
+    }
     return { http: 200, body: { status: 'updated', callId: callRow.id, leadId: numericLeadId } };
   }
 
+  console.log('[saveAiCall] Inserting call row | externalCallId:', callControlId, '| leadId:', numericLeadId);
   const [created] = await db.insert(schema.calls).values({
     leadId: numericLeadId, phone: leadPhone, contactPhone: leadPhone, direction: 'Outbound',
     provider: callControlId ? 'Telnyx-Sophia' : 'Sophia-Simulation', externalCallId: callControlId || null,
@@ -3909,6 +3958,27 @@ async function saveAiCall(body: any) {
     startedAt: new Date(endedDate.getTime() - dur * 1000), endedAt: endedDate,
   }).returning();
   callRow = created;
+  console.log('[saveAiCall] Call row saved | id:', callRow?.id, '| externalCallId:', callControlId);
+
+  // Track activity for LeadsTable "1st Connection Attempt" column
+  try {
+    await db.insert(schema.activities).values({
+      leadId: numericLeadId,
+      activityType: 'ai_call_made',
+      title: `AI Call — ${label}`,
+      description: aiSummary,
+      metadata: {
+        callId: callRow?.id,
+        call_outcome: label,
+        duration: dur,
+        outcome_category: cat,
+        agent: agentName,
+      },
+      createdAt: endedDate,
+    });
+  } catch (actErr: any) {
+    console.warn('[saveAiCall] Activity insert skipped:', actErr?.message);
+  }
 
   if (callRow && t.length > 0) {
     await db.insert(schema.callTranscripts).values(t.map((x, i) => ({
@@ -3939,19 +4009,34 @@ async function saveAiCall(body: any) {
       }
       
       // Log the call completion activity
-      await db.insert(schema.activities).values({
-        leadId: numericLeadId,
-        activityType: 'call_completed',
-        title: `Call Completed: ${label}`,
-        description: aiSummary,
-        metadata: { call_id: callRow.id, outcome: label, duration: dur },
-      });
+      try {
+        await db.insert(schema.activities).values({
+          leadId: numericLeadId,
+          activityType: 'ai_call_made',
+          title: `AI Call — ${label}`,
+          description: aiSummary,
+          metadata: {
+            callId: callRow.id,
+            call_outcome: label,
+            duration: dur,
+            outcome_category: cat,
+            agent: agentName,
+          },
+        });
+      } catch (actErr: any) {
+        console.warn('[saveAiCall] Activity insert skipped:', actErr?.message);
+      }
     } catch (e) { console.warn('[call-callback] callSummaries/stage/activity update failed:', e); }
     // Only an explicit meeting moves the pipeline. Audit/video requests are follow-up tasks, not meetings.
     if (/\b(meeting|appointment)\b/i.test(`${outcome} ${label}`) && !/not/i.test(label)) {
       try { await db.execute(sqlExpr`UPDATE leads SET pipeline_stage = 'Meeting Booked' WHERE id = ${numericLeadId}`); } catch { /* non-fatal */ }
     }
   }
+  
+  if (numericLeadId && cat !== 'failed_call') {
+    await markDbLeadContacted(numericLeadId, { channel: 'Call', reason: `AI outbound call — outcome: ${label}` }).catch((e: any) => console.warn('[saveAiCall] markDbLeadContacted failed:', e?.message));
+  }
+  
   return { http: 200, body: { status: 'saved', callId: callRow?.id, transcriptTurns: t.length, leadId: numericLeadId } };
 }
 
@@ -3990,21 +4075,25 @@ app.post('/api/call-callback/recording', async (req: express.Request, res: expre
   try {
     const { callControlId, recordingUrl = '' } = req.body || {};
     if (!callControlId) return res.status(400).json({ error: 'callControlId required' });
+    console.log(`[call-callback/recording] Starting attachment for CID: ${callControlId}`);
     const { db } = await import('./src/db/index.js');
     const { schema } = await import('./src/db/index.js');
-    if (!db) return res.json({ status: 'skipped', reason: 'no-db' });
-    const { eq } = await import('drizzle-orm');
-    // Faster retry loop to prevent Vercel timeout
-    let existing: any[] = [];
-    let delay = 500;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      existing = await db.select({id: schema.calls.id}).from(schema.calls).where(eq(schema.calls.externalCallId, callControlId)).limit(1);
-      if (existing.length > 0) break;
-      await new Promise((resolve) => setTimeout(resolve, delay));
-      delay *= 2;
+    if (!db) {
+      console.log('[call-callback/recording] DB not configured');
+      return res.json({ status: 'skipped', reason: 'no-db' });
     }
-    if (existing.length === 0) return res.status(503).json({ error: 'call-not-saved-yet-after-retry' });
+    const { eq } = await import('drizzle-orm');
+    // Immediate DB lookup to prevent Vercel timeout
+    console.log(`[call-callback/recording] Searching for call ${callControlId}`);
+    const existing = await db.select({id: schema.calls.id}).from(schema.calls).where(eq(schema.calls.externalCallId, callControlId)).limit(1);
+    
+    if (existing.length === 0) {
+      console.log(`[call-callback/recording] Call ${callControlId} not found`);
+      return res.status(503).json({ error: 'call-not-saved-yet' });
+    }
+    console.log(`[call-callback/recording] Found call ID: ${existing[0].id}. Updating URL.`);
     await db.update(schema.calls).set({ recordingUrl: stableRecordingUrl(callControlId, recordingUrl) }).where(eq(schema.calls.id, existing[0].id));
+    console.log(`[call-callback/recording] Successfully attached recording to call ID: ${existing[0].id}`);
     return res.json({ status: 'attached', callId: existing[0].id });
   } catch (error: any) {
     console.error('[call-callback/recording] Error:', error);
