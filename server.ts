@@ -4096,26 +4096,48 @@ app.post('/api/call-callback/webhook', async (req: express.Request, res: express
 app.post('/api/call-callback/recording', async (req: express.Request, res: express.Response) => {
   if (!checkAgentSecret(req)) return res.status(401).json({ error: 'Unauthorized' });
   try {
-    const { callControlId, recordingUrl = '' } = req.body || {};
-    if (!callControlId) return res.status(400).json({ error: 'callControlId required' });
-    console.log(`[call-callback/recording] Starting attachment for CID: ${callControlId}`);
+    const { callControlId, callSessionId, callLegId, recordingUrl = '' } = req.body || {};
+    console.log(`[call-callback/recording] Request body:`, JSON.stringify(req.body));
+    
+    // CID might be different, try multiple identifiers
+    const cid = callControlId || '';
+    const sid = callSessionId || '';
+    const legId = callLegId || '';
+    
+    if (!cid && !sid && !legId) return res.status(400).json({ error: 'identifier required' });
+    
+    console.log(`[call-callback/recording] Starting attachment. CIDs: ${cid}, SID: ${sid}, LegID: ${legId}`);
     const { db } = await import('./src/db/index.js');
     const { schema } = await import('./src/db/index.js');
     if (!db) {
       console.log('[call-callback/recording] DB not configured');
       return res.json({ status: 'skipped', reason: 'no-db' });
     }
-    const { eq } = await import('drizzle-orm');
-    // Immediate DB lookup to prevent Vercel timeout
-    console.log(`[call-callback/recording] Searching for call ${callControlId}`);
-    const existing = await db.select({id: schema.calls.id}).from(schema.calls).where(eq(schema.calls.externalCallId, callControlId)).limit(1);
+    const { eq, or, desc } = await import('drizzle-orm');
     
+    // Search by any of the possible identifiers
+    console.log(`[call-callback/recording] Searching for call with multiple identifiers. CID: ${cid}, SID: ${sid}, LegID: ${legId}`);
+    
+    let existing = await db.select({id: schema.calls.id, externalCallId: schema.calls.externalCallId})
+      .from(schema.calls)
+      .where(or(
+        cid ? eq(schema.calls.externalCallId, cid) : undefined,
+      ))
+      .limit(1);
+
     if (existing.length === 0) {
-      console.log(`[call-callback/recording] Call ${callControlId} not found`);
+      console.log(`[call-callback/recording] Call not found using CID: ${cid}. Attempting table dump.`);
+      // Debug: see if the record exists at all
+      const allRecent = await db.select({id: schema.calls.id, externalCallId: schema.calls.externalCallId})
+        .from(schema.calls)
+        .orderBy(desc(schema.calls.createdAt))
+        .limit(5);
+      console.log(`[call-callback/recording] 5 most recent calls:`, JSON.stringify(allRecent));
+      
       return res.status(503).json({ error: 'call-not-saved-yet' });
     }
     console.log(`[call-callback/recording] Found call ID: ${existing[0].id}. Updating URL.`);
-    await db.update(schema.calls).set({ recordingUrl: stableRecordingUrl(callControlId, recordingUrl) }).where(eq(schema.calls.id, existing[0].id));
+    await db.update(schema.calls).set({ recordingUrl: stableRecordingUrl(cid, recordingUrl) }).where(eq(schema.calls.id, existing[0].id));
     console.log(`[call-callback/recording] Successfully attached recording to call ID: ${existing[0].id}`);
     return res.json({ status: 'attached', callId: existing[0].id });
   } catch (error: any) {
