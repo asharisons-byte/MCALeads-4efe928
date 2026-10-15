@@ -3935,6 +3935,7 @@ async function saveAiCall(body: any) {
             duration: dur,
             outcome_category: cat,
             agent: agentName,
+            publicLeadId: leadId, // Add this
           },
           createdAt: endedDate,
         });
@@ -4001,6 +4002,7 @@ async function saveAiCall(body: any) {
             duration: dur,
             outcome_category: cat,
             agent: agentName,
+            publicLeadId: leadId, // Add this
           },
         });
       } catch (actErr: any) {

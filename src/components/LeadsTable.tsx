@@ -134,7 +134,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   const [assignError, setAssignError] = useState<string | null>(null);
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
-  const [isImportMenuOpen, setIsImportMenuOpen] = useState(false);
+
   const [showColumnConverter, setShowColumnConverter] = useState(false);
   const [expandedLeadId, setExpandedLeadId] = useState<string | null>(null);
 
@@ -431,7 +431,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             <button onClick={() => setShowColumnConverter(true)} className="p-1.5 text-slate-400 hover:text-white rounded-md hover:bg-slate-800">
                 <Table className="w-3.5 h-3.5" />
             </button>
-            <button onClick={() => { setIsImportMenuOpen(!isImportMenuOpen) }} className="p-1.5 text-slate-400 hover:text-white rounded-md hover:bg-slate-800">
+            <button onClick={() => onOpenImport?.('upload')} className="p-1.5 text-slate-400 hover:text-white rounded-md hover:bg-slate-800">
                 <Upload className="w-3.5 h-3.5" />
             </button>
             <button onClick={() => handleExport('xlsx')} className="p-1.5 text-slate-400 hover:text-white rounded-md hover:bg-slate-800">
@@ -640,7 +640,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                         <td className="p-2.5 text-[10px] text-slate-500">
                           {(() => {
                             const leadActivities = activities
-                              .filter((a) => a.lead_id === lead.lead_id)
+                              .filter((a) => a.lead_id === lead.lead_id || (a.metadata as any)?.publicLeadId === lead.lead_id)
                               .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
                             const firstContact = leadActivities.find((a) => 
                               ['call_completed', 'call_connected', 'call_started', 'ai_call_made', 'sms_sent', 'sms_received', 'email_sent'].includes(a.type)
