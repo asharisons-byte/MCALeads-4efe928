@@ -3960,26 +3960,6 @@ async function saveAiCall(body: any) {
   callRow = created;
   console.log('[saveAiCall] Call row saved | id:', callRow?.id, '| externalCallId:', callControlId);
 
-  // Track activity for LeadsTable "1st Connection Attempt" column
-  try {
-    await db.insert(schema.activities).values({
-      leadId: numericLeadId,
-      activityType: 'ai_call_made',
-      title: `AI Call — ${label}`,
-      description: aiSummary,
-      metadata: {
-        callId: callRow?.id,
-        call_outcome: label,
-        duration: dur,
-        outcome_category: cat,
-        agent: agentName,
-      },
-      createdAt: endedDate,
-    });
-  } catch (actErr: any) {
-    console.warn('[saveAiCall] Activity insert skipped:', actErr?.message);
-  }
-
   if (callRow && t.length > 0) {
     await db.insert(schema.callTranscripts).values(t.map((x, i) => ({
       callId: callRow.id, speaker: x.role === 'assistant' ? `${agentName} (AI)` : 'Contractor',
