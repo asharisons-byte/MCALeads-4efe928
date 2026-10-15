@@ -1,14 +1,15 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { LeadsTable } from './LeadsTable';
 import { BulkActionsToolbar } from './BulkActionsToolbar';
 import { BulkTagModal } from './BulkTagModal';
 import { BulkProgressOverlay } from './BulkProgressOverlay';
 import { BulkQueueController, BulkProgress } from '../services/bulkQueueService';
-import { Lead, ActivityEvent } from '../types';
+import { Lead, ActivityEvent, PipelineStage } from '../types';
 import { sendOutboundSMS, generateSophiaSMS } from '../services/messagingService';
 import { generateSophiaEmail, markEmailPrepared, saveEmailDraft, buildGmailComposeUrl } from '../services/emailService';
 import { checkAIBackend, runAICall, INTER_CALL_PAUSE_MS, bulkSleep } from '../services/bulkAICallService';
 import { updateLead, addActivity } from '../services/leadService';
+import { Filter, X } from 'lucide-react';
 
 // ── Props ─────────────────────────────────────────────────────────────────────
 
@@ -35,10 +36,12 @@ interface LeadsPageProps {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
+const ALL_STAGES: PipelineStage[] = ['New Lead', 'Contacted', 'Audit Sent', 'Proposal Sent', 'Won', 'Retainer', 'Archived'];
+
 const OUTREACH_GAP_MS = 5 * 60 * 1000; // 5 minutes between each SMS or Email
 
 const STAGE_ORDER: string[] = [
-  'New Lead', 'Contacted', 'Audit Sent', 'Proposal Sent', 'Won', 'Archived',
+  'New Lead', 'Contacted', 'Audit Sent', 'Proposal Sent', 'Won', 'Retainer', 'Archived',
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -59,7 +62,25 @@ function nextStage(current?: string): string {
 export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
   const { leads, activities, selectedLeadIds, activeBulkProgress, setActiveBulkProgress } = props;
 
+  const [selectedStages, setSelectedStages] = useState<PipelineStage[]>([]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('leads_stage_filter');
+    if (saved) {
+      setSelectedStages(JSON.parse(saved));
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('leads_stage_filter', JSON.stringify(selectedStages));
+  }, [selectedStages]);
+
+  const filteredLeads = selectedStages.length === 0 
+    ? leads 
+    : leads.filter(l => selectedStages.includes(l.pipeline_stage as PipelineStage));
+
   const [showTagModal, setShowTagModal] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
   const activeControllerRef = useRef<BulkQueueController | null>(null);
   const leadsRef = useRef(leads);
   leadsRef.current = leads;
@@ -352,21 +373,56 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="flex flex-col w-full h-full px-4 py-4 gap-0">
-      <BulkActionsToolbar
-        selectedCount={selectedLeadIds.size}
-        onBulkEnrich={handleBulkEnrich}
-        onBulkDelete={() => props.onBulkDelete(Array.from(selectedLeadIds))}
-        onBulkAICall={handleBulkAICall}
-        onBulkManualCall={handleBulkManualCall}
-        onBulkSMS={handleBulkSMS}
-        onBulkEmail={handleBulkEmail}
-        onBulkTag={() => setShowTagModal(true)}
-        onBulkAssign={handleBulkAssign}
-        onBulkMoveStage={handleBulkMoveStage}
-        onBulkArchive={() => props.onBulkUpdateStage(Array.from(selectedLeadIds), 'Archived')}
-        onBulkChangeStage={handleBulkMoveStage}
-        onBulkAddToCampaign={() => console.log('Add to Campaign')}
-      />
+      <div className="flex items-center gap-4 mb-3">
+        <BulkActionsToolbar
+          selectedCount={selectedLeadIds.size}
+          onBulkEnrich={handleBulkEnrich}
+          onBulkDelete={() => props.onBulkDelete(Array.from(selectedLeadIds))}
+          onBulkAICall={handleBulkAICall}
+          onBulkManualCall={handleBulkManualCall}
+          onBulkSMS={handleBulkSMS}
+          onBulkEmail={handleBulkEmail}
+          onBulkTag={() => setShowTagModal(true)}
+          onBulkAssign={handleBulkAssign}
+          onBulkMoveStage={handleBulkMoveStage}
+          onBulkArchive={() => props.onBulkUpdateStage(Array.from(selectedLeadIds), 'Archived')}
+          onBulkChangeStage={handleBulkMoveStage}
+          onBulkAddToCampaign={() => console.log('Add to Campaign')}
+        />
+
+        <div className="relative">
+          <button 
+            onClick={() => setShowFilter(!showFilter)}
+            className="flex items-center gap-2 px-3 py-2 bg-indigo-900/50 border border-indigo-700 rounded-md text-xs text-[var(--on-surface-variant)] hover:text-white"
+          >
+            <Filter className="w-3 h-3" />
+            {selectedStages.length > 0 ? `${selectedStages.length} selected` : 'Filter Stages'}
+          </button>
+          {showFilter && (
+            <div className="absolute top-full left-0 z-10 w-48 bg-indigo-950 border border-indigo-700 rounded-md shadow-lg p-2">
+              {ALL_STAGES.map(stage => (
+                <label key={stage} className="flex items-center gap-2 p-1 text-xs text-white hover:bg-indigo-900 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedStages.includes(stage)}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelectedStages([...selectedStages, stage]);
+                      else setSelectedStages(selectedStages.filter(s => s !== stage));
+                    }}
+                  />
+                  {stage}
+                </label>
+              ))}
+              <button 
+                className="w-full mt-2 text-[var(--secondary)] text-xs underline"
+                onClick={() => setSelectedStages([])}
+              >
+                Clear Filters
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
 
       {activeBulkProgress && (
         <BulkProgressOverlay
@@ -387,7 +443,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       />
 
       <div className="flex-1 flex flex-col min-h-0">
-        <LeadsTable {...props} leads={leads} activities={activities} />
+        <LeadsTable {...props} leads={filteredLeads} activities={activities} />
       </div>
     </div>
   );
