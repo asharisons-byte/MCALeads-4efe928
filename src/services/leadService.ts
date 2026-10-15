@@ -585,12 +585,20 @@ export async function deleteLead(leadId: string): Promise<boolean> {
 
 export async function bulkUpdateStage(leadIds: string[], stage: PipelineStage): Promise<void> {
   const current = await getLeads();
-  
+  const timestamp = new Date().toISOString();
+
   for (const id of leadIds) {
     try {
       const lead = current.find(l => l.lead_id === id);
       if (lead && canTransition(lead.pipeline_stage, stage)) {
-        await updateLead(id, { pipeline_stage: stage }, lead);
+        const updates: Partial<Lead> = { pipeline_stage: stage };
+        
+        // If transitioning to 'Contacted' and first attempt hasn't been set, set it now.
+        if (stage === 'Contacted' && !lead.first_connection_attempt) {
+            updates.first_connection_attempt = timestamp;
+        }
+
+        await updateLead(id, updates, lead);
       }
     } catch (err) {
       console.error(`Failed to update stage for lead ${id}:`, err);
