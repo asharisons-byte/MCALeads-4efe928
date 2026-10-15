@@ -461,6 +461,7 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           leadId: lead.lead_id,
+          serialNo: String(lead.id),
           leadName: lead.business_name,
           leadPhone: lead.phone,
           agentName: 'Sophia',
