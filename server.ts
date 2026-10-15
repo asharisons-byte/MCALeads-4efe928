@@ -4040,6 +4040,49 @@ async function saveAiCall(body: any) {
   return { http: 200, body: { status: 'saved', callId: callRow?.id, transcriptTurns: t.length, leadId: numericLeadId } };
 }
 
+// GET /api/calls — returns call history for the CallsView page
+app.get('/api/calls', async (req: express.Request, res: express.Response) => {
+  try {
+    const { db } = await import('./src/db/index.js');
+    const { schema } = await import('./src/db/index.js');
+    if (!db) return res.json({ calls: [] });
+
+    const { desc } = await import('drizzle-orm');
+
+    const rows = await db
+      .select()
+      .from(schema.calls)
+      .orderBy(desc(schema.calls.startedAt))
+      .limit(200);
+
+    // Shape each row into the CallRecord format the frontend expects
+    const calls = rows.map((r: any) => ({
+      call_id: r.externalCallId || String(r.id),
+      business_name: r.leadName || '',
+      contact_name: r.contactName || '',
+      phone_number: r.phone || r.contactPhone || '',
+      direction: (r.direction || 'Outbound') as 'Inbound' | 'Outbound',
+      call_type: 'AI Call' as const,
+      status: r.status || 'Completed',
+      duration: r.durationSeconds || 0,
+      outcome: r.callOutcome || r.outcome || 'Unknown',
+      notes: r.aiSummary || '',
+      next_action: '',
+      date: r.startedAt ? new Date(r.startedAt).toISOString() : new Date().toISOString(),
+      transcript: r.transcript || '',
+      ai_agent: 'Sophia',
+      ai_provider: 'Telnyx-Sophia',
+      recording_url: r.recordingUrl || '',
+      lead_id: r.leadId ? String(r.leadId) : '',
+    }));
+
+    return res.json({ calls });
+  } catch (error: any) {
+    console.error('[GET /api/calls] Error:', error);
+    return res.status(500).json({ error: error.message, calls: [] });
+  }
+});
+
 app.post('/api/call-callback', async (req: express.Request, res: express.Response) => {
   try {
     const r = await saveAiCall(req.body || {});

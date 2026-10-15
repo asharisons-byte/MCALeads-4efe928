@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Phone,
   PhoneCall,
@@ -58,17 +58,51 @@ export const CallsView: React.FC<CallsViewProps> = ({
 
   // Stored calls & Queue
   const [callRecords, setCallRecords] = useState<CallRecord[]>(() => getStoredCallRecords());
+  const hasFetched = useRef(false);
   const [callQueue, setCallQueue] = useState<CallQueueItem[]>(() =>
     TelephonyService.getCallQueue()
   );
+
+  useEffect(() => {
+    if (hasFetched.current) return;
+    hasFetched.current = true;
+    refreshData();
+  }, []);
 
   // Selected Call Detail & Sophia AI Call Modal States
   const [selectedCallForDetail, setSelectedCallForDetail] = useState<CallRecord | null>(null);
   const [isSophiaAICallOpen, setIsSophiaAICallOpen] = useState(false);
   const [sophiaLead, setSophiaLead] = useState<Lead | null>(null);
 
-  const refreshData = () => {
-    setCallRecords(getStoredCallRecords());
+  const refreshData = async () => {
+    // Always keep localStorage calls (browser modal calls live here)
+    const local = getStoredCallRecords();
+
+    try {
+      const res = await fetch('/api/calls');
+      if (res.ok) {
+        const data = await res.json();
+        const serverCalls: CallRecord[] = data.calls || [];
+
+        // Merge: server records win on duplicates (keyed by call_id / externalCallId)
+        const merged = new Map<string, CallRecord>();
+        for (const c of local) merged.set(c.call_id, c);
+        for (const c of serverCalls) {
+          merged.set(c.call_id, c); // Server overrides local
+        }
+
+        // Sort newest first
+        const sorted = Array.from(merged.values()).sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        setCallRecords(sorted);
+      } else {
+        setCallRecords(local);
+      }
+    } catch {
+      setCallRecords(local);
+    }
+
     setCallQueue(TelephonyService.getCallQueue());
   };
 
