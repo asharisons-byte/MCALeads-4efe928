@@ -129,6 +129,7 @@ export async function runAICall(lead: Lead, signal?: AbortSignal): Promise<BulkC
       signal,
       body: JSON.stringify({
         leadId: lead.lead_id,
+        serialNo: String(lead.id),
         leadName: lead.business_name,
         leadPhone: lead.phone,
         agentName: 'Sophia',
