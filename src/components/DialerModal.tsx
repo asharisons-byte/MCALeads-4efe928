@@ -49,6 +49,7 @@ import {
   getStoredCallRecords,
 } from '../services/telephonyService';
 import { TelnyxWebRTCService } from '../services/telnyxWebRTCService';
+import { addActivity } from '../services/leadService';
 
 interface DialerModalProps {
   isOpen: boolean;
@@ -403,6 +404,19 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     const callType: CallType = activeLead ? 'Outbound Call' : 'Manual Call';
     
     try {
+        if (activeLead) {
+          addActivity({
+            id: `act-call-attempt-${Date.now()}`,
+            lead_id: activeLead.lead_id,
+            timestamp: new Date().toISOString(),
+            type: 'call_attempted',
+            activity_type: 'call_attempted',
+            title: 'Manual Call Attempt Initiated',
+            description: `Outbound manual call attempt to ${phoneNumber}`,
+            author: 'Agency User',
+            source: 'Agency User',
+          });
+        }
         const result = await TelephonyService.startCall({
             lead: activeLead,
             phoneNumber,

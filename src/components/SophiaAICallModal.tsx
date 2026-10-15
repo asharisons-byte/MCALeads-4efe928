@@ -456,6 +456,18 @@ export const SophiaAICallModal: React.FC<SophiaAICallModalProps> = ({
       const discoveryQ  = strategy?.discovery_questions || [];
       const objections  = strategy?.objection_handlers || {};
 
+      addActivity({
+        id: `act-call-attempt-${Date.now()}`,
+        lead_id: lead.lead_id,
+        timestamp: new Date().toISOString(),
+        type: 'call_attempted',
+        activity_type: 'call_attempted',
+        title: 'AI Call Attempt Initiated',
+        description: `Outbound AI call attempt to ${lead.phone}`,
+        author: 'Sophia (AI)',
+        source: 'Sophia (AI)',
+      });
+
       const backendRes = await fetch(`${API_BASE}/api/outbound/call`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

@@ -643,7 +643,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                               .filter((a) => a.lead_id === lead.lead_id || (a.metadata as any)?.publicLeadId === lead.lead_id)
                               .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
                             const firstContact = leadActivities.find((a) => 
-                              ['call_completed', 'call_connected', 'call_started', 'ai_call_made', 'sms_sent', 'sms_received', 'email_sent'].includes(a.type)
+                              ['call_attempted', 'call_completed', 'call_connected', 'call_started', 'ai_call_made'].includes(a.type)
                             );
                             return firstContact ? `${new Date(firstContact.timestamp).toLocaleDateString()} ${new Date(firstContact.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} — ${firstContact.metadata?.call_outcome || 'Connected'}` : 'N/A';
                           })()}
