@@ -4113,16 +4113,14 @@ app.post('/api/call-callback/recording', async (req: express.Request, res: expre
       console.log('[call-callback/recording] DB not configured');
       return res.json({ status: 'skipped', reason: 'no-db' });
     }
-    const { eq, or, desc } = await import('drizzle-orm');
+    const { eq, desc } = await import('drizzle-orm');
     
     // Search by any of the possible identifiers
     console.log(`[call-callback/recording] Searching for call with multiple identifiers. CID: ${cid}, SID: ${sid}, LegID: ${legId}`);
     
-    let existing = await db.select({id: schema.calls.id, externalCallId: schema.calls.externalCallId})
+    const existing = await db.select({id: schema.calls.id})
       .from(schema.calls)
-      .where(or(
-        cid ? eq(schema.calls.externalCallId, cid) : undefined,
-      ))
+      .where(eq(schema.calls.externalCallId, cid))
       .limit(1);
 
     if (existing.length === 0) {
