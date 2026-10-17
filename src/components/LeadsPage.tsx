@@ -2,7 +2,10 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { LeadsTable } from './LeadsTable';
 import { BulkActionsToolbar } from './BulkActionsToolbar';
 import { BulkTagModal } from './BulkTagModal';
+import { AddLeadsToCampaignModal } from './command-center/AddLeadsToCampaignModal';
+import { BulkChangeStageModal } from './command-center/BulkChangeStageModal';
 import { BulkProgressOverlay } from './BulkProgressOverlay';
+import { bulkUpdateStage } from '../services/leadService';
 import { BulkQueueController, BulkProgress } from '../services/bulkQueueService';
 import { Lead, ActivityEvent, PipelineStage } from '../types';
 import { sendOutboundSMS, generateSophiaSMS } from '../services/messagingService';
@@ -81,6 +84,8 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
 
   const [showTagModal, setShowTagModal] = useState(false);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
+  const [showAddCampaignModal, setShowAddCampaignModal] = useState(false);
+  const [showChangeStageModal, setShowChangeStageModal] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const activeControllerRef = useRef<BulkQueueController | null>(null);
   const leadsRef = useRef(leads);
@@ -90,6 +95,11 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
   selectedIdsRef.current = selectedLeadIds;
   // Aborts the in-flight AI call (and hangs it up) on cancel / close
   const aiCallAbortRef = useRef<AbortController | null>(null);
+
+  const handleBulkChangeStageConfirm = useCallback(async (stage: PipelineStage) => {
+    await bulkUpdateStage(Array.from(selectedLeadIds), stage);
+    setShowChangeStageModal(false);
+  }, [selectedLeadIds]);
 
   // ── Progress callback ─────────────────────────────────────────────────────
   const onProgress = useCallback((p: BulkProgress) => {
@@ -380,7 +390,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
           onBulkAssign={handleBulkAssign}
           onBulkMoveStage={handleBulkMoveStage}
           onBulkArchive={() => props.onBulkUpdateStage(Array.from(selectedLeadIds), 'Archived')}
-          onBulkChangeStage={() => setShowBulkStageModal(true)}
+          onBulkChangeStage={() => setShowChangeStageModal(true)}
           onBulkDelete={() => setShowConfirmDelete(true)}
           onBulkEnrich={handleBulkEnrich}
           onBulkAICall={handleBulkAICall}
@@ -388,10 +398,21 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
           onBulkSMS={handleBulkSMS}
           onBulkEmail={handleBulkEmail}
           onBulkTag={() => setShowTagModal(true)}
-          onBulkAddToCampaign={() => {
-            // Logic to add to campaign - need modal and service call
-            console.log('TODO: Bulk add to campaign', selectedLeadIds);
-          }}
+          onBulkAddToCampaign={() => setShowAddCampaignModal(true)}
+        />
+        
+        <AddLeadsToCampaignModal
+          isOpen={showAddCampaignModal}
+          onClose={() => setShowAddCampaignModal(false)}
+          leadIds={Array.from(selectedLeadIds)}
+          onSuccess={() => alert('Leads added to campaign')}
+        />
+        
+        <BulkChangeStageModal
+          isOpen={showChangeStageModal}
+          onClose={() => setShowChangeStageModal(false)}
+          selectedCount={selectedLeadIds.size}
+          onConfirm={handleBulkChangeStageConfirm}
         />
 
         <div className="relative">

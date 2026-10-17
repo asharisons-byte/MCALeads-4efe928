@@ -207,6 +207,24 @@ export function addCampaign(campaign: Omit<Campaign, 'id' | 'created_at' | 'last
 }
 
 /**
+ * Add leads to an existing campaign
+ */
+export function addLeadsToCampaign(campaignId: string, leadIds: string[]): void {
+  const campaigns = getCampaigns();
+  const campaign = campaigns.find(c => c.id === campaignId);
+  if (!campaign) return;
+
+  const existingIds = new Set(campaign.enrolled_lead_ids);
+  const newIds = leadIds.filter(id => !existingIds.has(id));
+  
+  if (newIds.length === 0) return;
+
+  campaign.enrolled_lead_ids = [...campaign.enrolled_lead_ids, ...newIds];
+  campaign.last_activity_at = new Date().toISOString();
+  saveCampaigns(campaigns);
+}
+
+/**
  * Date Filtering Helper
  */
 export function isDateInRange(
