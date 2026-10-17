@@ -137,6 +137,24 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
 
   const [showColumnConverter, setShowColumnConverter] = useState(false);
   const [expandedLeadId, setExpandedLeadId] = useState<string | null>(null);
+  
+  // Recent Searches
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [showRecentSearches, setShowRecentSearches] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('recent_leads_searches');
+    if (saved) setRecentSearches(JSON.parse(saved));
+  }, []);
+
+  useEffect(() => {
+    if (!debouncedSearchQuery.trim()) return;
+    setRecentSearches(prev => {
+      const next = [debouncedSearchQuery, ...prev.filter(s => s !== debouncedSearchQuery)].slice(0, 5);
+      localStorage.setItem('recent_leads_searches', JSON.stringify(next));
+      return next;
+    });
+  }, [debouncedSearchQuery]);
 
   // Load team members when bulk reassign modal opens
   useEffect(() => {
@@ -442,18 +460,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             </button>
           </div>
           
-          {onClearAllLeads && leads.length > 0 && (
-             <button
-              onClick={() => {
-                if (window.confirm(`Are you sure you want to delete all ${leads.length} leads?`)) {
-                  onClearAllLeads();
-                }
-              }}
-              className="p-1.5 rounded-lg bg-slate-900 border border-rose-900/40 text-rose-400 hover:text-rose-300 hover:bg-rose-950/40"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          )}
+          {/* Global delete button removed as per security requirements */}
         </div>
       </div>
 
@@ -482,9 +489,25 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+              onFocus={() => setShowRecentSearches(true)}
+              onBlur={() => setTimeout(() => setShowRecentSearches(false), 200)}
               placeholder="Search leads..."
               className="w-full bg-slate-950 border border-slate-800 rounded-md pl-8 pr-3 py-1.5 text-[11px] text-white focus:outline-none focus:border-indigo-500 transition-all placeholder:text-slate-600"
             />
+            {showRecentSearches && recentSearches.length > 0 && (
+              <div className="absolute top-full left-0 right-0 z-20 mt-1 bg-slate-900 border border-slate-700 rounded-md shadow-lg py-1">
+                <div className="px-3 py-1 text-[10px] text-slate-500 font-semibold uppercase">Recent Searches</div>
+                {recentSearches.map((query) => (
+                  <button
+                    key={query}
+                    onClick={() => { setSearchQuery(query); setShowRecentSearches(false); }}
+                    className="w-full text-left px-3 py-1.5 text-[11px] text-slate-300 hover:bg-slate-800 hover:text-white"
+                  >
+                    {query}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
            <button
             onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
@@ -821,7 +844,12 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
             <p className="text-xs text-slate-300 leading-relaxed">This cannot be undone. {selectedLeadIds.size} lead records will be permanently removed.</p>
             <div className="flex justify-end gap-2 pt-2">
               <button onClick={() => setShowConfirmDelete(false)} className="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 text-xs font-semibold">Cancel</button>
-              <button onClick={() => { onBulkDelete(Array.from(selectedLeadIds)); onSelectionChange(new Set()); setShowConfirmDelete(false); }} className="px-4 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-semibold hover:bg-rose-500">
+              <button onClick={() => { 
+                if (selectedLeadIds.size === 0) return;
+                onBulkDelete(Array.from(selectedLeadIds)); 
+                onSelectionChange(new Set()); 
+                setShowConfirmDelete(false); 
+              }} className="px-4 py-1.5 rounded-lg bg-rose-600 text-white text-xs font-semibold hover:bg-rose-500">
                 Confirm Delete
               </button>
             </div>

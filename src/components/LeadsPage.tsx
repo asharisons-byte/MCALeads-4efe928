@@ -80,6 +80,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
     : leads.filter(l => selectedStages.includes(l.pipeline_stage as PipelineStage));
 
   const [showTagModal, setShowTagModal] = useState(false);
+  const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const activeControllerRef = useRef<BulkQueueController | null>(null);
   const leadsRef = useRef(leads);
@@ -376,18 +377,21 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       <div className="flex items-center gap-4 mb-3">
         <BulkActionsToolbar
           selectedCount={selectedLeadIds.size}
+          onBulkAssign={handleBulkAssign}
+          onBulkMoveStage={handleBulkMoveStage}
+          onBulkArchive={() => props.onBulkUpdateStage(Array.from(selectedLeadIds), 'Archived')}
+          onBulkChangeStage={() => setShowBulkStageModal(true)}
+          onBulkDelete={() => setShowConfirmDelete(true)}
           onBulkEnrich={handleBulkEnrich}
-          onBulkDelete={() => props.onBulkDelete(Array.from(selectedLeadIds))}
           onBulkAICall={handleBulkAICall}
           onBulkManualCall={handleBulkManualCall}
           onBulkSMS={handleBulkSMS}
           onBulkEmail={handleBulkEmail}
           onBulkTag={() => setShowTagModal(true)}
-          onBulkAssign={handleBulkAssign}
-          onBulkMoveStage={handleBulkMoveStage}
-          onBulkArchive={() => props.onBulkUpdateStage(Array.from(selectedLeadIds), 'Archived')}
-          onBulkChangeStage={handleBulkMoveStage}
-          onBulkAddToCampaign={() => console.log('Add to Campaign')}
+          onBulkAddToCampaign={() => {
+            // Logic to add to campaign - need modal and service call
+            console.log('TODO: Bulk add to campaign', selectedLeadIds);
+          }}
         />
 
         <div className="relative">
