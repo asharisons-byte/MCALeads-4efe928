@@ -170,6 +170,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
     const owner = params.get('owner');
     const sort = params.get('sort');
     const order = params.get('order');
+    const search = params.get('q');
 
     if (page) setLocalPage(Number(page));
     if (stage) setStageFilter(stage);
@@ -178,6 +179,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
     if (owner) setOwnerFilter(owner);
     if (sort) setSortField(sort as keyof Lead);
     if (order) setSortOrder(order as 'asc' | 'desc');
+    if (search) setSearchQuery(search);
   }, []);
 
   useEffect(() => {
@@ -189,8 +191,9 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
     params.set('owner', ownerFilter);
     params.set('sort', sortField);
     params.set('order', sortOrder);
+    params.set('q', searchQuery);
     window.history.replaceState(null, '', `?${params.toString()}`);
-  }, [localPage, stageFilter, nicheFilter, countryFilter, ownerFilter, sortField, sortOrder]);
+  }, [localPage, stageFilter, nicheFilter, countryFilter, ownerFilter, sortField, sortOrder, searchQuery]);
 
   // Extract unique values for filters
   const { uniqueNiches, uniqueCountries, uniqueOwners } = useMemo(() => {
@@ -568,7 +571,11 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                   const isExpanded = expandedLeadId === lead.lead_id;
                   return (
                     <React.Fragment key={lead.lead_id}>
-                      <tr className={`hover:bg-[var(--surface-container)]/40 transition-colors group ${isSelected ? 'bg-[rgba(0,255,157,0.04)]' : ''}`}>
+                      <tr className={`
+                        hover:bg-[var(--surface-container)]/40 transition-colors group 
+                        ${isSelected ? 'bg-[rgba(0,255,157,0.04)]' : ''}
+                        ${(lead.lead_score ?? 0) >= 75 ? 'ring-1 ring-inset ring-green-500/30 shadow-[0_0_8px_rgba(34,197,94,0.15)]' : ''}
+                      `}>
                         <td className="p-2.5 text-center">
                           <button onClick={() => setExpandedLeadId(isExpanded ? null : lead.lead_id)}>
                             {isExpanded ? <ChevronUp className="w-3.5 h-3.5 text-[var(--outline)]" /> : <ChevronDown className="w-3.5 h-3.5 text-[var(--outline)]" />}
