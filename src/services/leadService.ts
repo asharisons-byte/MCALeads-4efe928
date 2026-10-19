@@ -237,7 +237,7 @@ export async function syncWithDatabase(): Promise<Lead[]> {
     }
 
     // Fetch ALL leads from Neon database - single source of truth
-    const res = await bgApiCall('/api/leads?limit=1000');
+    const res = await bgApiCall('/api/leads');
     if (res && Array.isArray(res.leads)) {
       const dbLeads = res.leads.map((l: any) => mapDbLeadToModel(l));
       return dbLeads;
@@ -251,14 +251,13 @@ export async function syncWithDatabase(): Promise<Lead[]> {
 }
 
 // Get all leads from Neon database
-// Get all leads from Neon database
 export async function getLeads(): Promise<Lead[]> {
   try {
     const token = await getAuthToken();
     const headers: Record<string, string> = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
     console.log('Fetching leads from /api/leads...');
-    const res = await fetch('/api/leads?limit=1000', { headers });
+    const res = await fetch('/api/leads', { headers });
     console.log('Fetch response status:', res.status, 'ok:', res.ok);
     if (res.ok) {
       const data = await res.json();
@@ -458,7 +457,7 @@ export async function updateLead(
 
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
-    console.error('Failed to update lead:', errorData);
+    console.error(`Failed to update lead ${leadId}:`, res.status, errorData);
     return null;
   }
 

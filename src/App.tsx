@@ -298,19 +298,21 @@ export function App() {
         }
         setActivities(getActivities()); // Optional: Refresh activities if needed
       } else {
-        // 4. On failure, revert state
-        console.error('Lead update returned null, reverting');
-        setLeads(await getLeads());
+        // 4. On failure, revert state from source of truth
+        console.warn(`Lead update for ${leadId} failed (returned null) - re-syncing...`);
+        const freshLeads = await getLeads();
+        setLeads(freshLeads);
         if (selectedLead && selectedLead.lead_id === leadId) {
-          setSelectedLead(leads.find((l) => l.lead_id === leadId) || null);
+          setSelectedLead(freshLeads.find((l) => l.lead_id === leadId) || null);
         }
       }
     } catch (error) {
       // 4. On failure, revert state
-      console.error('Update failed, reverting...', error);
-      setLeads(await getLeads());
+      console.error(`Update failed for ${leadId}, reverting...`, error);
+      const freshLeads = await getLeads();
+      setLeads(freshLeads);
       if (selectedLead && selectedLead.lead_id === leadId) {
-        setSelectedLead(leads.find((l) => l.lead_id === leadId) || null);
+        setSelectedLead(freshLeads.find((l) => l.lead_id === leadId) || null);
       }
     }
   };
@@ -526,6 +528,8 @@ export function App() {
       <Sidebar
         currentTab={currentTab}
         onNavigate={(tab) => {
+          sessionStorage.removeItem('leads-scroll-top');
+          sessionStorage.removeItem('leads-scroll-left');
           setSelectedLead(null);
           setCurrentTab(tab);
         }}

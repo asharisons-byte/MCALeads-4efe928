@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback, useEffect, useLayoutEffect } from 'react';
 import { LeadsTable } from './LeadsTable';
 import { BulkActionsToolbar } from './BulkActionsToolbar';
 import { BulkTagModal } from './BulkTagModal';
@@ -89,6 +89,23 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
   const [showFilter, setShowFilter] = useState(false);
   const activeControllerRef = useRef<BulkQueueController | null>(null);
   const leadsRef = useRef(leads);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  
+  useLayoutEffect(() => {
+    if (scrollRef.current) {
+      const top = sessionStorage.getItem('leads-scroll-top');
+      const left = sessionStorage.getItem('leads-scroll-left');
+      if (top) scrollRef.current.scrollTop = parseInt(top, 10);
+      if (left) scrollRef.current.scrollLeft = parseInt(left, 10);
+    }
+    
+    return () => {
+      if (scrollRef.current) {
+        sessionStorage.setItem('leads-scroll-top', scrollRef.current.scrollTop.toString());
+        sessionStorage.setItem('leads-scroll-left', scrollRef.current.scrollLeft.toString());
+      }
+    };
+  }, []);
   leadsRef.current = leads;
   // Always-fresh selection so bulk handlers never act on a stale snapshot
   const selectedIdsRef = useRef(selectedLeadIds);
@@ -468,7 +485,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       />
 
       <div className="flex-1 flex flex-col min-h-0">
-        <LeadsTable {...props} leads={filteredLeads} activities={activities} />
+        <LeadsTable {...props} leads={filteredLeads} activities={activities} scrollRef={scrollRef} />
       </div>
     </div>
   );

@@ -222,7 +222,7 @@ export async function getDbLeads(params: {
       
       const rows = await query
         .orderBy(desc(schema.leads.createdAt), desc(schema.leads.leadScore))
-        .limit(params.limit || 500)
+        .limit(params.limit || 5000)
         .offset(params.offset || 0);
 
       return rows || [];

@@ -64,6 +64,7 @@ interface LeadsTableProps {
   onImportComplete?: (leads: Lead[], source: string, count: number) => void;
   currentPage?: number;
   onPageChange?: (page: number) => void;
+  scrollRef?: React.RefObject<HTMLDivElement>;
 }
 
 async function getAuthToken(): Promise<string | null> {
@@ -92,6 +93,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   onPageChange,
   selectedLeadIds,
   onSelectionChange,
+  scrollRef: propScrollRef,
 }) => {
   useEffect(() => {
     (leads || []).forEach(logGmbStatus);
@@ -135,6 +137,8 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
 
+  // Scroll restoration handled by parent
+  const scrollRef = propScrollRef;
   const [showColumnConverter, setShowColumnConverter] = useState(false);
   const [expandedLeadId, setExpandedLeadId] = useState<string | null>(null);
   
@@ -422,7 +426,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-extrabold text-white tracking-tight">Leads</h1>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[var(--surface-container)] text-[var(--on-surface-variant)] font-semibold">
-              {filteredLeads.length} total
+              {sortedLeads.length} total
             </span>
           </div>
         </div>
@@ -531,7 +535,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
       {/* CRM Table */}
       <div className="rounded-lg border border-[var(--hud-border-base)] bg-[var(--hud-graphite)] shadow-xl h-[calc(100vh-280px)] flex flex-col">
         {PaginationControls}
-        <div className="flex-1 overflow-auto min-h-0">
+        <div className="flex-1 overflow-auto min-h-0" ref={scrollRef}>
           <table className="min-w-full text-left border-collapse text-xs">
             <thead className="sticky top-0 z-10">
               <tr className="border-b border-[var(--hud-border-base)] bg-[var(--surface-container)] text-[var(--outline)] font-bold text-[9px] uppercase tracking-[0.12em]">
