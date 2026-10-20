@@ -481,6 +481,7 @@ export interface Lead {
   decision_maker_info?: DecisionMakerInfo;
   latest_call_intelligence?: CallIntelligence;
   next_best_action?: NextBestAction;
+  first_connection_attempt?: string;
 
   // Phase 3B: Advanced Lead Intelligence & AI Lead Scoring Engine
   intelligence?: LeadIntelligence;

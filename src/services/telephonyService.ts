@@ -153,6 +153,14 @@ export const TelephonyService = {
 
     // If attached to a lead, log call started in activity timeline
     if (lead?.lead_id) {
+      if (!lead.first_connection_attempt || lead.pipeline_stage === 'New Lead') {
+        import('./leadService.js').then(({ updateLead }) => {
+          const updates: Partial<Lead> = {};
+          if (!lead.first_connection_attempt) updates.first_connection_attempt = now;
+          if (lead.pipeline_stage === 'New Lead') updates.pipeline_stage = 'Contacted';
+          if (Object.keys(updates).length > 0) updateLead(lead.lead_id, updates);
+        });
+      }
       addActivity({
         id: `act-${Date.now()}`,
         activity_id: `act-${Date.now()}`,

@@ -227,8 +227,9 @@ export async function getDbLeads(params: {
 
       return rows || [];
     } catch (error: any) {
-      console.warn('getDbLeads DB query skipped (using in-memory store):', error?.message);
-      // Proceed to fallback
+      console.error('getDbLeads DB query failed:', error?.message);
+      // Do not fallback to memory if DB query failed when configured
+      throw error;
     }
   }
 
@@ -503,6 +504,7 @@ export async function createDbLead(leadData: any) {
     rawPayload: leadData.original_data || leadData.rawPayload || leadData,
     createdAt: new Date(),
     updatedAt: new Date(),
+    firstConnectionAttempt: leadData.first_connection_attempt || null,
     archivedAt: null,
     deletedAt: null,
     audits: [
@@ -695,6 +697,7 @@ export async function updateDbLead(leadId: string | number, updates: any) {
     if (updates.opportunityAngle !== undefined) target.opportunityAngle = updates.opportunityAngle;
     if (updates.recommended_service !== undefined) target.recommendedService = updates.recommended_service;
     if (updates.recommendedService !== undefined) target.recommendedService = updates.recommendedService;
+    if (updates.first_connection_attempt !== undefined) target.firstConnectionAttempt = updates.first_connection_attempt;
     target.updatedAt = new Date();
 
     if (target.leadStatus !== prevStatus) {
@@ -729,6 +732,7 @@ export async function updateDbLead(leadId: string | number, updates: any) {
       if (updates.pipeline_stage !== undefined) updateFields.leadStatus = updates.pipeline_stage;
       if (updates.leadStatus !== undefined) updateFields.leadStatus = updates.leadStatus;
       if (updates.country !== undefined) updateFields.country = updates.country;
+      if (updates.first_connection_attempt !== undefined) updateFields.firstConnectionAttempt = updates.first_connection_attempt;
 
       if (updates.assigned_user !== undefined) {
         const dbUser = updates.assigned_user;

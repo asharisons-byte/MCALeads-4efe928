@@ -12,6 +12,7 @@ interface BulkActionsToolbarProps {
   onBulkEmail: () => void;
   onBulkTag: () => void;
   onBulkManualCall: () => void;
+  onBulkManualMultiDial: () => void;
   onBulkArchive: () => void;
   onBulkChangeStage: () => void;
   onBulkAddToCampaign: () => void;
@@ -66,6 +67,7 @@ export const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
   onBulkEmail,
   onBulkTag,
   onBulkManualCall,
+  onBulkManualMultiDial,
   onBulkArchive,
   onBulkChangeStage,
   onBulkAddToCampaign,
@@ -94,6 +96,9 @@ export const BulkActionsToolbar: React.FC<BulkActionsToolbarProps> = ({
       {/* Outreach */}
       <ActionBtn onClick={onBulkAICall}    icon={<Bot   className="w-3 h-3" />} label="AI Call"    color="text-[var(--secondary)] hover:text-indigo-200" />
       <ActionBtn onClick={onBulkManualCall} icon={<Phone className="w-3 h-3" />} label="Manual Call" color="text-rose-300 hover:text-rose-200" />
+      {selectedCount > 1 && (
+        <ActionBtn onClick={onBulkManualMultiDial} icon={<Phone className="w-3 h-3" />} label="Multi-Dial" color="text-rose-400 hover:text-rose-300 font-bold" />
+      )}
       <ActionBtn
         onClick={onBulkSMS}
         icon={<Send className="w-3 h-3" />}

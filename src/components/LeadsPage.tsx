@@ -2,9 +2,11 @@ import React, { useState, useRef, useCallback, useEffect, useLayoutEffect } from
 import { LeadsTable } from './LeadsTable';
 import { BulkActionsToolbar } from './BulkActionsToolbar';
 import { BulkTagModal } from './BulkTagModal';
+import { BulkMultiDialSetupModal } from './BulkMultiDialSetupModal';
 import { AddLeadsToCampaignModal } from './command-center/AddLeadsToCampaignModal';
 import { BulkChangeStageModal } from './command-center/BulkChangeStageModal';
 import { BulkProgressOverlay } from './BulkProgressOverlay';
+import { BulkManualMultiDialer } from './BulkManualMultiDialer';
 import { bulkUpdateStage } from '../services/leadService';
 import { BulkQueueController, BulkProgress } from '../services/bulkQueueService';
 import { Lead, ActivityEvent, PipelineStage } from '../types';
@@ -83,6 +85,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
     : leads.filter(l => selectedStages.includes(l.pipeline_stage as PipelineStage));
 
   const [showTagModal, setShowTagModal] = useState(false);
+  const [showMultiDialModal, setShowMultiDialModal] = useState(false);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
   const [showAddCampaignModal, setShowAddCampaignModal] = useState(false);
   const [showChangeStageModal, setShowChangeStageModal] = useState(false);
@@ -91,6 +94,10 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
   const leadsRef = useRef(leads);
   const scrollRef = useRef<HTMLDivElement>(null);
   
+  const handleAdvanceManualCall = useCallback(async () => {
+    await activeControllerRef.current?.advanceManualCall();
+  }, []);
+
   useLayoutEffect(() => {
     if (scrollRef.current) {
       const top = sessionStorage.getItem('leads-scroll-top');
@@ -104,8 +111,15 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
         sessionStorage.setItem('leads-scroll-top', scrollRef.current.scrollTop.toString());
         sessionStorage.setItem('leads-scroll-left', scrollRef.current.scrollLeft.toString());
       }
+      window.removeEventListener('advance-manual-call', handleAdvanceManualCall as EventListener);
     };
   }, []);
+  
+  useEffect(() => {
+    window.addEventListener('advance-manual-call', handleAdvanceManualCall as EventListener);
+    return () => window.removeEventListener('advance-manual-call', handleAdvanceManualCall as EventListener);
+  }, [handleAdvanceManualCall]);
+
   leadsRef.current = leads;
   // Always-fresh selection so bulk handlers never act on a stale snapshot
   const selectedIdsRef = useRef(selectedLeadIds);
@@ -244,9 +258,49 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
     controller.start();
   }, [onProgress, props.onOpenDialer]);
 
-  const handleAdvanceManualCall = useCallback(async () => {
-    await activeControllerRef.current?.advanceManualCall();
+  const handleBulkManualMultiDial = useCallback(() => {
+    setShowMultiDialModal(true);
   }, []);
+
+  const handleStartMultiDial = useCallback((leads: Lead[]) => {
+    setShowMultiDialModal(false);
+    
+    // Filter leads with valid phone numbers
+    const validLeads = leads.filter(l => l.phone && l.phone.trim().length > 0);
+    
+    if (validLeads.length === 0) {
+      alert('No selected leads have valid phone numbers.');
+      return;
+    }
+
+    // Prepare controller
+    const controller = new BulkQueueController({
+      opType: 'MANUAL_CALL',
+      gapMs: 0,
+      onProgress,
+      executor: async (item) => {
+        const lead = leadsRef.current.find((l) => l.lead_id === item.leadId);
+        if (!lead) return { success: false, error: 'Lead not found' };
+        
+        // Navigate to lead details
+        props.onSelectLead(lead);
+        
+        // Open dialer
+        // Note: The DialerModal might need a way to know it's in multi-dial mode 
+        // to handle closing and advancing automatically, but we start with opening it.
+        props.onOpenDialer(lead);
+        
+        return { success: true };
+      },
+    });
+
+    activeControllerRef.current = controller;
+    controller.enqueue(
+      validLeads.map((l) => ({ leadId: l.lead_id, leadName: l.business_name || l.lead_id }))
+    );
+    controller.start();
+  }, [onProgress, props.onSelectLead, props.onOpenDialer]);
+
 
   // ── BULK ENRICH ──────────────────────────────────────────────────────────
   const handleBulkEnrich = useCallback(async () => {
@@ -408,14 +462,22 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
           onBulkMoveStage={handleBulkMoveStage}
           onBulkArchive={() => props.onBulkUpdateStage(Array.from(selectedLeadIds), 'Archived')}
           onBulkChangeStage={() => setShowChangeStageModal(true)}
-          onBulkDelete={() => setShowConfirmDelete(true)}
+          onBulkDelete={() => setShowBulkDeleteModal(true)}
           onBulkEnrich={handleBulkEnrich}
           onBulkAICall={handleBulkAICall}
           onBulkManualCall={handleBulkManualCall}
+          onBulkManualMultiDial={handleBulkManualMultiDial}
           onBulkSMS={handleBulkSMS}
           onBulkEmail={handleBulkEmail}
           onBulkTag={() => setShowTagModal(true)}
           onBulkAddToCampaign={() => setShowAddCampaignModal(true)}
+        />
+        
+        <BulkMultiDialSetupModal
+          isOpen={showMultiDialModal}
+          onClose={() => setShowMultiDialModal(false)}
+          onStart={handleStartMultiDial}
+          selectedLeads={getSelectedLeads(leadsRef.current, selectedIdsRef.current)}
         />
         
         <AddLeadsToCampaignModal
@@ -467,14 +529,20 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       </div>
 
       {activeBulkProgress && (
-        <BulkProgressOverlay
-          progress={activeBulkProgress}
-          onClose={handleClose}
-          onCancel={handleCancel}
-          onAdvanceManualCall={
-            activeBulkProgress.opType === 'MANUAL_CALL' ? handleAdvanceManualCall : undefined
-          }
-        />
+        activeBulkProgress.opType === 'MANUAL_CALL' ? (
+          <BulkManualMultiDialer
+            progress={activeBulkProgress}
+            onClose={handleClose}
+            onCancel={handleCancel}
+            onAdvanceManualCall={handleAdvanceManualCall}
+          />
+        ) : (
+          <BulkProgressOverlay
+            progress={activeBulkProgress}
+            onClose={handleClose}
+            onCancel={handleCancel}
+          />
+        )
       )}
 
       <BulkTagModal

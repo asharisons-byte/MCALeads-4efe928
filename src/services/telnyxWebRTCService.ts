@@ -256,7 +256,7 @@ export const TelnyxWebRTCService = {
           const sipCode   = notification.call?.sipCode || notification.call?.sip_code;
           const sipReason = notification.call?.sipReason || notification.call?.sip_reason;
 
-          console.error('[MCA-HANGUP]', { state, cause, causeCode, sipCode, sipReason });
+          console.log('[MCA-HANGUP]', { state, cause, causeCode, sipCode, sipReason });
 
           this.diagnosticCallback?.({
             hangupCause:  cause     || 'unknown',

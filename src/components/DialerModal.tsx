@@ -538,15 +538,11 @@ export const DialerModal: React.FC<DialerModalProps> = ({
 
     // Check if there is next lead in queue
     const queue = TelephonyService.getCallQueue().filter((q) => q.status === 'pending');
-    if (queue.length > 0 && queue[0].lead_id !== activeLead?.lead_id) {
-      const nextItem = queue[0];
-      const nextLead = allLeads.find((l) => l.lead_id === nextItem.lead_id);
-      if (nextLead) {
-        loadLeadIntoDialer(nextLead);
-        return;
-      }
-    }
-
+    
+    // Auto-advance
+    // Signal to the controller that the current manual call is done.
+    window.dispatchEvent(new CustomEvent('advance-manual-call'));
+    
     onClose();
   };
 

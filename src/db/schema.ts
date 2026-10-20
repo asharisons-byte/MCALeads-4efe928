@@ -123,6 +123,7 @@ export const leads = pgTable('leads', {
   updatedAt: timestamp('updated_at').defaultNow(),
   archivedAt: timestamp('archived_at'),
   deletedAt: timestamp('deleted_at'),
+  firstConnectionAttempt: timestamp('first_connection_attempt'),
 });
 
 // ==========================================
