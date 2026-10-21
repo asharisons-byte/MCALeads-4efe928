@@ -341,7 +341,15 @@ export const TelnyxWebRTCService = {
     }
 
     if (this.currentCall) {
-      try { await this.currentCall.hangup(); } catch (_) {}
+      try { 
+          // Check if call object has a state that allows hangup, 
+          // or at least wrap in a try-catch to ignore 'CALL DOES NOT EXIST'
+          if (this.currentCall.state !== 'hangup' && this.currentCall.state !== 'destroy') {
+              await this.currentCall.hangup(); 
+          }
+      } catch (e: any) {
+          console.warn('[MCA-TELNYX] Non-fatal hangup error:', e.message);
+      }
       this.currentCall = null;
     }
 

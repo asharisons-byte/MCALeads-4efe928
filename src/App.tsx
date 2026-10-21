@@ -943,14 +943,12 @@ export function App() {
             setDialerLead(null);
             setDialerPhoneNumber('');
             
-            // Advance the manual multi-dial queue if active
-            // NOTE: This assumes handleAdvanceManualCall is accessible in this scope.
-            // Actually it is not.
-            // The DialerModal close handler is in App.tsx. 
-            // I need to add a way to call handleAdvanceManualCall from here.
-            // This is complex. I'll stick to manual advancement for now.
+            // Only force return to Leads tab if a bulk session is running, 
+            // ensuring standard dialer sessions respect the user's current context.
+            if (activeBulkProgress) {
+                setCurrentTab('leads');
+            }
             
-            setCurrentTab('leads');
             setLeads(await getLeads());
             setActivities(getActivities());
           }}

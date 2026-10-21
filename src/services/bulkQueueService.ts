@@ -9,7 +9,7 @@
  * to invoke advanceManualCall() — e.g., after user closes the dialer.
  */
 
-export type BulkOpType = 'AI_CALL' | 'MANUAL_CALL' | 'SMS' | 'EMAIL';
+export type BulkOpType = 'AI_CALL' | 'MANUAL_CALL' | 'MULTI_MANUAL_CALL' | 'SMS' | 'EMAIL';
 export type ItemStatus = 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'SKIPPED' | 'CANCELLED';
 
 export interface QueueItem {
@@ -179,8 +179,17 @@ export class BulkQueueController {
 
   /** Signal that the current manual call ended — process the next lead */
   async advanceManualCall(): Promise<void> {
-    if (this.opType !== 'MANUAL_CALL' || this.isRunning) return;
+    console.log('[BulkQueueController] advanceManualCall called. opType:', this.opType, 'isRunning:', this.isRunning);
+    if (this.opType !== 'MANUAL_CALL' && this.opType !== 'MULTI_MANUAL_CALL') {
+        console.error('[BulkQueueController] Invalid opType:', this.opType);
+        return;
+    }
+    if (this.isRunning) {
+        console.warn('[BulkQueueController] advanceManualCall ignored: isRunning is true.');
+        return;
+    }
     this.isRunning = true;
+    console.log('[BulkQueueController] advanceManualCall proceeding. Calling _next().');
     await this._next();
   }
 
@@ -198,8 +207,14 @@ export class BulkQueueController {
   // ── Private ───────────────────────────────────────────────────────────────
 
   private async _next(): Promise<void> {
+    console.log('[BulkQueueController] _next called. isCancelled:', this.isCancelled, 'isEmpty:', this.bst.isEmpty());
     if (this.isCancelled) { this.isRunning = false; return; }
-    if (this.bst.isEmpty()) { this.isRunning = false; this._emit(); return; }
+    if (this.bst.isEmpty()) { 
+        console.log('[BulkQueueController] Queue empty. Session complete.');
+        this.isRunning = false; 
+        this._emit(); 
+        return; 
+    }
 
     // Wait until the next item's scheduled time
     const peek = this.bst.peekMin()!;
@@ -239,7 +254,7 @@ export class BulkQueueController {
     this._emit();
 
     // MANUAL_CALL: pause and wait for advanceManualCall() signal
-    if (this.opType === 'MANUAL_CALL') {
+    if (this.opType === 'MANUAL_CALL' || this.opType === 'MULTI_MANUAL_CALL') {
       this.isRunning = false;
       return;
     }

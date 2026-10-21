@@ -519,6 +519,12 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     }
   };
 
+  const isMounted = useRef(true);
+  useEffect(() => {
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
+  }, []);
+
   // Save Outcome & Notes
   const handleSaveOutcomeAndClose = async () => {
     if (!activeCallRecord || !selectedOutcome) return;
@@ -541,7 +547,10 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     
     // Auto-advance
     // Signal to the controller that the current manual call is done.
-    window.dispatchEvent(new CustomEvent('advance-manual-call'));
+    // Only dispatch if the component is still mounted (user hasn't closed it manually).
+    if (isMounted.current) {
+        window.dispatchEvent(new CustomEvent('advance-manual-call'));
+    }
     
     onClose();
   };

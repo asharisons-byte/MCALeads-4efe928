@@ -95,7 +95,11 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const handleAdvanceManualCall = useCallback(async () => {
-    await activeControllerRef.current?.advanceManualCall();
+    if (activeControllerRef.current) {
+        await activeControllerRef.current.advanceManualCall();
+    } else {
+        console.warn('[LeadsPage] handleAdvanceManualCall triggered but activeController is null - ignoring (session already closed).');
+    }
   }, []);
 
   useLayoutEffect(() => {
@@ -138,12 +142,16 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
   }, [setActiveBulkProgress]);
 
   const handleCancel = useCallback(() => {
+    console.log('[LeadsPage] handleCancel called. Trace:');
+    console.trace();
     aiCallAbortRef.current?.abort();
     activeControllerRef.current?.cancel();
     activeControllerRef.current = null;
   }, []);
 
   const handleClose = useCallback(() => {
+    console.log('[LeadsPage] handleClose called. Trace:');
+    console.trace();
     aiCallAbortRef.current?.abort();
     activeControllerRef.current = null;
     setActiveBulkProgress(null);
@@ -275,7 +283,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
 
     // Prepare controller
     const controller = new BulkQueueController({
-      opType: 'MANUAL_CALL',
+      opType: 'MULTI_MANUAL_CALL',
       gapMs: 0,
       onProgress,
       executor: async (item) => {
@@ -295,6 +303,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
     });
 
     activeControllerRef.current = controller;
+    console.log('[LeadsPage] handleStartMultiDial: Controller assigned.');
     controller.enqueue(
       validLeads.map((l) => ({ leadId: l.lead_id, leadName: l.business_name || l.lead_id }))
     );
@@ -529,7 +538,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       </div>
 
       {activeBulkProgress && (
-        activeBulkProgress.opType === 'MANUAL_CALL' ? (
+        activeBulkProgress.opType === 'MULTI_MANUAL_CALL' ? (
           <BulkManualMultiDialer
             progress={activeBulkProgress}
             onClose={handleClose}

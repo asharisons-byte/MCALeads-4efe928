@@ -21,6 +21,12 @@ export const BulkManualMultiDialer: React.FC<BulkManualMultiDialerProps> = ({
   const total = items.length;
   const processed = successful + failed;
 
+  React.useEffect(() => {
+    if (progress.isComplete) {
+      onClose();
+    }
+  }, [progress.isComplete, onClose]);
+
   return (
     <div className="fixed top-20 right-6 w-80 bg-[var(--surface-container-highest)] border border-[var(--outline)] rounded-lg shadow-xl z-50 p-4">
       <div className="flex justify-between items-center mb-3">
@@ -42,14 +48,21 @@ export const BulkManualMultiDialer: React.FC<BulkManualMultiDialerProps> = ({
 
       <div className="flex gap-2">
         <button
-          onClick={onAdvanceManualCall}
+          onClick={() => {
+            console.log('[BulkManualMultiDialer] Call Next clicked.');
+            setIsPaused(false);
+            onAdvanceManualCall();
+          }}
           disabled={isPaused}
           className="flex-1 py-2 bg-rose-600 hover:bg-rose-500 disabled:bg-slate-700 text-white text-sm font-semibold rounded transition"
         >
           Call Next
         </button>
         <button
-          onClick={() => setIsPaused(!isPaused)}
+          onClick={() => {
+            console.log('[BulkManualMultiDialer] Pause clicked. Current state:', isPaused);
+            setIsPaused(!isPaused);
+          }}
           className="py-2 px-3 bg-slate-700 hover:bg-slate-600 text-white text-sm font-semibold rounded transition"
         >
           {isPaused ? 'Resume' : 'Pause'}
