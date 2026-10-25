@@ -439,6 +439,8 @@ export async function updateLead(
     leadToValidate = currentLeads.find(l => l.lead_id === leadId);
   }
 
+  console.log('[DEBUG] updateLead called. leadId:', leadId, 'leadToValidate:', leadToValidate);
+
   if (updates.pipeline_stage && leadToValidate && !canTransition(leadToValidate.pipeline_stage, updates.pipeline_stage)) {
     console.warn(`Attempted invalid stage transition: ${leadToValidate.pipeline_stage} -> ${updates.pipeline_stage}`);
     // Strip the invalid update if it would move backward

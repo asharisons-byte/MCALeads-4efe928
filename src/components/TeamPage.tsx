@@ -66,6 +66,7 @@ interface AccessLog {
 }
 
 interface Lead {
+  id: number;
   lead_id: string;
   business_name: string;
   businessName?: string;
@@ -207,7 +208,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
   const getLeadName = (lead: Lead) => lead.business_name || lead.businessName || '—';
   const getLeadScore = (lead: Lead) => lead.lead_score ?? lead.opportunityScore ?? '—';
   const getLeadRetainer = (lead: Lead) => lead.estimated_retainer ?? lead.estRetainer ?? 0;
-  const getLeadId = (lead: Lead) => lead.lead_id;
+  const getLeadId = (lead: Lead) => lead.id.toString();
 
   const isSophiaOwned = (lead: Lead) => {
     const o = getLeadOwner(lead).toLowerCase();
@@ -234,6 +235,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
   const salesMembers = users.filter((u) => SALES_ROLES.includes(u.role as string));
 
   const handleAssignLead = async (leadId: string, memberId: string) => {
+    console.log('[DEBUG] handleAssignLead called with leadId:', leadId, 'memberId:', memberId);
     try {
       const token = await getCurrentToken();
       const response = await fetch(`/api/leads/${leadId}`, {
@@ -242,12 +244,14 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
         body: JSON.stringify({ assigned_user: { id: Number(memberId) } }),
       });
       const data = await response.json();
+      console.log('[DEBUG] handleAssignLead API response:', data);
       if (!response.ok) {
         setAssignError(data.error || 'Failed to assign lead');
         return false;
       }
       return true;
     } catch (e: any) {
+      console.error('Network error', e);
       setAssignError(e.message || 'Network error');
       return false;
     }

@@ -285,59 +285,44 @@ export async function getDbLeadById(leadIdentifier: string | number) {
 
   if (isDbConfigured) {
     try {
-      let lead;
       // Try by ID (numeric)
-      const rowsById = await db
-        .select()
-        .from(schema.leads)
-        .where(eq(schema.leads.id, Number(leadIdentifier)))
-        .limit(1);
-      lead = rowsById[0];
-
-      // If not found, try by leadId (string)
-      if (!lead) {
-        const rowsByLeadId = await db
+      const idNum = Number(leadIdentifier);
+      const isNumeric = !isNaN(idNum) && String(idNum) === String(leadIdentifier);
+      
+      if (isNumeric) {
+        const rowsById = await db
           .select()
           .from(schema.leads)
-          .where(eq(schema.leads.leadId, String(leadIdentifier)))
+          .where(eq(schema.leads.id, idNum))
           .limit(1);
-        lead = rowsByLeadId[0];
+        if (rowsById[0]) return rowsById[0];
       }
 
-      if (lead) {
-        const [audits, scores, notes, callsList, emailsList, smsList, tasksList, statusHist] = await Promise.all([
-          db.select().from(schema.leadAudits).where(eq(schema.leadAudits.leadId, lead.id)).orderBy(desc(schema.leadAudits.createdAt)),
-          db.select().from(schema.leadScores).where(eq(schema.leadScores.leadId, lead.id)).orderBy(desc(schema.leadScores.createdAt)),
-          db.select().from(schema.crmNotes).where(eq(schema.crmNotes.leadId, lead.id)).orderBy(desc(schema.crmNotes.createdAt)),
-          db.select().from(schema.calls).where(eq(schema.calls.leadId, lead.id)).orderBy(desc(schema.calls.createdAt)),
-          db.select().from(schema.emailMessages).where(eq(schema.emailMessages.leadId, lead.id)).orderBy(desc(schema.emailMessages.createdAt)),
-          db.select().from(schema.smsMessages).where(eq(schema.smsMessages.leadId, lead.id)).orderBy(desc(schema.smsMessages.createdAt)),
-          db.select().from(schema.tasks).where(eq(schema.tasks.leadId, lead.id)).orderBy(desc(schema.tasks.createdAt)),
-          db.select().from(schema.leadStatusHistory).where(eq(schema.leadStatusHistory.leadId, lead.id)).orderBy(desc(schema.leadStatusHistory.createdAt)),
-        ]);
-
-        return {
-          ...lead,
-          audits,
-          scores,
-          notes,
-          calls: callsList,
-          emails: emailsList,
-          sms: smsList,
-          tasks: tasksList,
-          statusHistory: statusHist,
-        };
-      }
+      // If not found, try by leadId (string)
+      const rowsByLeadId = await db
+        .select()
+        .from(schema.leads)
+        .where(eq(schema.leads.leadId, String(leadIdentifier)))
+        .limit(1);
+      if (rowsByLeadId[0]) return rowsByLeadId[0];
     } catch (error: any) {
-      console.warn('getDbLeadById DB query skipped (using in-memory store):', error?.message);
+      console.warn('getDbLeadById DB query failed, falling back to memory store:', error?.message);
     }
   }
 
   // Resilient In-Memory Fallback
   const idNum = Number(leadIdentifier);
   const found = inMemoryLeads.find(
-    (l) => (!isNaN(idNum) && l.id === idNum) || String(l.leadId) === String(leadIdentifier)
+    (l) => {
+      const match = (!isNaN(idNum) && l.id === idNum) || String(l.leadId) === String(leadIdentifier);
+      return match;
+    }
   );
+  
+  if (!found) {
+    console.log('[DEBUG] getDbLeadById: Lead not found in memory for identifier:', leadIdentifier, 'Type:', typeof leadIdentifier);
+    console.log('[DEBUG] Memory store leads:', inMemoryLeads.map(l => ({ id: l.id, leadId: l.leadId })));
+  }
 
   return found || null;
 }
@@ -656,6 +641,10 @@ export async function updateDbLead(leadId: string | number, updates: any) {
   const target = inMemoryLeads.find(
     (l) => (!isNaN(idNum) && l.id === idNum) || String(l.leadId) === String(leadId)
   );
+  
+  if (!target) {
+    console.log('[DEBUG] updateDbLead: Target lead not found in memory for ID:', leadId);
+  }
 
   if (target) {
     const prevStatus = target.leadStatus;
@@ -771,7 +760,8 @@ export async function updateDbLead(leadId: string | number, updates: any) {
 
       if (updated) return updated;
     } catch (error: any) {
-      console.warn('updateDbLead DB update skipped (memory updated):', error?.message);
+      console.error('updateDbLead DB update failed:', error?.message);
+      throw error; // Re-throw to ensure API layer handles failure
     }
   }
 

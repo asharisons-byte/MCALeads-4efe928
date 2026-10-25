@@ -411,163 +411,93 @@ router.post('/leads/reassign-bulk', requireAuth, async (req: AuthRequest, res: R
 // 7. Leads: Update - Requires authentication for ownership changes
 router.put('/leads/:id', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    // Diagnostic log: Inspect authentication context
-    console.log('[DEBUG] Reassign Handler - Auth Context:', {
-      fullUserObject: req.user,
-      userRoleField: (req.user as any)?.role,
-      uid: req.user?.uid,
-      email: (req.user as any)?.email
-    });
-
     const firebaseUid = req.user?.uid;
-    
     if (!firebaseUid) {
       return res.status(401).json({ error: 'Unauthorized: Missing user identity' });
     }
     
-    // Load authenticated user from Neon database
-    const userResult = await db
+    // Load authenticated user
+    const [dbUser] = await db
       .select()
       .from(schema.users)
       .where(eq(schema.users.uid, firebaseUid))
       .limit(1);
     
-    if (!userResult || userResult.length === 0) {
+    if (!dbUser) {
       return res.status(404).json({ error: 'User not found in database' });
     }
     
-    const dbUser = userResult[0];
-    
-    // Explicit requested diagnostic log
-    console.log('[DEBUG] Role Verification:', {
-        reqUserRole: (req as any).user?.role,
-        matchesDirector: (req as any).user?.role === 'Director'
-    });
-    
-    // Diagnostic log
-    console.log('[DEBUG] Reassign Request:', {
-      leadId: req.params.id,
-      firebaseUid,
-      dbUser: { id: dbUser.id, role: dbUser.role },
-      payload: req.body
-    });
-
     const canonicalRole = normalizeAppRole(dbUser.role as string) || dbUser.role;
     
-    console.log('[DEBUG] Role Normalization:', {
-        originalRole: dbUser.role,
-        canonicalRole: canonicalRole
-    });
-    
-    // Load existing lead to check current ownership
+    // Load existing lead
     const existingLead = await getDbLeadById(req.params.id);
     if (!existingLead) {
-      return res.status(404).json({ error: 'Lead not found' });
+      return res.status(404).json({ error: `Lead not found (ID: ${req.params.id})` });
     }
     
-    // Handle ownership assignment securely
-    const updates: any = { ...req.body };
+    // Extract updates and handle assignment explicitly
+    const { assigned_to_id, assigned_user, ...otherUpdates } = req.body;
+    const updates: any = { ...otherUpdates };
     
-    // Check if ownership change is being requested
-    if (updates.assigned_user !== undefined || updates.assignedTo !== undefined || updates.assigned_to !== undefined) {
-      // Determine the requested owner
-      let requestedOwner = updates.assigned_user || updates.assignedTo || updates.assigned_to;
-      
-      // Check if this is a Sophia assignment request
-      const isSophiaRequest = requestedOwner === 'Sophia (AI Sales Rep)' || 
-                              (typeof requestedOwner === 'object' && requestedOwner.firstName === 'Sophia');
-      
-      if (isSophiaRequest) {
-        // Sophia assignment requires explicit authorization via canAssignSophia()
-        if (!canAssignSophia(canonicalRole)) {
-          return res.status(403).json({ 
-            error: 'You are not authorized to assign leads to Sophia. Only Agency Director and other senior roles can assign Sophia.' 
-          });
-        }
-        // Set Sophia ownership server-side using canonical format
-        updates.assigned_user = {
-          id: null,
-          firstName: 'Sophia',
-          role: 'AI_SALES_REP',
-        };
-      } else if (existingLead.assignedTo === 'Sophia (AI Sales Rep)') {
-        // Protect existing Sophia-owned leads from being reassigned without explicit action
-        // If no explicit new owner is provided, keep Sophia as owner
-        if (!requestedOwner || requestedOwner === 'Sophia (AI Sales Rep)') {
-          // No reassignment requested, preserve Sophia ownership
-          delete updates.assigned_user;
-          delete updates.assignedTo;
-          delete updates.assigned_to;
-        } else {
-          // Explicit reassignment from Sophia - proceed with validation below
-        }
-      }
-      
-      // Handle non-Sophia ownership changes
-      if (updates.assigned_user !== undefined && !isSophiaRequest) {
-        const assignedUser = updates.assigned_user;
-        
-        // Self-claim operation: assign to authenticated user
-        if (assignedUser.selfClaim === true || !assignedUser.id) {
-          updates.assigned_user = {
-            id: dbUser.id,
-            firstName: dbUser.firstName || dbUser.displayName,
-            role: canonicalRole,
-          };
-        } else {
-          // Attempting to assign to another user - requires Agency Director, Sales Manager, or Director
-          console.log('[DEBUG] Reassignment Permission Check:', {
-            canonicalRole: canonicalRole,
-            isDirector: canonicalRole === 'Director',
-            isAgencyDirector: canonicalRole === 'AGENCY_DIRECTOR',
-            isSalesManager: canonicalRole === 'SALES_MANAGER',
-            isAuthorized: ['AGENCY_DIRECTOR', 'SALES_MANAGER', 'Director'].includes(canonicalRole)
-          });
+    // Handle assignment change
+    if (assigned_to_id !== undefined || assigned_user !== undefined) {
+      let targetUserId: number | null = null;
+      let targetFirstName: string | null = null;
+      let targetRole: string | null = null;
+      let isSophia = false;
 
-          if (!['AGENCY_DIRECTOR', 'SALES_MANAGER', 'Director'].includes(canonicalRole)) {
-            console.log('[DEBUG] Reassignment Denied: Unauthorized role attempt');
-            return res.status(403).json({ 
-              error: `You are not authorized to assign this lead to another team member. Your role (${canonicalRole}) does not have permission.` 
-            });
-          }
-          
-          // Validate target user exists in Neon
-          const targetUserResult = await db
-            .select({ 
-              id: schema.users.id, 
-              firstName: schema.users.firstName, 
-              displayName: schema.users.displayName, 
-              role: schema.users.role 
-            })
-            .from(schema.users)
-            .where(eq(schema.users.id, Number(assignedUser.id)))
-            .limit(1);
-          
-          if (!targetUserResult || targetUserResult.length === 0) {
-            return res.status(400).json({ error: 'Invalid assignment target: User not found' });
-          }
-          
-          const targetUser = targetUserResult[0];
-          const targetCanonicalRole = normalizeAppRole(targetUser.role as string) || targetUser.role;
-          updates.assigned_user = {
-            id: targetUser.id,
-            firstName: targetUser.firstName || targetUser.displayName,
-            role: targetCanonicalRole,
-          };
+      // Handle Sophia assignment
+      if (assigned_to_id === 'SOPHIA' || (assigned_user && assigned_user.firstName === 'Sophia')) {
+         isSophia = true;
+         if (!canAssignSophia(canonicalRole)) {
+           return res.status(403).json({ error: 'Unauthorized to assign leads to Sophia.' });
+         }
+         targetFirstName = 'Sophia';
+         targetRole = 'AI_SALES_REP';
+      } else {
+        // Handle human assignment
+        const userId = Number(assigned_to_id || assigned_user?.id);
+        if (isNaN(userId)) {
+           return res.status(400).json({ error: 'Invalid assignment target ID' });
         }
-      } else if ((updates.assignedTo !== undefined || updates.assigned_to !== undefined) && !isSophiaRequest) {
-        // Direct assignedTo/assigned_to field without proper authorization - block it
-        // This prevents browser from directly setting owner strings
-        console.warn('PUT /leads/:id: Direct assignedTo/assigned_to assignment blocked for security');
-        // Do not update ownership fields - they will be handled by assigned_user logic or remain unchanged
-        delete updates.assignedTo;
-        delete updates.assigned_to;
+
+        // Validate target user exists
+        const [targetUser] = await db
+          .select({ 
+            id: schema.users.id, 
+            firstName: schema.users.firstName, 
+            displayName: schema.users.displayName, 
+            role: schema.users.role 
+          })
+          .from(schema.users)
+          .where(eq(schema.users.id, userId))
+          .limit(1);
+        
+        if (!targetUser) {
+          return res.status(400).json({ error: 'Target user not found' });
+        }
+        
+        // Authorization check
+        if (!['AGENCY_DIRECTOR', 'SALES_MANAGER', 'Director'].includes(canonicalRole)) {
+          return res.status(403).json({ error: 'Unauthorized to reassign leads.' });
+        }
+        
+        targetUserId = targetUser.id;
+        targetFirstName = targetUser.firstName || targetUser.displayName;
+        targetRole = normalizeAppRole(targetUser.role as string) || targetUser.role;
       }
+      
+      updates.assigned_user = {
+        id: targetUserId,
+        firstName: targetFirstName,
+        role: targetRole,
+      };
     }
     
     const updated = await updateDbLead(req.params.id, updates);
     return res.json({ lead: updated });
   } catch (err: any) {
+    console.error('PUT /leads/:id error:', err);
     return res.status(500).json({ error: err.message });
   }
 });
