@@ -277,7 +277,11 @@ router.post('/leads/batch-import', async (req: Request, res: Response) => {
     if (!Array.isArray(rows)) {
       return res.status(400).json({ error: 'rows must be an array' });
     }
-    const result = await batchImportDbLeads(rows, meta || { fileName: 'upload.csv' });
+    const result = await batchImportDbLeads(rows, { 
+        ...meta, 
+        fileName: meta?.fileName || 'upload.csv',
+        skipDuplicateCheck: req.body.skipDuplicateCheck === true 
+    });
     return res.json({
       success: result.success,
       validCount: result.validCount,

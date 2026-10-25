@@ -400,7 +400,8 @@ export function App() {
   const handleImportComplete = async (
     newLeads: Lead[],
     fileName: string,
-    totalCount: number
+    totalCount: number,
+    skipDuplicateCheck?: boolean
   ) => {
     try {
       // Persist batch import to Neon / Cloud SQL PostgreSQL
@@ -414,6 +415,7 @@ export function App() {
             rowsCount: totalCount,
             source: 'Excel / CSV Import Engine',
           },
+          skipDuplicateCheck,
         }),
       });
 

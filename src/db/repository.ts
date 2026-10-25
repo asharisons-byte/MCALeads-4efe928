@@ -286,22 +286,22 @@ export async function getDbLeadById(leadIdentifier: string | number) {
   if (isDbConfigured) {
     try {
       let lead;
-      if (typeof leadIdentifier === 'number' || !isNaN(Number(leadIdentifier))) {
-        const rows = await db
-          .select()
-          .from(schema.leads)
-          .where(eq(schema.leads.id, Number(leadIdentifier)))
-          .limit(1);
-        lead = rows[0];
-      }
+      // Try by ID (numeric)
+      const rowsById = await db
+        .select()
+        .from(schema.leads)
+        .where(eq(schema.leads.id, Number(leadIdentifier)))
+        .limit(1);
+      lead = rowsById[0];
 
-      if (!lead && typeof leadIdentifier === 'string') {
-        const rows = await db
+      // If not found, try by leadId (string)
+      if (!lead) {
+        const rowsByLeadId = await db
           .select()
           .from(schema.leads)
-          .where(eq(schema.leads.leadId, leadIdentifier))
+          .where(eq(schema.leads.leadId, String(leadIdentifier)))
           .limit(1);
-        lead = rows[0];
+        lead = rowsByLeadId[0];
       }
 
       if (lead) {
@@ -351,19 +351,29 @@ export async function checkLeadDuplicate(params: {
   // NEON-ONLY duplicate check - no in-memory fallback to prevent false positives from fake seed data
   if (isDbConfigured) {
     try {
-      const checks = [];
       if (params.businessName) {
-        checks.push(ilike(schema.leads.businessName, params.businessName.trim()));
-      }
-      if (params.phone && params.phone.replace(/\D/g, '').length >= 7) {
-        const cleanPhone = params.phone.replace(/\D/g, '');
-        checks.push(ilike(schema.leads.phone, `%${cleanPhone.slice(-7)}%`));
-      }
-      if (params.email && params.email.includes('@') && !params.email.toLowerCase().includes('not provided')) {
-        checks.push(ilike(schema.leads.email, params.email.trim()));
-      }
-      if (params.website && params.website.length > 5 && !params.website.toLowerCase().includes('not provided')) {
-        checks.push(ilike(schema.leads.website, `%${params.website.replace(/https?:\/\//, '').replace(/\/$/, '')}%`));
+        const businessCheck = ilike(schema.leads.businessName, params.businessName.trim());
+        const otherChecks = [];
+        
+        if (params.phone && params.phone.replace(/\D/g, '').length >= 10) {
+            const cleanPhone = params.phone.replace(/\D/g, '');
+            otherChecks.push(eq(schema.leads.phone, cleanPhone));
+        }
+        if (params.email && params.email.includes('@') && !params.email.toLowerCase().includes('not provided')) {
+            otherChecks.push(ilike(schema.leads.email, params.email.trim()));
+        }
+        if (params.website && params.website.length > 5 && !params.website.toLowerCase().includes('not provided')) {
+            otherChecks.push(ilike(schema.leads.website, `%${params.website.replace(/https?:\/\//, '').replace(/\/$/, '')}%`));
+        }
+
+        if (otherChecks.length > 0) {
+            checks.push(and(businessCheck, or(...otherChecks)));
+        } else {
+            checks.push(businessCheck);
+        }
+      } else {
+        // If no business name, only use other identifiers if they are very strong.
+        // For now, don't flag as duplicate if no business name is present to be safe.
       }
 
       if (checks.length > 0) {
@@ -1811,10 +1821,13 @@ export async function batchImportDbLeads(
     const email = row.email || row.Email || '';
     const website = row.website || row.Website || '';
 
-    const dupCheck = await checkLeadDuplicate({ businessName: bizName, phone, email, website });
-    if (dupCheck.isDuplicate) {
+    // Marking as duplicate if found but not skipping, to allow UI review.
+    // The UI should handle displaying these duplicates.
+    const dupCheck = importMeta.skipDuplicateCheck ? { isDuplicate: false } : await checkLeadDuplicate({ businessName: bizName, phone, email, website });
+    const isDuplicate = dupCheck.isDuplicate;
+    if (isDuplicate) {
       duplicatesCount++;
-      continue;
+      // Do not continue, just tag this lead as duplicate in the result
     }
 
     // Determine assignee (ALWAYS Sophia)
@@ -1833,40 +1846,43 @@ export async function batchImportDbLeads(
       row.leadId ||
       `MCA-LEAD-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-    const result = await createDbLead({
-      lead_id: leadId,
-      business_name: bizName,
-      contact_name: row.contact_name || row['Contact Name'] || row.contactName || bizName,
-      phone,
-      phone_e164: row.phone_e164 || row.phoneE164 || phone,
-      email,
-      website,
-      address: row.address || row.Address || '',
-      city: row.city || row.City || null,
-      state: row.state || row.State || row.stateRegion || null,
-      postal_code: row.postal_code || row.postalCode || row.zip || row.Zip || '',
-      niche: row.niche || row.Trade || row.Industry || 'General Contractor',
-      gmb_status: 
-        row.gmb_status === 'GMB Found - Website Available' ? 'Established' : 
-        (row.gmb_status || row.gmbStatus || null),
-      gmb_rating: (row.gmb_rating !== undefined && row.gmb_rating !== null && row.gmb_rating !== '') ? Number(row.gmb_rating) : null,
-      gmb_review_count: (row.gmb_review_count !== undefined && row.gmb_review_count !== null && row.gmb_review_count !== '') ? Number(row.gmb_review_count) : null,
-      google_maps_url: row.google_maps_url || row.googleMapsUrl || '',
-      website_status: row.website_status || row.websiteStatus || 'Active',
-      pagespeed_score: row.pagespeed_score !== undefined ? Number(row.pagespeed_score) : 60,
-      google_ads_status: row.google_ads_status || 'No Ads',
-      meta_pixel_status: row.meta_pixel_status || 'No Pixel',
-      lead_score: Number(row.lead_score || row.leadScore || row.Score || 65),
-      score_breakdown: row.score_breakdown || {},
-      is_hot_target: row.is_hot_target !== undefined ? Boolean(row.is_hot_target) : (Number(row.lead_score || row.Score || 65) >= 80),
-      opportunity_angle: row.opportunity_angle || row.opportunityAngle || 'Immediate Local Growth Optimization',
-      recommended_service: row.recommended_service || row.recommendedService || 'SEO & GMB Optimization',
-      estimated_retainer: Number(row.estimated_retainer || row.estimatedRetainer || 2500),
-      pipeline_stage: row.pipeline_stage || row.leadStatus || 'New Lead',
-      owner: leadData.assignedTo,
-      notes: row.notes || [],
-      original_data: row.original_data || row.rawPayload || row,
-    });
+    let result: any = { _dbSource: 'skipped_as_duplicate' };
+    if (!isDuplicate) {
+        result = await createDbLead({
+          lead_id: leadId,
+          business_name: bizName,
+          contact_name: row.contact_name || row['Contact Name'] || row.contactName || bizName,
+          phone,
+          phone_e164: row.phone_e164 || row.phoneE164 || phone,
+          email,
+          website,
+          address: row.address || row.Address || '',
+          city: row.city || row.City || null,
+          state: row.state || row.State || row.stateRegion || null,
+          postal_code: row.postal_code || row.postalCode || row.zip || row.Zip || '',
+          niche: row.niche || row.Trade || row.Industry || 'General Contractor',
+          gmb_status: 
+            row.gmb_status === 'GMB Found - Website Available' ? 'Established' : 
+            (row.gmb_status || row.gmbStatus || null),
+          gmb_rating: (row.gmb_rating !== undefined && row.gmb_rating !== null && row.gmb_rating !== '') ? Number(row.gmb_rating) : null,
+          gmb_review_count: (row.gmb_review_count !== undefined && row.gmb_review_count !== null && row.gmb_review_count !== '') ? Number(row.gmb_review_count) : null,
+          google_maps_url: row.google_maps_url || row.googleMapsUrl || '',
+          website_status: row.website_status || row.websiteStatus || 'Active',
+          pagespeed_score: row.pagespeed_score !== undefined ? Number(row.pagespeed_score) : 60,
+          google_ads_status: row.google_ads_status || 'No Ads',
+          meta_pixel_status: row.meta_pixel_status || 'No Pixel',
+          lead_score: Number(row.lead_score || row.leadScore || row.Score || 65),
+          score_breakdown: row.score_breakdown || {},
+          is_hot_target: row.is_hot_target !== undefined ? Boolean(row.is_hot_target) : (Number(row.lead_score || row.Score || 65) >= 80),
+          opportunity_angle: row.opportunity_angle || row.opportunityAngle || 'Immediate Local Growth Optimization',
+          recommended_service: row.recommended_service || row.recommendedService || 'SEO & GMB Optimization',
+          estimated_retainer: Number(row.estimated_retainer || row.estimatedRetainer || 2500),
+          pipeline_stage: row.pipeline_stage || row.leadStatus || 'New Lead',
+          owner: leadData.assignedTo,
+          notes: row.notes || [],
+          original_data: row.original_data || row.rawPayload || row,
+        });
+    }
     
     if (result._dbSource === 'neon') {
       // SUCCESS: Valid record created and confirmed in Neon PostgreSQL

@@ -558,7 +558,6 @@ export async function deleteLead(leadId: string): Promise<boolean> {
   const lead = current.find((l) => l.lead_id === leadId);
   const filtered = current.filter((l) => l.lead_id !== leadId);
   if (filtered.length !== current.length) {
-    saveLeads(filtered);
     // Background Cloud SQL persistence
     bgApiCall(`/api/leads/${encodeURIComponent(leadId)}?soft=true`, 'DELETE');
     if (lead) {

@@ -179,7 +179,6 @@ export class BulkQueueController {
 
   /** Signal that the current manual call ended — process the next lead */
   async advanceManualCall(): Promise<void> {
-    console.log('[BulkQueueController] advanceManualCall called. opType:', this.opType, 'isRunning:', this.isRunning);
     if (this.opType !== 'MANUAL_CALL' && this.opType !== 'MULTI_MANUAL_CALL') {
         console.error('[BulkQueueController] Invalid opType:', this.opType);
         return;

@@ -39,7 +39,7 @@ interface ImportModalProps {
   isOpen: boolean;
   onClose: () => void;
   existingLeads: Lead[];
-  onImportComplete: (newLeads: Lead[], fileName: string, totalCount: number) => void;
+  onImportComplete: (newLeads: Lead[], fileName: string, totalCount: number, skipDuplicateCheck?: boolean) => void;
   initialMode?: 'upload' | 'sheets' | 'paste' | 'preset';
 }
 
@@ -266,7 +266,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
           setImportedLeads(newLeads);
           setIsProcessing(false);
           setStep(6); // Completion
-          onImportComplete(newLeads, fileName, newLeads.length);
+          onImportComplete(newLeads, fileName, newLeads.length, true);
         }, 300);
       }, 400);
     }, 400);

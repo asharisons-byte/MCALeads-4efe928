@@ -57,6 +57,7 @@ interface LeadsTableProps {
   onOpenAddLead?: () => void;
   onBulkUpdateStage: (leadIds: string[], stage: PipelineStage) => Promise<void>;
   onBulkDelete: (leadIds: string[]) => void;
+  onDeleteLead: (leadId: string) => void;
   onTriggerAIEnrichment: (leadIds: string[]) => void;
   onClearAllLeads?: () => void;
   onOpenDialer?: (lead: Lead) => void;
@@ -84,6 +85,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
   onOpenAddLead,
   onBulkUpdateStage,
   onBulkDelete,
+  onDeleteLead,
   onTriggerAIEnrichment,
   onClearAllLeads,
   onOpenDialer,
@@ -683,7 +685,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                           })()}
                         </td>
                         <td className="p-2.5 text-[10px] text-slate-400 font-mono">{lead.created_at ? new Date(lead.created_at).toLocaleDateString() : '—'}</td>
-                        <td className="p-2.5 text-center min-w-[60px]">
+                        <td className="p-2.5 text-center min-w-[60px] flex gap-2 justify-center">
                           <button 
                             onClick={(e) => { 
                               e.stopPropagation(); 
@@ -692,6 +694,17 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                             className="text-xs text-[var(--secondary)] hover:text-[var(--secondary)] font-semibold"
                           >
                             View
+                          </button>
+                            <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if(window.confirm('Delete this lead?')) {
+                                    onDeleteLead(lead.lead_id);
+                                }
+                            }}
+                            className="text-rose-400 hover:text-rose-300"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </td>
                       </tr>
