@@ -432,6 +432,11 @@ export async function updateLead(
 ): Promise<Lead | null> {
   const timestamp = new Date().toISOString();
   
+  if (!leadId) {
+    console.error('[ERROR] updateLead called with undefined leadId. targetLead object:', currentLead);
+    return null;
+  }
+
   // Use provided currentLead, or fetch if not provided
   let leadToValidate = currentLead;
   if (!leadToValidate) {

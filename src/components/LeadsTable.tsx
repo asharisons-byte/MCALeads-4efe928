@@ -310,9 +310,9 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
     const next = new Set(selectedLeadIds);
     paginatedLeads.forEach((l) => {
       if (checked) {
-        next.add(l.lead_id);
+        next.add(l.id.toString());
       } else {
-        next.delete(l.lead_id);
+        next.delete(l.id.toString());
       }
     });
     onSelectionChange(next);
@@ -596,7 +596,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                 </tr>
               ) : (
                 paginatedLeads.map((lead) => {
-                  const isSelected = selectedLeadIds.has(lead.lead_id);
+                  const isSelected = selectedLeadIds.has(lead.id.toString());
                   const isExpanded = expandedLeadId === lead.lead_id;
                   return (
                     <React.Fragment key={lead.lead_id}>
@@ -614,7 +614,7 @@ export const LeadsTable: React.FC<LeadsTableProps> = ({
                           <input
                             type="checkbox"
                             checked={isSelected}
-                            onChange={(e) => { e.stopPropagation(); handleSelectRow(lead.lead_id); }}
+                            onChange={(e) => { e.stopPropagation(); handleSelectRow(lead.id.toString()); }}
                             className="rounded border-slate-700 bg-slate-800 text-indigo-600 focus:ring-indigo-500"
                           />
                         </td>
