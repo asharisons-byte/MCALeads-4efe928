@@ -310,9 +310,29 @@ router.get('/leads/:id', async (req: Request, res: Response) => {
 });
 
 // 6. Leads: Create
-router.post('/leads', async (req: Request, res: Response) => {
+router.post('/leads', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const lead = await createDbLead(req.body);
+    const firebaseUid = req.user?.uid;
+    const [dbUser] = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.uid, firebaseUid!))
+      .limit(1);
+    
+    let assignment = undefined;
+    if (dbUser) {
+        const canonicalRole = normalizeAppRole(dbUser.role);
+        const salesRoles = ['SDR', 'ACCOUNT_EXECUTIVE', 'APPOINTMENT_SETTER', 'OUTREACH_SPECIALIST'];
+        if (canonicalRole && salesRoles.includes(canonicalRole)) {
+            assignment = {
+                userId: dbUser.id,
+                displayName: dbUser.displayName,
+                role: dbUser.role
+            };
+        }
+    }
+
+    const lead = await createDbLead(req.body, assignment);
     if (lead._dbSource === 'failed') {
       return res.status(500).json({
         success: false,

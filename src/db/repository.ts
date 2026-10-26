@@ -396,7 +396,7 @@ export async function checkLeadDuplicate(params: {
 }
 
 
-export async function createDbLead(leadData: any) {
+export async function createDbLead(leadData: any, assignment?: { userId: number; displayName: string; role: string }) {
   // initInMemoryDefaults() removed - was seeding fake CCB data causing contamination
 
   const rawBusinessName =
@@ -495,7 +495,7 @@ export async function createDbLead(leadData: any) {
     leadScore: validatedScore,
     estimatedRetainer: Number(leadData.estimated_retainer || leadData.estimatedRetainer || 2500),
     estimatedValue: (Number(leadData.estimated_retainer || leadData.estimatedRetainer || 2500)) * 12,
-    ...getDefaultLeadOwner(),
+    ...(assignment ? { ownershipType: 'HUMAN', assignedTo: `${assignment.displayName} (${ROLE_DISPLAY_TITLES[assignment.role as AppRole] || assignment.role})`, assignedUserId: assignment.userId } : getDefaultLeadOwner()),
     ccbLicenseNumber: leadData.ccb_license_number || leadData.licenseNumber || (uniqueLeadId.startsWith('CCB-') ? uniqueLeadId.replace('CCB-', '') : null),
     isHotTarget: leadData.is_hot_target !== undefined ? Boolean(leadData.is_hot_target) : (validatedScore >= 80),
     doNotContact: false,
