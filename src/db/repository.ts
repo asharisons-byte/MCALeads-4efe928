@@ -167,6 +167,7 @@ export async function getDbLeads(params: {
   city?: string;
   isHotTarget?: boolean;
   assignedTo?: string;
+  assignedUserId?: number;
   limit?: number;
   offset?: number;
 }) {
@@ -211,6 +212,10 @@ export async function getDbLeads(params: {
 
       if (params.assignedTo) {
         conditions.push(eq(schema.leads.assignedTo, params.assignedTo));
+      }
+
+      if (params.assignedUserId) {
+        conditions.push(eq(schema.leads.assignedUserId, params.assignedUserId));
       }
 
       const whereClause = conditions.length > 0 ? and(...conditions) : undefined;

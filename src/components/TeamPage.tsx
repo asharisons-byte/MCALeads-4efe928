@@ -611,7 +611,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
                     <MenuItem key={u.id} value={String(u.id)}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <AssignmentIndIcon fontSize="small" />
-                        {u.displayName} ({ROLE_DISPLAY_TITLES[u.role] || u.role})
+                        {u.displayName} ({u.role})
                       </Box>
                     </MenuItem>
                   ))}
@@ -776,7 +776,7 @@ const TeamPage: React.FC<TeamPageProps> = ({ currentUserRole }) => {
                 <MenuItem value=""><em>— Select member —</em></MenuItem>
                 {salesMembers.map((u) => (
                   <MenuItem key={u.id} value={String(u.id)}>
-                    {u.displayName} ({ROLE_DISPLAY_TITLES[u.role] || u.role})
+                    {u.displayName} ({u.role})
                   </MenuItem>
                 ))}
               </Select>

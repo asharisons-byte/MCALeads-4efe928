@@ -233,12 +233,12 @@ router.get('/leads', async (req: Request, res: Response) => {
     
     // SDR and APPOINTMENT_SETTER see only their assigned leads
     const restrictedRoles = ['SDR', 'APPOINTMENT_SETTER', 'OUTREACH_SPECIALIST'];
-    let assignedToFilter: string | undefined = undefined;
+    let assignedUserIdFilter: number | undefined = undefined;
     
     if (restrictedRoles.includes(normalizedCallerRole) && db && callerUid) {
-      const userRows = await db.select().from(schema.users).where(eq(schema.users.uid, callerUid)).limit(1);
+      const userRows = await db.select({ id: schema.users.id }).from(schema.users).where(eq(schema.users.uid, callerUid)).limit(1);
       if (userRows[0]) {
-        assignedToFilter = userRows[0].displayName || userRows[0].firstName || undefined;
+        assignedUserIdFilter = userRows[0].id;
       }
     }
 
@@ -248,7 +248,7 @@ router.get('/leads', async (req: Request, res: Response) => {
       niche: niche ? String(niche) : undefined,
       city: city ? String(city) : undefined,
       isHotTarget: isHotTarget === 'true',
-      assignedTo: assignedToFilter,
+      assignedUserId: assignedUserIdFilter,
       limit: limit ? Number(limit) : undefined,
       offset: offset ? Number(offset) : undefined,
     });
