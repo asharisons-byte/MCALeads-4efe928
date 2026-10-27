@@ -291,6 +291,7 @@ app.post('/api/ai/analyze-lead', async (req, res) => {
 app.post('/api/ai/batch-analyze', async (req, res) => {
   try {
     const { leads } = req.body;
+    console.log(`[API /api/ai/batch-analyze] Received batch analysis request for ${Array.isArray(leads) ? leads.length : 0} leads`);
     if (!Array.isArray(leads) || leads.length === 0) {
       return res.status(400).json({ error: 'Array of leads is required' });
     }
@@ -302,19 +303,26 @@ app.post('/api/ai/batch-analyze', async (req, res) => {
     const batch = leads.slice(0, 15);
     await Promise.all(
       batch.map(async (lead) => {
+        let data: any;
         if (ai) {
           try {
-            const data = await analyzeSingleLeadWithGemini(ai, lead);
-            results[lead.lead_id] = data;
-          } catch (e) {
-            results[lead.lead_id] = generateDeterministicAnalysis(lead);
+            data = await analyzeSingleLeadWithGemini(ai, lead);
+          } catch (e: any) {
+            console.warn(`[API /api/ai/batch-analyze] Gemini single analyze failed for lead ${lead.lead_id || lead.id}:`, e.message);
+            data = generateDeterministicAnalysis(lead);
           }
         } else {
-          results[lead.lead_id] = generateDeterministicAnalysis(lead);
+          data = generateDeterministicAnalysis(lead);
         }
+
+        // Store under both string/number keys so frontend lookups never fail
+        if (lead.lead_id) results[lead.lead_id] = data;
+        if (lead.id) results[String(lead.id)] = data;
+        if (lead.leadId) results[lead.leadId] = data;
       })
     );
 
+    console.log(`[API /api/ai/batch-analyze] Completed batch analysis. Result keys count: ${Object.keys(results).length}`);
     return res.json({ results });
   } catch (error: any) {
     console.error('Batch analyze error:', error);

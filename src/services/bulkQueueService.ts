@@ -9,7 +9,7 @@
  * to invoke advanceManualCall() — e.g., after user closes the dialer.
  */
 
-export type BulkOpType = 'AI_CALL' | 'MANUAL_CALL' | 'MULTI_MANUAL_CALL' | 'SMS' | 'EMAIL';
+export type BulkOpType = 'AI_CALL' | 'MANUAL_CALL' | 'MULTI_MANUAL_CALL' | 'ENRICH' | 'SMS' | 'EMAIL';
 export type ItemStatus = 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED' | 'SKIPPED' | 'CANCELLED';
 
 export interface QueueItem {
@@ -237,12 +237,15 @@ export class BulkQueueController {
     this._emit();
 
     try {
+      console.log(`[BulkQueueController] Starting execution of item ${item.id} for lead "${item.leadName}" (${item.leadId}) [opType: ${this.opType}]`);
       const result = await this.executor(item);
       item.status = result.success ? 'SUCCESS' : 'FAILED';
       if (!result.success) item.error = result.error || 'Unknown error';
+      console.log(`[BulkQueueController] Executed item ${item.id} for lead "${item.leadName}": status = ${item.status}`, result.error ? `error: ${result.error}` : '');
     } catch (err: any) {
       item.status = 'FAILED';
       item.error = err?.message ?? 'Unhandled error';
+      console.error(`[BulkQueueController] Unhandled error during item execution ${item.id}:`, err);
     }
     if (item.status === 'FAILED') {
       console.error(`[Bulk ${this.opType}] FAILED for "${item.leadName}" (${item.leadId}): ${item.error}`);

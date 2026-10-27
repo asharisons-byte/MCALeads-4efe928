@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Loader2, CheckCircle, AlertCircle, X, Clock, Bot, Send, Mail, Phone,
+  Loader2, CheckCircle, AlertCircle, X, Clock, Bot, Send, Mail, Phone, Sparkles,
   SkipForward, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { BulkProgress, BulkOpType, QueueItem } from '../services/bulkQueueService';
@@ -38,10 +38,12 @@ function formatCountdown(ms: number): string {
 
 // ── Icon per type ─────────────────────────────────────────────────────────────
 const OP_META: Record<BulkOpType, { label: string; Icon: React.FC<any>; color: string }> = {
-  AI_CALL:     { label: 'AI Call',     Icon: Bot,   color: 'text-[var(--secondary)]' },
-  MANUAL_CALL: { label: 'Manual Call', Icon: Phone,  color: 'text-[var(--error)]' },
-  SMS:         { label: 'Bulk SMS',    Icon: Send,   color: 'text-[var(--primary-container)]' },
-  EMAIL:       { label: 'Bulk Email',  Icon: Mail,   color: 'text-[var(--tertiary-fixed-dim)]' },
+  AI_CALL:           { label: 'AI Voice Call',     Icon: Bot,      color: 'text-[var(--secondary)]' },
+  MANUAL_CALL:       { label: 'Manual Call',       Icon: Phone,    color: 'text-[var(--error)]' },
+  MULTI_MANUAL_CALL: { label: 'Multi-Dialer Call', Icon: Phone,    color: 'text-rose-400' },
+  ENRICH:            { label: 'AI Lead Enrichment',Icon: Sparkles, color: 'text-purple-400' },
+  SMS:               { label: 'Bulk SMS',          Icon: Send,     color: 'text-[var(--primary-container)]' },
+  EMAIL:             { label: 'Bulk Email',        Icon: Mail,     color: 'text-[var(--tertiary-fixed-dim)]' },
 };
 
 const STATUS_COLOR: Record<string, string> = {
@@ -66,7 +68,7 @@ export const BulkProgressOverlay: React.FC<BulkProgressOverlayProps> = ({
   const { opType, total, successful, failed, pending, running, isComplete, items } = progress;
   const processed = successful + failed;
   const pct = total > 0 ? Math.round((processed / total) * 100) : 0;
-  const meta = OP_META[opType];
+  const meta = OP_META[opType] || OP_META.AI_CALL;
 
   const hasCountdown = !isComplete && remaining > 0 && (opType === 'SMS' || opType === 'EMAIL');
   const needsManualAdvance = opType === 'MANUAL_CALL' && !isComplete;

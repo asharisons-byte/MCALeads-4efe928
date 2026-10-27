@@ -73,17 +73,22 @@ export async function analyzeLeadWithAI(lead: Partial<Lead>): Promise<AIEnrichme
 
 export async function batchAnalyzeLeads(leads: Lead[]): Promise<Record<string, AIEnrichmentData>> {
   try {
+    console.log('[batchAnalyzeLeads] Sending POST to /api/ai/batch-analyze, leads count:', leads.length);
     const res = await fetch('/api/ai/batch-analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ leads }),
     });
 
+    console.log('[batchAnalyzeLeads] Response status:', res.status, res.statusText);
     if (!res.ok) {
-      throw new Error(`Server returned ${res.status}`);
+      const errorText = await res.text();
+      console.error('[batchAnalyzeLeads] Server returned non-OK status:', res.status, errorText);
+      throw new Error(`Server returned ${res.status}: ${errorText}`);
     }
 
     const data = await res.json();
+    console.log('[batchAnalyzeLeads] Backend API response received:', data);
     const rawResults = data.results || {};
     const formatted: Record<string, AIEnrichmentData> = {};
 
@@ -106,9 +111,10 @@ export async function batchAnalyzeLeads(leads: Lead[]): Promise<Record<string, A
       };
     }
 
+    console.log('[batchAnalyzeLeads] Formatted results count:', Object.keys(formatted).length);
     return formatted;
   } catch (err) {
-    console.error('Batch analysis failed, using single lead pipeline:', err);
+    console.error('[batchAnalyzeLeads] Batch analysis failed, using single lead pipeline:', err);
     const map: Record<string, AIEnrichmentData> = {};
     for (const l of leads.slice(0, 10)) {
       map[l.lead_id] = await analyzeLeadWithAI(l);

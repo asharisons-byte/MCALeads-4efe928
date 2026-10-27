@@ -731,10 +731,27 @@ export async function updateDbLead(leadId: string | number, updates: any) {
       const updateFields: any = { updatedAt: new Date() };
       if (updates.business_name !== undefined) updateFields.businessName = updates.business_name;
       if (updates.businessName !== undefined) updateFields.businessName = updates.businessName;
+      if (updates.contact_name !== undefined) updateFields.contactName = updates.contact_name;
+      if (updates.contactName !== undefined) updateFields.contactName = updates.contactName;
       if (updates.phone !== undefined) updateFields.phone = updates.phone;
+      if (updates.phone_e164 !== undefined) updateFields.phoneE164 = updates.phone_e164;
       if (updates.email !== undefined) updateFields.email = updates.email;
+      if (updates.website !== undefined) updateFields.website = updates.website;
+      if (updates.niche !== undefined) updateFields.niche = updates.niche;
+      if (updates.city !== undefined) updateFields.city = updates.city;
+      if (updates.address !== undefined) updateFields.address = updates.address;
+      if (updates.lead_score !== undefined) updateFields.leadScore = Number(updates.lead_score);
+      if (updates.leadScore !== undefined) updateFields.leadScore = Number(updates.leadScore);
+      if (updates.estimated_retainer !== undefined) updateFields.estimatedRetainer = Number(updates.estimated_retainer);
+      if (updates.estimatedRetainer !== undefined) updateFields.estimatedRetainer = Number(updates.estimatedRetainer);
       if (updates.pipeline_stage !== undefined) updateFields.leadStatus = updates.pipeline_stage;
       if (updates.leadStatus !== undefined) updateFields.leadStatus = updates.leadStatus;
+      if (updates.is_hot_target !== undefined) updateFields.isHotTarget = Boolean(updates.is_hot_target);
+      if (updates.isHotTarget !== undefined) updateFields.isHotTarget = Boolean(updates.isHotTarget);
+      if (updates.opportunity_angle !== undefined) updateFields.opportunityAngle = updates.opportunity_angle;
+      if (updates.opportunityAngle !== undefined) updateFields.opportunityAngle = updates.opportunityAngle;
+      if (updates.recommended_service !== undefined) updateFields.recommendedService = updates.recommended_service;
+      if (updates.recommendedService !== undefined) updateFields.recommendedService = updates.recommendedService;
       if (updates.country !== undefined) updateFields.country = updates.country;
       if (updates.first_connection_attempt !== undefined) updateFields.firstConnectionAttempt = updates.first_connection_attempt;
 
@@ -757,20 +774,40 @@ export async function updateDbLead(leadId: string | number, updates: any) {
         ? eq(schema.leads.leadId, String(leadId))
         : or(eq(schema.leads.id, numId), eq(schema.leads.leadId, String(leadId)));
 
+      if (updates.ai_enrichment !== undefined || updates.rawPayload !== undefined || updates.score_breakdown !== undefined || updates.gaps !== undefined || updates.estimated_revenue_lift !== undefined) {
+        try {
+          const existingRow = await db.select({ rawPayload: schema.leads.rawPayload }).from(schema.leads).where(whereClause).limit(1);
+          const existingPayload = (existingRow[0]?.rawPayload as any) || {};
+          updateFields.rawPayload = {
+            ...existingPayload,
+            ...(updates.rawPayload || {}),
+            ...(updates.ai_enrichment ? { ai_enrichment: updates.ai_enrichment } : {}),
+            ...(updates.score_breakdown ? { score_breakdown: updates.score_breakdown } : {}),
+            ...(updates.gaps ? { gaps: updates.gaps } : {}),
+            ...(updates.opportunity_angle ? { opportunity_angle: updates.opportunity_angle } : {}),
+            ...(updates.recommended_service ? { recommended_service: updates.recommended_service } : {}),
+            ...(updates.estimated_retainer ? { estimated_retainer: updates.estimated_retainer } : {}),
+            ...(updates.estimated_revenue_lift ? { estimated_revenue_lift: updates.estimated_revenue_lift } : {}),
+          };
+        } catch (payloadErr) {
+          console.warn('Could not merge rawPayload in updateDbLead:', payloadErr);
+        }
+      }
+
       const [updated] = await db
         .update(schema.leads)
         .set(updateFields)
         .where(whereClause)
         .returning();
 
-      if (updated) return updated;
+      if (updated) return { ...updated, _dbSource: 'neon' };
     } catch (error: any) {
       console.error('updateDbLead DB update failed:', error?.message);
       throw error; // Re-throw to ensure API layer handles failure
     }
   }
 
-  return target || { success: true };
+  return target ? { ...target, _dbSource: 'in_memory' } : { success: true };
 }
 
 export async function archiveOrDeleteDbLead(leadId: string | number, softDelete = true) {

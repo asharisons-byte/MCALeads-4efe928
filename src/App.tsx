@@ -327,12 +327,16 @@ export function App() {
   };
 
   const handleBulkUpdateStage = async (leadIds: string[], stage: PipelineStage) => {
+    console.log('[handleBulkUpdateStage] Invoked for leads:', leadIds, 'to stage:', stage);
     await bulkUpdateStage(leadIds, stage);
-    setLeads(await getLeads());
+    const fresh = await getLeads();
+    console.log('[handleBulkUpdateStage] Fresh leads fetched after bulk update:', fresh.length);
+    setLeads(fresh);
     setActivities(getActivities());
   };
 
   const handleBulkDelete = async (leadIds: string[]) => {
+    console.log('[handleBulkDelete] Deleting leads:', leadIds);
     await bulkDelete(leadIds);
     setLeads(await getLeads());
     setActivities(getActivities());
@@ -361,38 +365,108 @@ export function App() {
 
   // Trigger Gemini enrichment on selected leads
   const handleTriggerAIEnrichment = async (leadIds: string[]) => {
-    const targetLeads = leads.filter((l) => leadIds.includes(l.lead_id));
-    if (targetLeads.length === 0) return;
+    console.log('[handleTriggerAIEnrichment] Initiating AI enrichment for leadIds:', leadIds);
+    const currentLeads = leads.length > 0 ? leads : await getLeads();
+    const targetLeads = currentLeads.filter(
+      (l) => leadIds.includes(l.lead_id) || leadIds.includes(String(l.id)) || ((l as any).leadId && leadIds.includes((l as any).leadId))
+    );
+    console.log('[handleTriggerAIEnrichment] Matched targetLeads count:', targetLeads.length, targetLeads.map(l => ({ id: l.id, lead_id: l.lead_id, name: l.business_name })));
+
+    if (targetLeads.length === 0) {
+      console.warn('[handleTriggerAIEnrichment] No leads found matching leadIds:', leadIds);
+      return;
+    }
 
     try {
+      console.log('[handleTriggerAIEnrichment] Calling batchAnalyzeLeads with', targetLeads.length, 'leads...');
       const results = await batchAnalyzeLeads(targetLeads);
-      for (const [id, enrichment] of Object.entries(results)) {
-        updateLead(id, {
+      console.log('[handleTriggerAIEnrichment] API Response received from batchAnalyzeLeads:', results);
+
+      const updatePromises = targetLeads.map(async (targetLead) => {
+        const enrichment = results[targetLead.lead_id] || 
+          (targetLead.id ? results[String(targetLead.id)] : undefined) || 
+          ((targetLead as any).leadId ? results[(targetLead as any).leadId] : undefined);
+
+        if (!enrichment) {
+          console.warn(`[handleTriggerAIEnrichment] No enrichment entry in backend API response for lead ${targetLead.lead_id} (${targetLead.business_name})`);
+          return null;
+        }
+
+        console.log(`[handleTriggerAIEnrichment] Applying AI enrichment to lead ${targetLead.lead_id}:`, {
+          leadScore: enrichment.confidence_score,
+          opportunity_angle: enrichment.opportunity_angle,
+          recommended_service: enrichment.recommended_service,
+          retainer: enrichment.estimated_retainer,
+        });
+
+        const updated = await updateLead(targetLead.lead_id, {
           ai_enrichment: enrichment,
           opportunity_angle: enrichment.opportunity_angle,
           recommended_service: enrichment.recommended_service,
           estimated_retainer: enrichment.estimated_retainer,
           estimated_revenue_lift: enrichment.estimated_revenue_lift,
-        });
-      }
+          lead_score: enrichment.confidence_score || targetLead.lead_score,
+        }, targetLead);
+
+        console.log(`[handleTriggerAIEnrichment] Persisted lead update result for ${targetLead.lead_id}:`, updated ? 'Success' : 'Failed');
+        return updated;
+      });
+
+      await Promise.all(updatePromises);
+
+      // Immediately reflect updates in local state so UI updates instantly
+      setLeads((prev) =>
+        prev.map((l) => {
+          const enrichment = results[l.lead_id] || (l.id ? results[String(l.id)] : undefined) || ((l as any).leadId ? results[(l as any).leadId] : undefined);
+          if (!enrichment) return l;
+          return {
+            ...l,
+            ai_enrichment: enrichment,
+            opportunity_angle: enrichment.opportunity_angle || l.opportunity_angle,
+            recommended_service: enrichment.recommended_service || l.recommended_service,
+            estimated_retainer: enrichment.estimated_retainer || l.estimated_retainer,
+            estimated_revenue_lift: enrichment.estimated_revenue_lift || l.estimated_revenue_lift,
+            lead_score: enrichment.confidence_score || l.lead_score,
+          };
+        })
+      );
     } catch (e) {
-      console.error('Batch enrichment failed, trying single leads:', e);
+      console.error('[handleTriggerAIEnrichment] Batch enrichment API call failed, trying single leads fallback. Error:', e);
       for (const target of targetLeads) {
         try {
+          console.log('[handleTriggerAIEnrichment] Fallback analyzing single lead:', target.lead_id);
           const enrichment = await analyzeLeadWithAI(target);
-          updateLead(target.lead_id, {
+          console.log('[handleTriggerAIEnrichment] Single lead analysis API response for', target.lead_id, ':', enrichment);
+          await updateLead(target.lead_id, {
             ai_enrichment: enrichment,
             opportunity_angle: enrichment.opportunity_angle,
             recommended_service: enrichment.recommended_service,
             estimated_retainer: enrichment.estimated_retainer,
             estimated_revenue_lift: enrichment.estimated_revenue_lift,
-          });
+            lead_score: enrichment.confidence_score || target.lead_score,
+          }, target);
+          setLeads((prev) =>
+            prev.map((l) =>
+              l.lead_id === target.lead_id
+                ? {
+                    ...l,
+                    ai_enrichment: enrichment,
+                    opportunity_angle: enrichment.opportunity_angle || l.opportunity_angle,
+                    recommended_service: enrichment.recommended_service || l.recommended_service,
+                    estimated_retainer: enrichment.estimated_retainer || l.estimated_retainer,
+                    estimated_revenue_lift: enrichment.estimated_revenue_lift || l.estimated_revenue_lift,
+                    lead_score: enrichment.confidence_score || l.lead_score,
+                  }
+                : l
+            )
+          );
         } catch (err) {
-          console.error('Enrichment failed for lead', target.lead_id, err);
+          console.error('[handleTriggerAIEnrichment] Fallback enrichment failed for lead', target.lead_id, err);
         }
       }
     }
-    getLeads().then((fresh) => setLeads(fresh));
+    const fresh = await getLeads();
+    if (fresh && fresh.length > 0) setLeads(fresh);
     setActivities(getActivities());
   };
 

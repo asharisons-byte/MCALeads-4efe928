@@ -132,9 +132,14 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
   const aiCallAbortRef = useRef<AbortController | null>(null);
 
   const handleBulkChangeStageConfirm = useCallback(async (stage: PipelineStage) => {
-    await bulkUpdateStage(Array.from(selectedLeadIds), stage);
+    console.log('[LeadsPage] Confirming bulk stage change to:', stage, 'for leads:', Array.from(selectedLeadIds));
+    if (props.onBulkUpdateStage) {
+      await props.onBulkUpdateStage(Array.from(selectedLeadIds), stage);
+    } else {
+      await bulkUpdateStage(Array.from(selectedLeadIds), stage);
+    }
     setShowChangeStageModal(false);
-  }, [selectedLeadIds]);
+  }, [selectedLeadIds, props.onBulkUpdateStage]);
 
   // ── Progress callback ─────────────────────────────────────────────────────
   const onProgress = useCallback((p: BulkProgress) => {
@@ -165,12 +170,10 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
     activeControllerRef.current?.cancel();
     aiCallAbortRef.current?.abort();
 
-    // One up-front check so a bad VITE_AI_BACKEND_URL / down server shows ONE clear
-    // message instead of N identical per-lead failures.
+    // Check backend health (supports both direct server-side agent and local simulation)
     const health = await checkAIBackend();
-    if (!health.ok) {
-      alert(`Bulk AI Call can't start.\n\n${health.error}`);
-      return;
+    if (!health.ok && !health.isSimulation) {
+      console.warn(`[Bulk AI Call] AI backend warning:`, health.error);
     }
 
     const abort = new AbortController();
@@ -319,7 +322,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
     activeControllerRef.current?.cancel();
 
     const controller = new BulkQueueController({
-      opType: 'AI_CALL', // Reusing AI_CALL type as placeholder for enrichment
+      opType: 'ENRICH',
       gapMs: 0,
       onProgress,
       executor: async (item) => {
@@ -452,13 +455,13 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
   }, [selectedLeadIds, props.onBulkUpdateStage]);
 
   // ── ADVANCE STAGE ─────────────────────────────────────────────────────────
-  const handleBulkMoveStage = useCallback(() => {
+  const handleBulkMoveStage = useCallback(async () => {
     const ids = Array.from(selectedLeadIds);
-    ids.forEach((id) => {
-      const lead = leads.find((l) => l.lead_id === id);
+    for (const id of ids) {
+      const lead = leads.find((l) => l.lead_id === id || String(l.id) === String(id));
       const next = nextStage(lead?.pipeline_stage);
-      props.onBulkUpdateStage([id], next);
-    });
+      await props.onBulkUpdateStage([id], next);
+    }
   }, [leads, selectedLeadIds, props.onBulkUpdateStage]);
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -562,7 +565,13 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       />
 
       <div className="flex-1 flex flex-col min-h-0">
-        <LeadsTable {...props} leads={filteredLeads} activities={activities} scrollRef={scrollRef} />
+        <LeadsTable
+          {...props}
+          leads={filteredLeads}
+          activities={activities}
+          scrollRef={scrollRef}
+          onDeleteLead={(id) => props.onBulkDelete([id])}
+        />
       </div>
     </div>
   );
