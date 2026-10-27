@@ -72,28 +72,62 @@ export async function analyzeLeadWithAI(lead: Partial<Lead>): Promise<AIEnrichme
 }
 
 export async function batchAnalyzeLeads(leads: Lead[]): Promise<Record<string, AIEnrichmentData>> {
+  const outgoingPayload = { leads };
+  console.log('[batchAnalyzeLeads] PRE-REQUEST: Exact JSON payload sent to backend:', JSON.stringify(outgoingPayload));
+  console.log('[batchAnalyzeLeads] PRE-REQUEST: Tracing leads array indices before transmission:');
+  leads.forEach((l, idx) => {
+    console.log(`  [Payload Index ${idx}] id=${l.id}, lead_id=${l.lead_id}, (leadId=${(l as any).leadId}), business_name="${l.business_name}"`);
+  });
+
   try {
-    console.log('[batchAnalyzeLeads] Sending POST to /api/ai/batch-analyze, leads count:', leads.length);
+    console.log('[batchAnalyzeLeads] PRE-REQUEST: Sending POST to /api/ai/batch-analyze, leads count:', leads.length);
     const res = await fetch('/api/ai/batch-analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ leads }),
+      body: JSON.stringify(outgoingPayload),
     });
 
-    console.log('[batchAnalyzeLeads] Response status:', res.status, res.statusText);
+    console.log('[batchAnalyzeLeads] POST-REQUEST: HTTP Response status:', res.status, res.statusText);
     if (!res.ok) {
       const errorText = await res.text();
-      console.error('[batchAnalyzeLeads] Server returned non-OK status:', res.status, errorText);
+      console.error('[batchAnalyzeLeads] POST-REQUEST: Server returned non-OK status:', res.status, errorText);
       throw new Error(`Server returned ${res.status}: ${errorText}`);
     }
 
     const data = await res.json();
-    console.log('[batchAnalyzeLeads] Backend API response received:', data);
+    console.log('[batchAnalyzeLeads] POST-REQUEST: Full raw response structure received from backend:', JSON.stringify(data));
+    console.log('[batchAnalyzeLeads] POST-REQUEST: Parsed data type of data.results:', typeof data.results, Array.isArray(data.results) ? '(Array)' : '(Object)');
+
     const rawResults = data.results || {};
     const formatted: Record<string, AIEnrichmentData> = {};
 
-    for (const [id, a] of Object.entries(rawResults) as [string, any][]) {
-      formatted[id] = {
+    // Specific check for array index mismatches
+    console.log('[batchAnalyzeLeads] === ARRAY INDEX MISMATCH AUDIT ===');
+    leads.forEach((lead, index) => {
+      const byLeadId = rawResults[lead.lead_id];
+      const byNumericId = lead.id ? rawResults[String(lead.id)] : undefined;
+      const byCamelLeadId = (lead as any).leadId ? rawResults[(lead as any).leadId] : undefined;
+      const byIndex = Array.isArray(rawResults) ? rawResults[index] : (rawResults[String(index)] || (rawResults as any)[index]);
+      
+      const hasIdMatch = !!(byLeadId || byNumericId || byCamelLeadId);
+      const hasIndexMatch = !!byIndex;
+      const indexMismatch = !hasIdMatch && hasIndexMatch;
+
+      console.log(`[batchAnalyzeLeads] Lead [Index ${index}]: "${lead.business_name}" (lead_id: ${lead.lead_id}, id: ${lead.id}) ->`, {
+        matchedByLeadId: !!byLeadId,
+        matchedByNumericId: !!byNumericId,
+        matchedByCamelLeadId: !!byCamelLeadId,
+        matchedByIndex: hasIndexMatch,
+        arrayIndexMismatchDetected: indexMismatch,
+      });
+
+      if (indexMismatch) {
+        console.warn(`[batchAnalyzeLeads] ARRAY INDEX MISMATCH DETECTED for lead index ${index}! Result exists under index key "${index}" but not lead_id "${lead.lead_id}"`);
+      }
+    });
+
+    for (const [idOrIndex, a] of Object.entries(rawResults) as [string, any][]) {
+      const item: AIEnrichmentData = {
         analyzed_at: new Date().toISOString(),
         model: 'Gemini 3.8 Flash',
         summary: a.summary || 'Lead digital presence evaluated.',
@@ -109,12 +143,25 @@ export async function batchAnalyzeLeads(leads: Lead[]): Promise<Record<string, A
         rationale: a.rationale || 'Grounded in CCB license, reviews, and website data.',
         suggested_pitch: a.suggested_pitch || '',
       };
+      formatted[idOrIndex] = item;
+
+      // Handle cases where response keys are numeric array indices ("0", "1", ...)
+      const numIndex = Number(idOrIndex);
+      if (!isNaN(numIndex) && leads[numIndex]) {
+        const correspondingLead = leads[numIndex];
+        if (correspondingLead.lead_id && !formatted[correspondingLead.lead_id]) {
+          formatted[correspondingLead.lead_id] = item;
+        }
+        if (correspondingLead.id && !formatted[String(correspondingLead.id)]) {
+          formatted[String(correspondingLead.id)] = item;
+        }
+      }
     }
 
-    console.log('[batchAnalyzeLeads] Formatted results count:', Object.keys(formatted).length);
+    console.log('[batchAnalyzeLeads] POST-REQUEST: Formatted results mapped keys count:', Object.keys(formatted).length, 'keys:', Object.keys(formatted));
     return formatted;
   } catch (err) {
-    console.error('[batchAnalyzeLeads] Batch analysis failed, using single lead pipeline:', err);
+    console.error('[batchAnalyzeLeads] Batch analysis failed, using single lead pipeline. Error:', err);
     const map: Record<string, AIEnrichmentData> = {};
     for (const l of leads.slice(0, 10)) {
       map[l.lead_id] = await analyzeLeadWithAI(l);

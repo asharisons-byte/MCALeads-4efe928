@@ -185,7 +185,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       onProgress,
       executor: async (item) => {
         if (abort.signal.aborted) return { success: false, error: 'Cancelled' };
-        const lead = leadsRef.current.find((l) => l.lead_id === item.leadId);
+        const lead = leadsRef.current.find((l) => l.lead_id === item.leadId || String(l.id) === item.leadId || (l as any).leadId === item.leadId);
         if (!lead) return { success: false, error: 'Lead not found' };
         if (!lead.phone) return { success: false, error: 'No phone number' };
 
@@ -254,7 +254,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       gapMs: 0,
       onProgress,
       executor: async (item) => {
-        const lead = leadsRef.current.find((l) => l.lead_id === item.leadId);
+        const lead = leadsRef.current.find((l) => l.lead_id === item.leadId || String(l.id) === item.leadId || (l as any).leadId === item.leadId);
         if (!lead) return { success: false, error: 'Lead not found' };
         props.onOpenDialer(lead);
         // Manual call waits for advanceManualCall signal from overlay
@@ -290,7 +290,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       gapMs: 0,
       onProgress,
       executor: async (item) => {
-        const lead = leadsRef.current.find((l) => l.lead_id === item.leadId);
+        const lead = leadsRef.current.find((l) => l.lead_id === item.leadId || String(l.id) === item.leadId || (l as any).leadId === item.leadId);
         if (!lead) return { success: false, error: 'Lead not found' };
         
         // Navigate to lead details
@@ -354,7 +354,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       gapMs: OUTREACH_GAP_MS,
       onProgress,
       executor: async (item) => {
-        const lead = leadsRef.current.find((l) => l.lead_id === item.leadId);
+        const lead = leadsRef.current.find((l) => l.lead_id === item.leadId || String(l.id) === item.leadId || (l as any).leadId === item.leadId);
         if (!lead) return { success: false, error: 'Lead not found' };
         if (!lead.phone) return { success: false, error: 'No phone number — skipped' };
 
@@ -392,7 +392,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       gapMs: OUTREACH_GAP_MS,
       onProgress,
       executor: async (item) => {
-        const lead = leadsRef.current.find((l) => l.lead_id === item.leadId);
+        const lead = leadsRef.current.find((l) => l.lead_id === item.leadId || String(l.id) === item.leadId || (l as any).leadId === item.leadId);
         if (!lead) return { success: false, error: 'Lead not found' };
 
         const recipientEmail = lead.email;

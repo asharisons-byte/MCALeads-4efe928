@@ -365,12 +365,12 @@ export function App() {
 
   // Trigger Gemini enrichment on selected leads
   const handleTriggerAIEnrichment = async (leadIds: string[]) => {
-    console.log('[handleTriggerAIEnrichment] Initiating AI enrichment for leadIds:', leadIds);
+    console.log('[handleTriggerAIEnrichment] PRE-REQUEST: Initiating AI enrichment for leadIds:', leadIds);
     const currentLeads = leads.length > 0 ? leads : await getLeads();
     const targetLeads = currentLeads.filter(
       (l) => leadIds.includes(l.lead_id) || leadIds.includes(String(l.id)) || ((l as any).leadId && leadIds.includes((l as any).leadId))
     );
-    console.log('[handleTriggerAIEnrichment] Matched targetLeads count:', targetLeads.length, targetLeads.map(l => ({ id: l.id, lead_id: l.lead_id, name: l.business_name })));
+    console.log('[handleTriggerAIEnrichment] PRE-REQUEST: Matched targetLeads count:', targetLeads.length, targetLeads.map(l => ({ id: l.id, lead_id: l.lead_id, name: l.business_name })));
 
     if (targetLeads.length === 0) {
       console.warn('[handleTriggerAIEnrichment] No leads found matching leadIds:', leadIds);
@@ -378,22 +378,53 @@ export function App() {
     }
 
     try {
-      console.log('[handleTriggerAIEnrichment] Calling batchAnalyzeLeads with', targetLeads.length, 'leads...');
-      const results = await batchAnalyzeLeads(targetLeads);
-      console.log('[handleTriggerAIEnrichment] API Response received from batchAnalyzeLeads:', results);
+      console.log('[handleTriggerAIEnrichment] PRE-REQUEST: Calling batchAnalyzeLeads API with target leads count:', targetLeads.length);
+      console.log('[handleTriggerAIEnrichment] PRE-REQUEST: Exact JSON payload trace:', JSON.stringify({
+        leadsCount: targetLeads.length,
+        leadIds: targetLeads.map(l => l.lead_id || String(l.id)),
+        leads: targetLeads.map((l, idx) => ({ arrayIndex: idx, id: l.id, lead_id: l.lead_id, leadId: (l as any).leadId, business_name: l.business_name })),
+      }));
 
-      const updatePromises = targetLeads.map(async (targetLead) => {
+      const results = await batchAnalyzeLeads(targetLeads);
+      console.log('[handleTriggerAIEnrichment] POST-REQUEST: Full response structure received:', JSON.stringify(results));
+      console.log('[handleTriggerAIEnrichment] POST-REQUEST: Result keys count:', Object.keys(results || {}).length, 'keys:', Object.keys(results || {}));
+
+      // Array index mismatch check in App.tsx
+      console.log('[handleTriggerAIEnrichment] === ARRAY INDEX MISMATCH AUDIT ===');
+      targetLeads.forEach((targetLead, index) => {
+        const foundByLeadId = !!results[targetLead.lead_id];
+        const foundByNumericId = targetLead.id ? !!results[String(targetLead.id)] : false;
+        const foundByCamelId = (targetLead as any).leadId ? !!results[(targetLead as any).leadId] : false;
+        const foundByIndex = !!(results[String(index)] || (results as any)[index]);
+        const isMismatch = !foundByLeadId && !foundByNumericId && !foundByCamelId && foundByIndex;
+
+        console.log(`[handleTriggerAIEnrichment] Lead [Index ${index}]: "${targetLead.business_name}" (lead_id: ${targetLead.lead_id}, id: ${targetLead.id}) ->`, {
+          foundByLeadId,
+          foundByNumericId,
+          foundByCamelId,
+          foundByIndex,
+          arrayIndexMismatchDetected: isMismatch,
+        });
+
+        if (isMismatch) {
+          console.warn(`[handleTriggerAIEnrichment] ARRAY INDEX MISMATCH DETECTED for targetLeads[${index}]: Result found at index "${index}", but not by lead ID!`);
+        }
+      });
+
+      const updatePromises = targetLeads.map(async (targetLead, index) => {
         const enrichment = results[targetLead.lead_id] || 
           (targetLead.id ? results[String(targetLead.id)] : undefined) || 
-          ((targetLead as any).leadId ? results[(targetLead as any).leadId] : undefined);
+          ((targetLead as any).leadId ? results[(targetLead as any).leadId] : undefined) ||
+          results[String(index)] ||
+          (results as any)[index];
 
         if (!enrichment) {
-          console.warn(`[handleTriggerAIEnrichment] No enrichment entry in backend API response for lead ${targetLead.lead_id} (${targetLead.business_name})`);
+          console.warn(`[handleTriggerAIEnrichment] No enrichment entry in backend API response for lead ${targetLead.lead_id} (${targetLead.business_name}) at index ${index}`);
           return null;
         }
 
-        console.log(`[handleTriggerAIEnrichment] Applying AI enrichment to lead ${targetLead.lead_id}:`, {
-          leadScore: enrichment.confidence_score,
+        console.log(`[handleTriggerAIEnrichment] MAPPING: Applying AI enrichment to lead index ${index} (${targetLead.lead_id}):`, {
+          confidence_score: enrichment.confidence_score,
           opportunity_angle: enrichment.opportunity_angle,
           recommended_service: enrichment.recommended_service,
           retainer: enrichment.estimated_retainer,
@@ -408,7 +439,7 @@ export function App() {
           lead_score: enrichment.confidence_score || targetLead.lead_score,
         }, targetLead);
 
-        console.log(`[handleTriggerAIEnrichment] Persisted lead update result for ${targetLead.lead_id}:`, updated ? 'Success' : 'Failed');
+        console.log(`[handleTriggerAIEnrichment] Persisted lead update result for ${targetLead.lead_id} (index ${index}):`, updated ? 'Success' : 'Failed');
         return updated;
       });
 
@@ -416,8 +447,12 @@ export function App() {
 
       // Immediately reflect updates in local state so UI updates instantly
       setLeads((prev) =>
-        prev.map((l) => {
-          const enrichment = results[l.lead_id] || (l.id ? results[String(l.id)] : undefined) || ((l as any).leadId ? results[(l as any).leadId] : undefined);
+        prev.map((l, index) => {
+          const enrichment = results[l.lead_id] || 
+            (l.id ? results[String(l.id)] : undefined) || 
+            ((l as any).leadId ? results[(l as any).leadId] : undefined) ||
+            results[String(index)] ||
+            (results as any)[index];
           if (!enrichment) return l;
           return {
             ...l,
@@ -430,8 +465,13 @@ export function App() {
           };
         })
       );
-    } catch (e) {
-      console.error('[handleTriggerAIEnrichment] Batch enrichment API call failed, trying single leads fallback. Error:', e);
+    } catch (e: any) {
+      console.error('[handleTriggerAIEnrichment] ERROR: Batch enrichment API call failed! Raw error details:', {
+        name: e?.name,
+        message: e?.message,
+        stack: e?.stack,
+        rawError: e,
+      });
       for (const target of targetLeads) {
         try {
           console.log('[handleTriggerAIEnrichment] Fallback analyzing single lead:', target.lead_id);

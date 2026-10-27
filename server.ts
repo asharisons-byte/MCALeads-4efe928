@@ -296,33 +296,39 @@ app.post('/api/ai/batch-analyze', async (req, res) => {
       return res.status(400).json({ error: 'Array of leads is required' });
     }
 
+    console.log('[API /api/ai/batch-analyze] Tracing incoming leads array indices:');
+    leads.forEach((l, idx) => {
+      console.log(`  [Batch Item Index ${idx}] id: ${l.id}, lead_id: ${l.lead_id}, leadId: ${l.leadId}, business_name: "${l.business_name}"`);
+    });
+
     const ai = getGemini();
     const results: Record<string, any> = {};
 
-    // Process up to 15 leads per batch with Gemini, fallback if needed
-    const batch = leads.slice(0, 15);
+    // Process all leads in the request, up to 30 per call
+    const batch = leads.slice(0, 30);
     await Promise.all(
-      batch.map(async (lead) => {
+      batch.map(async (lead, index) => {
         let data: any;
         if (ai) {
           try {
             data = await analyzeSingleLeadWithGemini(ai, lead);
           } catch (e: any) {
-            console.warn(`[API /api/ai/batch-analyze] Gemini single analyze failed for lead ${lead.lead_id || lead.id}:`, e.message);
+            console.warn(`[API /api/ai/batch-analyze] Gemini single analyze failed for lead at index ${index} (${lead.lead_id || lead.id}):`, e.message);
             data = generateDeterministicAnalysis(lead);
           }
         } else {
           data = generateDeterministicAnalysis(lead);
         }
 
-        // Store under both string/number keys so frontend lookups never fail
+        // Store under index AND string/numeric keys so frontend lookups never encounter array index mismatches
+        results[String(index)] = data;
         if (lead.lead_id) results[lead.lead_id] = data;
         if (lead.id) results[String(lead.id)] = data;
         if (lead.leadId) results[lead.leadId] = data;
       })
     );
 
-    console.log(`[API /api/ai/batch-analyze] Completed batch analysis. Result keys count: ${Object.keys(results).length}`);
+    console.log(`[API /api/ai/batch-analyze] Completed batch analysis. Result keys count: ${Object.keys(results).length}, keys:`, Object.keys(results));
     return res.json({ results });
   } catch (error: any) {
     console.error('Batch analyze error:', error);
@@ -1846,7 +1852,7 @@ Return a JSON object strictly conforming to this schema:
   });
 
   const parsed = safeJsonParse(response?.text, null);
-  if (parsed && (parsed.lead_score !== undefined || parsed.score !== undefined)) {
+  if (parsed && (parsed.confidence_score !== undefined || parsed.summary || parsed.primary_pain_point || parsed.lead_score !== undefined || parsed.score !== undefined)) {
     return parsed;
   }
   return generateDeterministicAnalysis(lead);
