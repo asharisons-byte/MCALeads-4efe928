@@ -411,16 +411,43 @@ export function App() {
         }
       });
 
+      // Explicit validation step: Check for null or undefined enrichment results for specific lead indices
+      console.log('[handleTriggerAIEnrichment] === VALIDATING BATCH ENRICHMENT RESULTS PER INDEX ===');
+      const missingIndices: number[] = [];
+      targetLeads.forEach((targetLead, index) => {
+        const enrichment = results?.[targetLead.lead_id] || 
+          (targetLead.id ? results?.[String(targetLead.id)] : undefined) || 
+          ((targetLead as any).leadId ? results?.[(targetLead as any).leadId] : undefined) ||
+          results?.[String(index)] ||
+          (results as any)?.[index];
+
+        if (enrichment === null || enrichment === undefined) {
+          missingIndices.push(index);
+          console.error(`[handleTriggerAIEnrichment] VALIDATION FAILURE: Backend failed to process lead at batch array index [${index}]! Lead ID: ${targetLead.lead_id}, DB ID: ${targetLead.id}, Name: "${targetLead.business_name}"`);
+        } else {
+          console.log(`[handleTriggerAIEnrichment] VALIDATION SUCCESS: Valid enrichment result confirmed for lead at batch array index [${index}] (Lead ID: ${targetLead.lead_id})`);
+        }
+      });
+
+      if (missingIndices.length > 0) {
+        console.warn(`[handleTriggerAIEnrichment] Batch enrichment completed with missing/failed results at indices: [${missingIndices.join(', ')}]. Will attempt single-lead fallback for missing leads.`);
+      }
+
       const updatePromises = targetLeads.map(async (targetLead, index) => {
-        const enrichment = results[targetLead.lead_id] || 
+        let enrichment = results[targetLead.lead_id] || 
           (targetLead.id ? results[String(targetLead.id)] : undefined) || 
           ((targetLead as any).leadId ? results[(targetLead as any).leadId] : undefined) ||
           results[String(index)] ||
           (results as any)[index];
 
         if (!enrichment) {
-          console.warn(`[handleTriggerAIEnrichment] No enrichment entry in backend API response for lead ${targetLead.lead_id} (${targetLead.business_name}) at index ${index}`);
-          return null;
+          console.warn(`[handleTriggerAIEnrichment] Missing enrichment entry for lead ${targetLead.lead_id} at index ${index}. Running single lead fallback...`);
+          try {
+            enrichment = await analyzeLeadWithAI(targetLead);
+          } catch (err) {
+            console.error(`[handleTriggerAIEnrichment] Single lead fallback failed for ${targetLead.lead_id}:`, err);
+            return null;
+          }
         }
 
         console.log(`[handleTriggerAIEnrichment] MAPPING: Applying AI enrichment to lead index ${index} (${targetLead.lead_id}):`, {
@@ -440,19 +467,27 @@ export function App() {
         }, targetLead);
 
         console.log(`[handleTriggerAIEnrichment] Persisted lead update result for ${targetLead.lead_id} (index ${index}):`, updated ? 'Success' : 'Failed');
-        return updated;
+        return { targetLead, enrichment, updated };
       });
 
-      await Promise.all(updatePromises);
+      const processedResults = await Promise.all(updatePromises);
+
+      // Build a map of lead_id -> enrichment for accurate local state updating
+      const enrichmentByLeadKey = new Map<string, any>();
+      processedResults.forEach((res) => {
+        if (res && res.enrichment) {
+          if (res.targetLead.lead_id) enrichmentByLeadKey.set(res.targetLead.lead_id, res.enrichment);
+          if (res.targetLead.id) enrichmentByLeadKey.set(String(res.targetLead.id), res.enrichment);
+          if ((res.targetLead as any).leadId) enrichmentByLeadKey.set((res.targetLead as any).leadId, res.enrichment);
+        }
+      });
 
       // Immediately reflect updates in local state so UI updates instantly
       setLeads((prev) =>
-        prev.map((l, index) => {
-          const enrichment = results[l.lead_id] || 
-            (l.id ? results[String(l.id)] : undefined) || 
-            ((l as any).leadId ? results[(l as any).leadId] : undefined) ||
-            results[String(index)] ||
-            (results as any)[index];
+        prev.map((l) => {
+          const enrichment = enrichmentByLeadKey.get(l.lead_id) || 
+            (l.id ? enrichmentByLeadKey.get(String(l.id)) : undefined) || 
+            ((l as any).leadId ? enrichmentByLeadKey.get((l as any).leadId) : undefined);
           if (!enrichment) return l;
           return {
             ...l,
@@ -863,6 +898,10 @@ export function App() {
               activeBulkProgress={activeBulkProgress}
               setActiveBulkProgress={setActiveBulkProgress}
               onImportComplete={handleImportComplete}
+              onRefreshData={() => {
+                getLeads().then((fresh) => setLeads(fresh));
+                setActivities(getActivities());
+              }}
               currentPage={currentPage}
               onPageChange={setCurrentPage}
             />

@@ -7,7 +7,8 @@ import { AddLeadsToCampaignModal } from './command-center/AddLeadsToCampaignModa
 import { BulkChangeStageModal } from './command-center/BulkChangeStageModal';
 import { BulkProgressOverlay } from './BulkProgressOverlay';
 import { BulkManualMultiDialer } from './BulkManualMultiDialer';
-import { bulkUpdateStage } from '../services/leadService';
+import { BulkAssignModal } from './BulkAssignModal';
+import { bulkUpdateStage, getLeads } from '../services/leadService';
 import { BulkQueueController, BulkProgress } from '../services/bulkQueueService';
 import { Lead, ActivityEvent, PipelineStage } from '../types';
 import { sendOutboundSMS, generateSophiaSMS } from '../services/messagingService';
@@ -33,6 +34,7 @@ interface LeadsPageProps {
   onOpenDialer: (lead: Lead) => void;
   onOpenAICall: (lead: Lead) => void;
   onImportComplete: () => void;
+  onRefreshData?: () => void;
   currentPage: number;
   onPageChange: (page: number) => void;
   activeBulkProgress: BulkProgress | null;
@@ -52,7 +54,9 @@ const STAGE_ORDER: string[] = [
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function getSelectedLeads(allLeads: Lead[], ids: Set<string>): Lead[] {
-  return allLeads.filter((l) => ids.has(l.lead_id));
+  return allLeads.filter(
+    (l) => ids.has(l.lead_id) || (l.id && ids.has(String(l.id))) || ((l as any).leadId && ids.has((l as any).leadId))
+  );
 }
 
 function nextStage(current?: string): string {
@@ -84,6 +88,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
     ? leads 
     : leads.filter(l => selectedStages.includes(l.pipeline_stage as PipelineStage));
 
+  const [showBulkAssignModal, setShowBulkAssignModal] = useState(false);
   const [showTagModal, setShowTagModal] = useState(false);
   const [showMultiDialModal, setShowMultiDialModal] = useState(false);
   const [showBulkDeleteModal, setShowBulkDeleteModal] = useState(false);
@@ -344,7 +349,7 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
 
   // ── BULK SMS — BST queue, 5-min gap ──────────────────────────────────────
   const handleBulkSMS = useCallback(async () => {
-    const selected = getSelectedLeads(leads, selectedLeadIds);
+    const selected = getSelectedLeads(leadsRef.current, selectedIdsRef.current);
     if (!selected.length) return;
 
     activeControllerRef.current?.cancel();
@@ -378,11 +383,11 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       selected.map((l) => ({ leadId: l.lead_id, leadName: l.business_name || l.lead_id }))
     );
     controller.start();
-  }, [leads, selectedLeadIds, onProgress]);
+  }, [onProgress]);
 
   // ── BULK EMAIL — BST queue, 5-min gap ────────────────────────────────────
   const handleBulkEmail = useCallback(async () => {
-    const selected = getSelectedLeads(leads, selectedLeadIds);
+    const selected = getSelectedLeads(leadsRef.current, selectedIdsRef.current);
     if (!selected.length) return;
 
     activeControllerRef.current?.cancel();
@@ -418,15 +423,6 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
           });
 
           markEmailPrepared(draft, lead);
-
-          // Open Gmail compose in a background tab
-          const gmailUrl = buildGmailComposeUrl(
-            recipientEmail,
-            generated.subject,
-            generated.body
-          );
-          window.open(gmailUrl, '_blank', 'noopener,noreferrer');
-
           return { success: true };
         } catch (err: any) {
           return { success: false, error: err?.message ?? 'Email preparation failed' };
@@ -439,20 +435,31 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
       selected.map((l) => ({ leadId: l.lead_id, leadName: l.business_name || l.lead_id }))
     );
     controller.start();
-  }, [leads, selectedLeadIds, onProgress]);
+  }, [onProgress]);
 
   // ── BULK TAG ──────────────────────────────────────────────────────────────
   const handleBulkTagConfirm = useCallback(async (tag: string) => {
+    const trimmed = tag.trim();
+    if (!trimmed) return;
     const ids = Array.from(selectedLeadIds);
-    // tags is string[] on the Lead type — wrap the single tag in an array
-    await Promise.all(ids.map((id) => updateLead(id, { tags: [tag] })));
+    await Promise.all(
+      ids.map(async (id) => {
+        const existing = leadsRef.current.find(
+          (l) => l.lead_id === id || String(l.id) === id || ((l as any).leadId && (l as any).leadId === id)
+        );
+        const existingTags = existing?.tags || [];
+        const mergedTags = Array.from(new Set([...existingTags, trimmed]));
+        return updateLead(existing ? existing.lead_id : id, { tags: mergedTags }, existing);
+      })
+    );
+    props.onRefreshData?.();
     setShowTagModal(false);
-  }, [selectedLeadIds]);
+  }, [selectedLeadIds, props.onRefreshData]);
 
   // ── BULK ASSIGN ───────────────────────────────────────────────────────────
   const handleBulkAssign = useCallback(() => {
-    props.onBulkUpdateStage(Array.from(selectedLeadIds), 'Contacted');
-  }, [selectedLeadIds, props.onBulkUpdateStage]);
+    setShowBulkAssignModal(true);
+  }, []);
 
   // ── ADVANCE STAGE ─────────────────────────────────────────────────────────
   const handleBulkMoveStage = useCallback(async () => {
@@ -485,6 +492,15 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
           onBulkAddToCampaign={() => setShowAddCampaignModal(true)}
         />
         
+        <BulkAssignModal
+          isOpen={showBulkAssignModal}
+          onClose={() => setShowBulkAssignModal(false)}
+          selectedLeadIds={Array.from(selectedLeadIds)}
+          onAssigned={() => {
+            props.onRefreshData?.();
+          }}
+        />
+
         <BulkMultiDialSetupModal
           isOpen={showMultiDialModal}
           onClose={() => setShowMultiDialModal(false)}
@@ -496,7 +512,10 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
           isOpen={showAddCampaignModal}
           onClose={() => setShowAddCampaignModal(false)}
           leadIds={Array.from(selectedLeadIds)}
-          onSuccess={() => alert('Leads added to campaign')}
+          onSuccess={() => {
+            setShowAddCampaignModal(false);
+            props.onRefreshData?.();
+          }}
         />
         
         <BulkChangeStageModal
@@ -563,6 +582,36 @@ export const LeadsPage: React.FC<LeadsPageProps> = (props) => {
         onConfirm={handleBulkTagConfirm}
         selectedCount={selectedLeadIds.size}
       />
+
+      {showBulkDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-[var(--surface-container)] border border-[var(--hud-border-base)] rounded-xl max-w-md w-full p-6 shadow-2xl">
+            <h3 className="text-base font-bold text-white mb-2">Delete {selectedLeadIds.size} Selected Lead{selectedLeadIds.size > 1 ? 's' : ''}?</h3>
+            <p className="text-xs text-[var(--outline)] mb-6">
+              Are you sure you want to remove the {selectedLeadIds.size} selected lead(s)? This will archive them and remove them from your active leads view. Only the selected leads will be deleted.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowBulkDeleteModal(false)}
+                className="px-4 py-2 text-xs font-semibold text-[var(--outline)] hover:text-white bg-[var(--surface-dim)] rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const idsToDelete = Array.from(selectedLeadIds);
+                  setShowBulkDeleteModal(false);
+                  await props.onBulkDelete(idsToDelete);
+                  props.onSelectionChange(new Set());
+                }}
+                className="px-4 py-2 text-xs font-semibold text-white bg-red-600 hover:bg-red-500 rounded-lg transition-colors shadow-lg shadow-red-600/20"
+              >
+                Delete Selected ({selectedLeadIds.size})
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 flex flex-col min-h-0">
         <LeadsTable

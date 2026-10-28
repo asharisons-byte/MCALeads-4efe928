@@ -26,7 +26,7 @@ const STAGE_ORDER: Record<string, number> = {
 };
 
 function canTransition(from: string, to: string): boolean {
-  return (STAGE_ORDER[to] || 0) >= (STAGE_ORDER[from] || 0);
+  return true;
 }
 
 // Automatic stage update listener
@@ -562,16 +562,17 @@ export async function updateLead(
 
 export async function deleteLead(leadId: string): Promise<boolean> {
   const current = await getLeads();
-  const lead = current.find((l) => l.lead_id === leadId);
-  const filtered = current.filter((l) => l.lead_id !== leadId);
-  if (filtered.length !== current.length) {
+  const lead = current.find((l) => l.lead_id === leadId || String(l.id) === String(leadId) || ((l as any).leadId && (l as any).leadId === leadId));
+  const targetLeadId = lead ? lead.lead_id : leadId;
+  const filtered = current.filter((l) => l.lead_id !== targetLeadId && String(l.id) !== String(leadId));
+  if (lead || filtered.length !== current.length) {
     // Background Cloud SQL persistence
-    bgApiCall(`/api/leads/${encodeURIComponent(leadId)}?soft=true`, 'DELETE');
+    bgApiCall(`/api/leads/${encodeURIComponent(targetLeadId)}?soft=true`, 'DELETE');
     if (lead) {
       addActivity({
         id: `act-${Date.now()}`,
         activity_id: `act-${Date.now()}`,
-        lead_id: leadId,
+        lead_id: targetLeadId,
         lead_name: lead.business_name,
         timestamp: new Date().toISOString(),
         type: 'lead_updated',
@@ -599,12 +600,6 @@ export async function bulkUpdateStage(leadIds: string[], stage: PipelineStage): 
       if (lead) {
         console.log(`[bulkUpdateStage] Updating lead ${lead.lead_id} (${lead.business_name}) stage from "${lead.pipeline_stage}" to "${stage}"`);
         const updates: Partial<Lead> = { pipeline_stage: stage };
-        
-        // If transitioning to 'Contacted' and first attempt hasn't been set, set it now.
-        if (stage === 'Contacted' && !lead.first_connection_attempt) {
-          updates.first_connection_attempt = timestamp;
-        }
-
         const res = await updateLead(lead.lead_id, updates, lead);
         console.log(`[bulkUpdateStage] updateLead result for ${lead.lead_id}:`, res ? 'Success' : 'Failed');
       } else {

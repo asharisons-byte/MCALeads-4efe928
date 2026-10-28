@@ -390,32 +390,44 @@ router.post('/leads/reassign-bulk', requireAuth, async (req: AuthRequest, res: R
       return res.status(403).json({ error: 'Unauthorized to reassign leads' });
     }
 
-    // Validate target user
-    const targetUserResult = await db
-      .select({ 
-        id: schema.users.id, 
-        firstName: schema.users.firstName, 
-        displayName: schema.users.displayName, 
-        role: schema.users.role 
-      })
-      .from(schema.users)
-      .where(eq(schema.users.id, Number(targetMemberId)))
-      .limit(1);
-    
-    if (targetUserResult.length === 0) {
-      return res.status(400).json({ error: 'Target user not found' });
+    let assignmentUpdate: any;
+
+    if (String(targetMemberId).toUpperCase() === 'SOPHIA') {
+      assignmentUpdate = {
+        assigned_user: {
+          id: null,
+          firstName: 'Sophia',
+          role: 'AI_SALES_REP',
+        },
+      };
+    } else {
+      // Validate target user
+      const targetUserResult = await db
+        .select({ 
+          id: schema.users.id, 
+          firstName: schema.users.firstName, 
+          displayName: schema.users.displayName, 
+          role: schema.users.role 
+        })
+        .from(schema.users)
+        .where(eq(schema.users.id, Number(targetMemberId)))
+        .limit(1);
+      
+      if (targetUserResult.length === 0) {
+        return res.status(400).json({ error: 'Target user not found' });
+      }
+      
+      const targetUser = targetUserResult[0];
+      const targetCanonicalRole = normalizeAppRole(targetUser.role as string) || targetUser.role;
+      
+      assignmentUpdate = {
+        assigned_user: {
+          id: targetUser.id,
+          firstName: targetUser.firstName || targetUser.displayName,
+          role: targetCanonicalRole,
+        },
+      };
     }
-    
-    const targetUser = targetUserResult[0];
-    const targetCanonicalRole = normalizeAppRole(targetUser.role as string) || targetUser.role;
-    
-    const assignmentUpdate = {
-      assigned_user: {
-        id: targetUser.id,
-        firstName: targetUser.firstName || targetUser.displayName,
-        role: targetCanonicalRole,
-      },
-    };
 
     for (const leadId of leadIds) {
       await updateDbLead(leadId, assignmentUpdate);

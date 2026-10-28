@@ -14,6 +14,7 @@
 import type { Lead } from '../types';
 import { buildCallResearch } from './callResearch';
 import { saveCallRecord } from './telephonyService';
+import { updateLead } from './leadService';
 
 export const AI_BACKEND_URL: string =
   (import.meta as any).env?.VITE_AI_BACKEND_URL || 'http://localhost:8000';
@@ -121,6 +122,14 @@ async function hangup(callControlId: string): Promise<void> {
 export async function runAICall(lead: Lead, signal?: AbortSignal): Promise<BulkCallResult> {
   if (!lead.phone) return { success: false, error: 'No phone number' };
   if (signal?.aborted) return { success: false, error: 'Cancelled' };
+
+  // Record connection attempt when initiated regardless of outcome
+  if (!lead.first_connection_attempt) {
+    const nowIso = new Date().toISOString();
+    updateLead(lead.lead_id, { first_connection_attempt: nowIso }, lead).catch((err) =>
+      console.warn('[runAICall] Could not record initial first_connection_attempt:', err)
+    );
+  }
 
   // ── 1. Try placing the call via external Python backend if available ────────────────
   let callControlId: string | undefined;
