@@ -1,4 +1,5 @@
 import { TelnyxRTC } from '@telnyx/webrtc';
+import { getAuthoritativeFromNumber, TELNYX_CONSTANTS } from '../config/telnyxConfig';
 
 export const TelnyxWebRTCService = {
   // ── State ────────────────────────────────────────────────────────────────
@@ -14,7 +15,8 @@ export const TelnyxWebRTCService = {
   audioRef:             null as HTMLAudioElement | null,
   diagnosticCallback:   null as ((update: any) => void) | null,
   ringbackInterval:     null as ReturnType<typeof setInterval> | null,
-  ringbackCtx:          null as AudioContext | null,
+  cachedCallerNumber:   null as string | null,
+  cachedConnectionId:   null as string | null,
 
   // ── Diagnostic callback ──────────────────────────────────────────────────
   setDiagnosticCallback(cb: (update: any) => void) {
@@ -128,16 +130,28 @@ export const TelnyxWebRTCService = {
         throw new Error(`Empty SIP credentials. Keys received: ${Object.keys(data).join(', ')}`);
       }
 
+      if (data.caller_number) {
+        this.cachedCallerNumber = data.caller_number;
+      }
+      if (data.connection_id) {
+        this.cachedConnectionId = data.connection_id;
+      }
+
       this.tokenExpiry = Date.now() + 23 * 60 * 60 * 1000;
 
-      console.log('[MCA-E] SIP credentials OK for:', data.sip_username);
+      console.log('[MCA-E] SIP credentials OK for:', data.sip_username, 'caller_number:', data.caller_number);
       this.diagnosticCallback?.({
         tokenStatus:  'fresh',
         tokenFetched: new Date().toLocaleTimeString(),
         tokenExpires: new Date(this.tokenExpiry).toLocaleTimeString(),
       });
 
-      return { sip_username: data.sip_username, sip_password: data.sip_password };
+      return { 
+        sip_username: data.sip_username, 
+        sip_password: data.sip_password,
+        caller_number: data.caller_number,
+        connection_id: data.connection_id,
+      };
     }
     return null; // still within valid window
   },
@@ -292,7 +306,48 @@ export const TelnyxWebRTCService = {
     audioRef:          HTMLAudioElement,
   ) {
     this.audioRef = audioRef;
-    console.log('[MCA-K] makeCall(), dest prefix:', destinationNumber?.substring(0, 6));
+
+    // Sanitize and normalize destination number
+    const rawDest = (destinationNumber || '')
+      .replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E]/g, '')
+      .trim();
+    const destDigits = rawDest.replace(/\D/g, '');
+
+    let normalizedDest = rawDest;
+    if (rawDest.startsWith('+')) {
+      normalizedDest = `+${destDigits}`;
+    } else if (destDigits.length === 10) {
+      normalizedDest = `+1${destDigits}`;
+    } else if (destDigits.length === 11 && destDigits.startsWith('1')) {
+      normalizedDest = `+${destDigits}`;
+    } else if (destDigits.length >= 7 && destDigits.length <= 15) {
+      normalizedDest = `+${destDigits}`;
+    }
+
+    if (!/^\+[1-9]\d{6,14}$/.test(normalizedDest)) {
+      const err = `Invalid destination number "${destinationNumber}". Expected valid E.164 format (e.g. ${TELNYX_CONSTANTS.FROM_NUMBER}).`;
+      console.error('[MCA-TELNYX] ' + err);
+      throw new Error(err);
+    }
+
+    // Sanitize and normalize caller number
+    const defaultCaller = getAuthoritativeFromNumber();
+    const rawCaller = (callerNumber || this.cachedCallerNumber || defaultCaller)
+      .replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E]/g, '')
+      .trim();
+    const callerDigits = rawCaller.replace(/\D/g, '');
+    let normalizedCaller = rawCaller;
+    if (rawCaller.startsWith('+')) {
+      normalizedCaller = `+${callerDigits}`;
+    } else if (callerDigits.length === 10) {
+      normalizedCaller = `+1${callerDigits}`;
+    } else if (callerDigits.length === 11 && callerDigits.startsWith('1')) {
+      normalizedCaller = `+${callerDigits}`;
+    } else if (callerDigits.length >= 7 && callerDigits.length <= 15) {
+      normalizedCaller = `+${callerDigits}`;
+    }
+
+    console.log('[MCA-K] makeCall(), sanitized dest:', normalizedDest, 'caller:', normalizedCaller);
 
     if (!this.client) await this.init(audioRef);
 
@@ -309,16 +364,14 @@ export const TelnyxWebRTCService = {
 
     this.stateChangeCallback = onStateChange;
 
-    console.log('[MCA-NEWCALL] params:', {
-      destinationNumber,
-      destE164:   destinationNumber?.startsWith('+'),
-      callerNumber,
-      callerE164: callerNumber?.startsWith('+'),
+    console.log('[MCA-NEWCALL] placing call with:', {
+      destinationNumber: normalizedDest,
+      callerNumber: normalizedCaller,
     });
 
     this.currentCall = await this.client!.newCall({
-      destinationNumber,
-      callerNumber,
+      destinationNumber: normalizedDest,
+      callerNumber: normalizedCaller,
     });
 
     console.log('[MCA-NEWCALL] call object returned:', !!this.currentCall);

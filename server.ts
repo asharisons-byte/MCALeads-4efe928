@@ -6,6 +6,14 @@ import { telephonyManager } from './telephony-server.js';
 import { databaseRoutes } from './src/routes/databaseRoutes.js';
 import { integrationRoutes } from './src/routes/integrationRoutes.js';
 import { initDatabaseDefaults, saveDbAiContent, addDbLeadSms, recordDbInboundSms, getDbInboundSms } from './src/db/repository.js';
+import {
+  getAuthoritativeFromNumber,
+  getAuthoritativeConnectionId,
+  getAuthoritativeSipUsername,
+  getAuthoritativeMessagingProfileId,
+  getAuthoritativeVoiceApiAppId,
+  TELNYX_CONSTANTS,
+} from './src/config/telnyxConfig.js';
 
 dotenv.config();
 
@@ -715,7 +723,8 @@ app.post('/api/sms/send', async (req, res) => {
     let deliveryStatus = 'DELIVERED';
 
     const apiKey = process.env.TELNYX_API_KEY;
-    const fromNumber = process.env.TELNYX_FROM_NUMBER || '+15035550199';
+    const fromNumber = getAuthoritativeFromNumber();
+    const messagingProfileId = getAuthoritativeMessagingProfileId();
 
     if (apiKey) {
       try {
@@ -729,6 +738,7 @@ app.post('/api/sms/send', async (req, res) => {
             from: fromNumber,
             to,
             text: content,
+            messaging_profile_id: messagingProfileId,
           }),
         });
 
@@ -2826,22 +2836,21 @@ app.post('/api/telephony/calls/start', async (req, res) => {
 app.get('/api/telephony/webrtc/token', async (req, res) => {
   console.log('[TOKEN-A] Token route called');
   try {
-    const sipUsername = process.env.TELNYX_WEBRTC_SIP_USERNAME;
-    const sipPassword = process.env.TELNYX_WEBRTC_SIP_PASSWORD;
+    const sipUsername = getAuthoritativeSipUsername();
+    const sipPassword = process.env.TELNYX_WEBRTC_SIP_PASSWORD || process.env.TELNYX_SIP_PASSWORD;
 
-    console.log('[TOKEN-B] SIP_USERNAME present:', !!sipUsername);
+    console.log('[TOKEN-B] SIP_USERNAME:', sipUsername);
     console.log('[TOKEN-C] SIP_PASSWORD present:', !!sipPassword);
 
-    if (!sipUsername || !sipPassword) {
-      console.error('[TOKEN] Missing SIP credentials in environment');
+    if (!sipPassword) {
+      console.error('[TOKEN] Missing SIP password in environment');
       return res.status(500).json({
         error: 'WebRTC credentials not configured',
-        details: 'TELNYX_WEBRTC_SIP_USERNAME and TELNYX_WEBRTC_SIP_PASSWORD are required'
+        details: 'TELNYX_WEBRTC_SIP_PASSWORD or TELNYX_SIP_PASSWORD is required',
       });
     }
 
-    console.log('[TOKEN] Serving SIP credentials, username:', sipUsername);
-    console.log('[TOKEN-D] Sending credentials, username length:', sipUsername?.length);
+    console.log('[TOKEN] Serving SIP credentials for account:', sipUsername);
 
     res.set({
       'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
@@ -2851,18 +2860,171 @@ app.get('/api/telephony/webrtc/token', async (req, res) => {
       'Surrogate-Control': 'no-store',
     });
 
+    const callerNumber = getAuthoritativeFromNumber();
+    const connectionId = getAuthoritativeConnectionId();
+
     res.json({
       sip_username: sipUsername,
       sip_password: sipPassword,
+      caller_number: callerNumber,
+      connection_id: connectionId,
     });
 
   } catch (error: any) {
     console.error('[TOKEN] Unexpected error:', error);
     res.status(500).json({
       error: 'Failed to fetch WebRTC credentials',
-      details: error.message
+      details: error.message,
     });
   }
+});
+
+// Dedicated Telnyx Integration Health & Diagnostic Endpoint
+app.get('/api/telnyx/health', (req, res) => {
+  try {
+    const fromNumber = getAuthoritativeFromNumber();
+    const connectionId = getAuthoritativeConnectionId();
+    const sipUsername = getAuthoritativeSipUsername();
+    const messagingProfileId = getAuthoritativeMessagingProfileId();
+    const voiceApiAppId = getAuthoritativeVoiceApiAppId();
+    const hasApiKey = Boolean(process.env.TELNYX_API_KEY);
+    const hasSipPassword = Boolean(process.env.TELNYX_WEBRTC_SIP_PASSWORD || process.env.TELNYX_SIP_PASSWORD);
+
+    const isFullyConfigured = hasApiKey && hasSipPassword;
+
+    res.json({
+      status: isFullyConfigured ? 'healthy' : 'partially_configured',
+      account: {
+        numberLabel: TELNYX_CONSTANTS.NUMBER_LABEL,
+        fromNumber,
+        connectionName: TELNYX_CONSTANTS.SIP_CONNECTION_NAME,
+        connectionId,
+        sipUsername,
+        messagingProfileId,
+        voiceApiApplicationName: TELNYX_CONSTANTS.VOICE_API_APPLICATION_NAME,
+        voiceApiApplicationId: voiceApiAppId,
+      },
+      credentials: {
+        apiKeyConfigured: hasApiKey,
+        sipPasswordConfigured: hasSipPassword,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Dedicated Voice API outbound call trigger or diagnostic route
+app.post('/api/telnyx/voice/calls', async (req, res) => {
+  try {
+    const { to, leadId } = req.body;
+    if (!to) {
+      return res.status(400).json({ error: 'Destination number "to" is required' });
+    }
+
+    const session = await telephonyManager.startCall({
+      leadId,
+      phoneNumber: to,
+      callType: 'Outbound Call',
+    });
+
+    res.json({
+      success: true,
+      callId: session.callId,
+      providerCallId: session.providerCallId,
+      callerId: getAuthoritativeFromNumber(),
+      connectionId: getAuthoritativeConnectionId(),
+      voiceApiApplicationId: getAuthoritativeVoiceApiAppId(),
+      status: session.status,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Dedicated SMS send endpoint (mirrors /api/sms/send using authoritative Telnyx credentials)
+app.post('/api/telnyx/sms/send', async (req, res) => {
+  try {
+    const { to, content, leadId } = req.body;
+    if (!to || !content) {
+      return res.status(400).json({ error: 'Parameters "to" and "content" are required' });
+    }
+
+    const apiKey = process.env.TELNYX_API_KEY;
+    const fromNumber = getAuthoritativeFromNumber();
+    const messagingProfileId = getAuthoritativeMessagingProfileId();
+
+    if (!apiKey) {
+      return res.status(503).json({ error: 'TELNYX_API_KEY not configured' });
+    }
+
+    const telnyxRes = await fetch('https://api.telnyx.com/v2/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        from: fromNumber,
+        to,
+        text: content,
+        messaging_profile_id: messagingProfileId,
+      }),
+    });
+
+    const data: any = await telnyxRes.json().catch(() => ({}));
+    if (telnyxRes.ok) {
+      if (leadId) {
+        addDbLeadSms(leadId, {
+          phone: to,
+          message: content,
+          direction: 'Outbound',
+          status: 'SENT',
+          provider: 'Telnyx Messaging v2',
+        }).catch((e) => console.warn('Cloud SQL SMS sync warning:', e?.message));
+      }
+      return res.json({
+        success: true,
+        messageId: data.data?.id,
+        from: fromNumber,
+        messagingProfileId,
+      });
+    } else {
+      const errDetail = data?.errors?.[0]?.detail || `Telnyx error ${telnyxRes.status}`;
+      return res.status(502).json({ success: false, error: errDetail });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Webhook Aliases for Telnyx Call Control and SMS
+app.post('/webhooks/telnyx/sms', async (req, res) => {
+  // Delegate directly to SMS webhook handler logic
+  try {
+    const payload = req.body;
+    if (payload && payload.data?.payload?.direction === 'inbound') {
+      const message = payload.data.payload;
+      const senderPhone = message.from?.phone_number;
+      const text = message.text || '';
+      const messageId = message.id;
+      if (senderPhone) {
+        await recordDbInboundSms({
+          phone: senderPhone,
+          message: text,
+          externalMessageId: messageId,
+        });
+      }
+    }
+    res.status(200).json({ success: true, received: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/webhooks/telnyx/voice', (req, res) => {
+  res.status(200).json({ success: true, received: true });
 });
 
 // Real-time call status endpoint

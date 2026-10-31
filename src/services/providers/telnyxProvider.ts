@@ -1,4 +1,9 @@
 import Telnyx from 'telnyx';
+import {
+  getAuthoritativeFromNumber,
+  getAuthoritativeConnectionId,
+  getAuthoritativeMessagingProfileId,
+} from '../../config/telnyxConfig.js';
 
 const apiKey = process.env.TELNYX_API_KEY || '';
 const telnyx = apiKey ? new Telnyx({ apiKey }) : null;
@@ -6,23 +11,23 @@ const telnyx = apiKey ? new Telnyx({ apiKey }) : null;
 export const TelnyxProvider = {
   isConfigured: () => !!telnyx,
   
-  async sendSms(params: { to: string; content: string; messagingProfileId: string }) {
+  async sendSms(params: { to: string; content: string; messagingProfileId?: string }) {
     if (!telnyx) throw new Error('TELNYX_API_KEY is not configured');
     
     return await telnyx.messages.sendNumberPool({
       to: params.to,
       text: params.content,
-      messaging_profile_id: params.messagingProfileId,
+      messaging_profile_id: params.messagingProfileId || getAuthoritativeMessagingProfileId(),
     });
   },
 
-  async startCall(params: { to: string; connectionId: string; clientState: string }) {
+  async startCall(params: { to: string; connectionId?: string; clientState: string }) {
     if (!telnyx) throw new Error('TELNYX_API_KEY is not configured');
     
     return await telnyx.calls.dial({
-      connection_id: params.connectionId,
+      connection_id: params.connectionId || getAuthoritativeConnectionId(),
       to: params.to,
-      from: process.env.TELNYX_FROM_NUMBER,
+      from: getAuthoritativeFromNumber(),
       client_state: params.clientState,
     });
   },

@@ -4,6 +4,8 @@
  * and external service diagnostics.
  */
 
+import { TELNYX_CONSTANTS } from '../config/telnyxConfig';
+
 export interface IntegrationItem {
   name: string;
   category: string;
@@ -115,7 +117,7 @@ export async function fetchIntegrationsStatus(): Promise<IntegrationsStatusRespo
           category: 'Outbound & Inbound SIP Dialer',
           status: 'CONNECTED',
           isLive: true,
-          fromNumber: '+1-503-555-0199',
+          fromNumber: TELNYX_CONSTANTS.FROM_NUMBER,
           features: ['Call Control v2', 'Real-time Webhook Call Events', 'AI Call Analysis'],
         },
         telnyxSms: {
@@ -123,7 +125,7 @@ export async function fetchIntegrationsStatus(): Promise<IntegrationsStatusRespo
           category: '10DLC Two-Way Messaging',
           status: 'CONNECTED',
           isLive: true,
-          fromNumber: '+1-503-555-0199',
+          fromNumber: TELNYX_CONSTANTS.FROM_NUMBER,
           features: ['Inbound SMS Webhook', 'Sophia Automated Intent Classifier'],
         },
         gmail: {
@@ -236,7 +238,7 @@ export async function simulateInboundSmsWebhook(params: {
         from: {
           phone_number: params.fromPhone,
         },
-        to: [{ phone_number: '+15035550199' }],
+        to: [{ phone_number: TELNYX_CONSTANTS.FROM_NUMBER }],
         text: params.messageText,
         direction: 'inbound',
         received_at: new Date().toISOString(),
@@ -244,7 +246,7 @@ export async function simulateInboundSmsWebhook(params: {
     },
   };
 
-  const res = await fetch('/webhooks/telnyx/sms', {
+  const res = await fetch('/api/sms/webhook', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -273,7 +275,7 @@ export async function simulateVoiceWebhook(params: {
         call_control_id: callControlId,
         client_state: clientState,
         to: params.phone,
-        from: '+15035550199',
+        from: TELNYX_CONSTANTS.FROM_NUMBER,
         duration_seconds: params.durationSeconds || 45,
         hangup_cause: 'NORMAL_CLEARING',
         transcript: params.transcript,

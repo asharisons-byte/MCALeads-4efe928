@@ -47,9 +47,12 @@ import {
   formatDuration,
   formatPhoneNumber,
   getStoredCallRecords,
+  saveCallRecord,
 } from '../services/telephonyService';
 import { TelnyxWebRTCService } from '../services/telnyxWebRTCService';
-import { addActivity } from '../services/leadService';
+import { addActivity, updateLead } from '../services/leadService';
+import { validateAndNormalizePhone } from '../services/messagingService';
+import { getAuthoritativeFromNumber } from '../config/telnyxConfig';
 
 interface DialerModalProps {
   isOpen: boolean;
@@ -352,26 +355,87 @@ export const DialerModal: React.FC<DialerModalProps> = ({
   const handleStartCall = async () => {
     if (!hasPhoneNumber) return;
 
+    // Validate and normalize destination number
+    const phoneVal = validateAndNormalizePhone(phoneNumber);
+    if (!phoneVal.valid) {
+      addLog(`❌ Cannot place call: ${phoneVal.reason || 'Invalid phone number'}`, 'error');
+      addDiagnostic({
+        stage: 'webrtc:validation:error',
+        error: phoneVal.reason || 'Invalid destination number format',
+        code: 'INVALID_NUMBER',
+      });
+      setWebRTCStatus('Invalid Number');
+      setCallState('FAILED');
+      return;
+    }
+    const cleanDestination = phoneVal.e164;
+
     setCallDuration(0);
     setCallState('PREPARING');
     setWebRTCStatus('Initializing WebRTC...');
     setSelectedOutcome(null);
     setDiagnosticInfo(null); // Clear previous diagnostics
     setTranscriptBoard([]);
-    addLog(`📞 Outbound call initiated → ${phoneNumber}${activeLead ? ` (${activeLead.business_name})` : ''}`);
+    addLog(`📞 Outbound call initiated → ${phoneVal.display} (${cleanDestination})${activeLead ? ` (${activeLead.business_name})` : ''}`);
     addLog(`🔧 Initializing WebRTC / PSTN…`);
+
+    const now = new Date().toISOString();
+    const callId = `call_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const callType: CallType = activeLead ? 'Outbound Call' : 'Manual Call';
+    const webrtcRecord: CallRecord = {
+      call_id: callId,
+      lead_id: activeLead?.lead_id,
+      business_name: activeLead?.business_name || 'Manual Dial',
+      contact_name: activeLead?.contact_name,
+      phone_number: cleanDestination,
+      direction: 'OUTBOUND',
+      call_type: callType,
+      status: 'PREPARING',
+      duration: 0,
+      started_at: now,
+      created_at: now,
+      provider_call_id: `telnyx_webrtc_${Date.now()}`,
+      recording_status: 'Not Available',
+      transcript_status: 'Not Available',
+      lead_score: activeLead?.lead_score,
+      pipeline_stage: activeLead?.pipeline_stage,
+      opportunity: activeLead?.opportunity_angle || activeLead?.recommended_service,
+      estimated_retainer: activeLead?.estimated_retainer,
+    };
+    saveCallRecord(webrtcRecord);
+    setActiveCallRecord(webrtcRecord);
+
+    if (activeLead?.lead_id) {
+      addActivity({
+        id: `act-call-attempt-${Date.now()}`,
+        lead_id: activeLead.lead_id,
+        lead_name: activeLead.business_name,
+        timestamp: now,
+        type: 'call_started',
+        activity_type: 'call_started',
+        channel: 'CALL',
+        title: 'Outbound Call Attempt Initiated',
+        description: `Outbound WebRTC call attempt to ${phoneVal.display} (${cleanDestination})`,
+        author: 'Sales Rep',
+        source: 'Professional CRM Dialer',
+        metadata: {
+          call_id: callId,
+          phone_number: cleanDestination,
+        },
+      });
+    }
 
     // 1. Try WebRTC
     try {
       addDiagnostic({ stage: 'webrtc:init' });
       setWebRTCStatus('Registering...');
-      const client = await TelnyxWebRTCService.init(remoteAudioRef.current || undefined);
+      await TelnyxWebRTCService.init(remoteAudioRef.current || undefined);
       
       addDiagnostic({ stage: 'webrtc:connect:start' });
       setWebRTCStatus('Starting WebRTC call...');
       await TelnyxWebRTCService.makeCall(
-        phoneNumber, 
-        import.meta.env.VITE_TELNYX_FROM_NUMBER || '+14052853816', 
+        cleanDestination, 
+        getAuthoritativeFromNumber(), 
         (state) => {
             console.log(`[MCA WebRTC] SDK State: ${state}`);
             addDiagnostic({ stage: `webrtc:status:${state}` });
@@ -379,6 +443,45 @@ export const DialerModal: React.FC<DialerModalProps> = ({
             const internalState = mapTelnyxState(state);
             setCallState(internalState);
             setWebRTCStatus(state);
+
+            if (state === 'active' || state === 'connected') {
+              if (activeLead?.lead_id) {
+                if (!activeLead.first_connection_attempt || activeLead.pipeline_stage === 'New Lead') {
+                  const updates: Partial<Lead> = {};
+                  if (!activeLead.first_connection_attempt) updates.first_connection_attempt = new Date().toISOString();
+                  if (activeLead.pipeline_stage === 'New Lead') updates.pipeline_stage = 'Contacted';
+                  updateLead(activeLead.lead_id, updates);
+                  onLeadUpdated?.(activeLead.lead_id, updates);
+                }
+                addActivity({
+                  id: `act-call-conn-${Date.now()}`,
+                  lead_id: activeLead.lead_id,
+                  lead_name: activeLead.business_name,
+                  timestamp: new Date().toISOString(),
+                  type: 'call_connected',
+                  activity_type: 'call_connected',
+                  channel: 'CALL',
+                  title: 'Outbound Call Connected',
+                  description: `Call connected with ${phoneVal.display} via WebRTC.`,
+                  author: 'Sales Rep',
+                  source: 'Professional CRM Dialer',
+                });
+              }
+            } else if (state === 'hangup' || state === 'destroy') {
+              setIsWebRTCConnected(false);
+              setActiveCallRecord((prev) => {
+                if (!prev) return null;
+                const updated = {
+                  ...prev,
+                  status: 'COMPLETED' as CallState,
+                  duration: callDuration,
+                  ended_at: new Date().toISOString(),
+                };
+                saveCallRecord(updated);
+                return updated;
+              });
+              refreshQueue();
+            }
         }, 
         remoteAudioRef.current!
       );
@@ -401,25 +504,11 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     // 2. Fallback to PSTN
     addDiagnostic({ stage: 'pstn:fallback:start' });
     setWebRTCStatus('PSTN Fallback');
-    const callType: CallType = activeLead ? 'Outbound Call' : 'Manual Call';
     
     try {
-        if (activeLead) {
-          addActivity({
-            id: `act-call-attempt-${Date.now()}`,
-            lead_id: activeLead.lead_id,
-            timestamp: new Date().toISOString(),
-            type: 'call_attempted',
-            activity_type: 'call_attempted',
-            title: 'Manual Call Attempt Initiated',
-            description: `Outbound manual call attempt to ${phoneNumber}`,
-            author: 'Agency User',
-            source: 'Agency User',
-          });
-        }
         const result = await TelephonyService.startCall({
             lead: activeLead,
-            phoneNumber,
+            phoneNumber: cleanDestination,
             callType,
         });
         
@@ -447,6 +536,19 @@ export const DialerModal: React.FC<DialerModalProps> = ({
       setIsWebRTCConnected(false);
       setCallState('COMPLETED');
       addLog('✅ WebRTC session terminated');
+      setActiveCallRecord((prev) => {
+        if (!prev) return null;
+        const updated = {
+          ...prev,
+          status: 'COMPLETED' as CallState,
+          duration: callDuration,
+          ended_at: new Date().toISOString(),
+          notes: callNotes,
+        };
+        saveCallRecord(updated);
+        return updated;
+      });
+      refreshQueue();
       return;
     }
 

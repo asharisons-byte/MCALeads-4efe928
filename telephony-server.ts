@@ -2,6 +2,11 @@
 // Backend-only implementation - credentials never exposed to client
 import { addDbLeadCall } from './src/db/repository.js';
 import { validateAndNormalizePhone } from './src/services/messagingService.js';
+import {
+  getAuthoritativeFromNumber,
+  getAuthoritativeConnectionId,
+  getAuthoritativeMessagingProfileId,
+} from './src/config/telnyxConfig.js';
 
 export interface VoiceProvider {
   id: string;
@@ -29,7 +34,7 @@ export class TelnyxVoiceProvider implements VoiceProvider {
 
   constructor() {
     this.apiKey = process.env.TELNYX_API_KEY;
-    this.defaultFromNumber = process.env.TELNYX_FROM_NUMBER || '+15035550199';
+    this.defaultFromNumber = getAuthoritativeFromNumber();
   }
 
   public async initiateCall(params: {
@@ -185,6 +190,7 @@ export class TelnyxVoiceProvider implements VoiceProvider {
             from: fromNumber,
             to: params.to,
             text: params.text,
+            messaging_profile_id: getAuthoritativeMessagingProfileId(),
           }),
         });
         if (response.ok) {
@@ -273,7 +279,8 @@ class TelephonyServerManager {
     const callId = `call_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     
     // Validate configuration
-    if (!process.env.TELNYX_CONNECTION_ID) {
+    const connectionId = getAuthoritativeConnectionId();
+    if (!connectionId) {
         throw new Error('TELNYX_CONNECTION_ID is not configured');
     }
 
