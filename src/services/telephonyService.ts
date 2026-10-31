@@ -209,7 +209,7 @@ export const TelephonyService = {
     }
 
     const local = getStoredCallRecords().find((c) => c.call_id === callId);
-    return { status: local?.status || 'CONNECTED', duration: local?.duration };
+    return { status: (local?.status as CallState) || 'CALLING', duration: local?.duration };
   },
 
   /**

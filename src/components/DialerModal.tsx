@@ -134,6 +134,7 @@ export const DialerModal: React.FC<DialerModalProps> = ({
   // Diagnostic Panel state
   const [diagnosticInfo, setDiagnosticInfo] = useState<{
     callId: string;
+    callingMode: string;
     lastError: string;
     stage: string;
     code: string;
@@ -152,6 +153,7 @@ export const DialerModal: React.FC<DialerModalProps> = ({
   // Helper to log and track diagnostics
   const addDiagnostic = (updates: Partial<{
     stage: string;
+    callingMode: string;
     error: string;
     code: string;
     pstnResult: string;
@@ -169,9 +171,10 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     
     setDiagnosticInfo(prev => ({
       callId: prev?.callId || diagnosticId,
-      lastError: updates.error || prev?.lastError || '',
+      callingMode: updates.callingMode || prev?.callingMode || (isWebRTCConnected ? 'WebRTC' : 'PSTN Fallback Mode'),
+      lastError: updates.error !== undefined ? updates.error : (prev?.lastError || ''),
       stage: updates.stage || prev?.stage || '',
-      code: updates.code || prev?.code || '',
+      code: updates.code !== undefined ? updates.code : (prev?.code || ''),
       time,
       pstnResult: updates.pstnResult || prev?.pstnResult || '',
       tokenStatus: updates.tokenStatus || prev?.tokenStatus || 'unknown',
@@ -179,9 +182,9 @@ export const DialerModal: React.FC<DialerModalProps> = ({
       tokenExpires: updates.tokenExpires || prev?.tokenExpires || 'N/A',
       wssStatus: updates.wssStatus || prev?.wssStatus || 'unknown',
       sipRegistered: updates.sipRegistered || prev?.sipRegistered || 'unknown',
-      hangupCause: updates.hangupCause || prev?.hangupCause || '',
-      hangupCode: updates.hangupCode || prev?.hangupCode || '',
-      hangupReason: updates.hangupReason || prev?.hangupReason || '',
+      hangupCause: updates.hangupCause !== undefined ? updates.hangupCause : (prev?.hangupCause || ''),
+      hangupCode: updates.hangupCode !== undefined ? updates.hangupCode : (prev?.hangupCode || ''),
+      hangupReason: updates.hangupReason !== undefined ? updates.hangupReason : (prev?.hangupReason || ''),
     }));
   };
 
@@ -316,7 +319,41 @@ export const DialerModal: React.FC<DialerModalProps> = ({
       statusPollingRef.current = setInterval(async () => {
         const res = await TelephonyService.getCallStatus(activeCallRecord.call_id);
         if (res.status && res.status !== 'UNKNOWN' && res.status !== callState) {
-          setCallState(res.status as CallState);
+          const nextStatus = res.status as CallState;
+
+          if (nextStatus === 'CONNECTED' && callState !== 'CONNECTED') {
+            if (!isWebRTCConnected) {
+              addDiagnostic({ 
+                stage: 'pstn:answered',
+                callingMode: 'PSTN Fallback Mode',
+              });
+              addDiagnostic({ 
+                stage: 'pstn:media-connected',
+                callingMode: 'PSTN Fallback Mode',
+              });
+              addLog(`🎉 PSTN Call answered and connected.`);
+            }
+          } else if (nextStatus === 'COMPLETED') {
+            if (!isWebRTCConnected) {
+              addDiagnostic({ 
+                stage: 'pstn:completed',
+                callingMode: 'PSTN Fallback Mode',
+              });
+              addLog(`📞 PSTN Call completed.`);
+            }
+          } else if (nextStatus === 'FAILED' || nextStatus === 'BUSY' || nextStatus === 'NO_ANSWER') {
+            if (!isWebRTCConnected) {
+              addDiagnostic({ 
+                stage: 'call:failed',
+                callingMode: 'PSTN Fallback Mode',
+                error: `Call ended with status: ${nextStatus}`,
+                code: nextStatus,
+              });
+              addLog(`❌ PSTN Call ${nextStatus.toLowerCase()}.`, 'error');
+            }
+          }
+
+          setCallState(nextStatus);
           if (res.duration !== undefined && res.duration > callDuration) {
             setCallDuration(res.duration);
           }
@@ -335,7 +372,7 @@ export const DialerModal: React.FC<DialerModalProps> = ({
         statusPollingRef.current = null;
       }
     };
-  }, [activeCallRecord, callState, callDuration]);
+  }, [activeCallRecord, callState, callDuration, isWebRTCConnected]);
 
   // Check if phone number is available
   const hasPhoneNumber = Boolean(phoneNumber && phoneNumber.trim() && phoneNumber !== 'Not Available');
@@ -489,21 +526,33 @@ export const DialerModal: React.FC<DialerModalProps> = ({
       setIsWebRTCConnected(true);
       return;
     } catch (e: any) {
-      console.error('[MCA WebRTC ERROR] Fallback triggered:', e);
-      addDiagnostic({ stage: 'webrtc:connect:error', error: e.message || 'Unknown WebRTC error', code: e.code || 'N/A' });
-      setWebRTCStatus(`Failed: ${e.message || 'Error'}`);
+      const errMsg = e?.message || (typeof e === 'string' ? e : 'WebRTC connection failed');
+      const errCode = e?.code || 'WEBRTC_ERROR';
+      console.error('[MCA WebRTC ERROR] Fallback triggered:', errMsg, errCode);
+      addDiagnostic({ 
+        stage: 'webrtc:wss:failed', 
+        callingMode: 'PSTN Fallback Mode',
+        error: errMsg, 
+        code: errCode,
+        wssStatus: 'failed',
+        sipRegistered: 'failed',
+      });
+      setWebRTCStatus(`PSTN Fallback (${errMsg})`);
       setIsWebRTCConnected(false);
       
-      // If this is an immediate hangup, wait 3 seconds to show the diagnostic
-      // before falling to PSTN — so the user can read the error
-      const isImmediateHangup = e.message?.includes('hangup') || 
-                                e.message?.includes('Registration timed out') === false;
-      await new Promise(r => setTimeout(r, isImmediateHangup ? 3000 : 1000));
+      // If this is an immediate hangup or registration error, wait briefly to show diagnostic before fallback
+      const isImmediateHangup = errMsg.includes('hangup') || errMsg.includes('Registration timed out');
+      await new Promise(r => setTimeout(r, isImmediateHangup ? 2000 : 1000));
     }
 
     // 2. Fallback to PSTN
-    addDiagnostic({ stage: 'pstn:fallback:start' });
-    setWebRTCStatus('PSTN Fallback');
+    addDiagnostic({ 
+      stage: 'pstn:fallback-started',
+      callingMode: 'PSTN Fallback Mode',
+    });
+    setWebRTCStatus('PSTN Calling...');
+    setCallState('CALLING');
+    addLog(`⚠️ WebRTC unavailable. Initiating PSTN fallback connection to ${phoneVal.display}…`);
     
     try {
         const result = await TelephonyService.startCall({
@@ -512,18 +561,36 @@ export const DialerModal: React.FC<DialerModalProps> = ({
             callType,
         });
         
-        addDiagnostic({ stage: 'pstn:start-success', pstnResult: JSON.stringify(result) });
-
-        if (result.success) {
+        if (result.success && result.callRecord) {
             setActiveCallRecord(result.callRecord);
-            setCallState('PSTN_ACTIVE');
+            setCallState('CALLING');
+            addDiagnostic({ 
+              stage: 'pstn:initiated', 
+              callingMode: 'PSTN Fallback Mode',
+              pstnResult: JSON.stringify(result) 
+            });
+            addLog(`📡 PSTN Call initiated (Session: ${result.callRecord.provider_call_id || result.callRecord.call_id}). Waiting for answer...`);
         } else {
-            addDiagnostic({ stage: 'pstn:start-error', error: 'PSTN start failed', code: 'N/A' });
+            addDiagnostic({ 
+              stage: 'call:failed', 
+              callingMode: 'PSTN Fallback Mode',
+              error: 'PSTN fallback initiation failed', 
+              code: 'PSTN_FAILED' 
+            });
             setCallState('FAILED');
+            addLog(`❌ PSTN fallback failed to initiate.`, 'error');
         }
     } catch (e: any) {
-        addDiagnostic({ stage: 'pstn:start-error', error: e.message || 'Unknown PSTN error', code: 'N/A' });
+        const errMsg = e?.message || 'PSTN start error';
+        const errCode = e?.code || 'PSTN_ERROR';
+        addDiagnostic({ 
+          stage: 'call:failed', 
+          callingMode: 'PSTN Fallback Mode',
+          error: errMsg, 
+          code: errCode 
+        });
         setCallState('FAILED');
+        addLog(`❌ PSTN fallback error: ${errMsg}`, 'error');
     }
   };
 
@@ -779,6 +846,7 @@ ${callScript.closing}
               </button>
             </div>
             <div className="text-[11px] font-mono text-rose-200/80 space-y-1">
+              <p>Calling Mode: <span className="text-white font-semibold">{diagnosticInfo.callingMode || (isWebRTCConnected ? 'WebRTC' : 'PSTN Fallback Mode')}</span></p>
               <p>Stage: <span className="text-white">{diagnosticInfo.stage}</span></p>
               <p>Error: <span className="text-white">{diagnosticInfo.lastError || 'N/A'}</span></p>
               <p>Code: <span className="text-white">{diagnosticInfo.code || 'N/A'}</span></p>

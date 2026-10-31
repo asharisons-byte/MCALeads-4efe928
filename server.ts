@@ -2838,19 +2838,59 @@ app.get('/api/telephony/webrtc/token', async (req, res) => {
   try {
     const sipUsername = getAuthoritativeSipUsername();
     const sipPassword = process.env.TELNYX_WEBRTC_SIP_PASSWORD || process.env.TELNYX_SIP_PASSWORD;
+    const callerNumber = getAuthoritativeFromNumber();
+    const connectionId = getAuthoritativeConnectionId();
+    let loginToken = process.env.TELNYX_WEBRTC_TOKEN || process.env.TELNYX_LOGIN_TOKEN;
+
+    // If login_token is not configured directly but TELNYX_API_KEY is present, attempt dynamic generation
+    if (!loginToken && process.env.TELNYX_API_KEY) {
+      try {
+        const credRes = await fetch('https://api.telnyx.com/v2/telephony_credentials', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.TELNYX_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            connection_id: connectionId,
+            expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+          }),
+        });
+        if (credRes.ok) {
+          const credData: any = await credRes.json();
+          const credId = credData.data?.id;
+          if (credId) {
+            const tokenRes = await fetch(`https://api.telnyx.com/v2/telephony_credentials/${credId}/token`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${process.env.TELNYX_API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+            });
+            if (tokenRes.ok) {
+              const tokenText = await tokenRes.text();
+              loginToken = tokenText.replace(/^"|"$/g, '').trim();
+              console.log('[TOKEN] Dynamically generated Telnyx WebRTC login_token');
+            }
+          }
+        }
+      } catch (genErr: any) {
+        console.warn('[TOKEN] Dynamic login_token generation skipped/failed, using SIP credentials:', genErr.message);
+      }
+    }
 
     console.log('[TOKEN-B] SIP_USERNAME:', sipUsername);
-    console.log('[TOKEN-C] SIP_PASSWORD present:', !!sipPassword);
+    console.log('[TOKEN-C] SIP_PASSWORD present:', !!sipPassword, 'LOGIN_TOKEN present:', !!loginToken);
 
-    if (!sipPassword) {
-      console.error('[TOKEN] Missing SIP password in environment');
+    if (!sipPassword && !loginToken) {
+      console.error('[TOKEN] Missing SIP credentials and WebRTC login token in environment');
       return res.status(500).json({
         error: 'WebRTC credentials not configured',
-        details: 'TELNYX_WEBRTC_SIP_PASSWORD or TELNYX_SIP_PASSWORD is required',
+        details: 'TELNYX_WEBRTC_SIP_PASSWORD, TELNYX_SIP_PASSWORD, or TELNYX_WEBRTC_TOKEN is required',
       });
     }
 
-    console.log('[TOKEN] Serving SIP credentials for account:', sipUsername);
+    console.log('[TOKEN] Serving credentials for account:', sipUsername);
 
     res.set({
       'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
@@ -2860,12 +2900,10 @@ app.get('/api/telephony/webrtc/token', async (req, res) => {
       'Surrogate-Control': 'no-store',
     });
 
-    const callerNumber = getAuthoritativeFromNumber();
-    const connectionId = getAuthoritativeConnectionId();
-
     res.json({
+      login_token: loginToken || undefined,
       sip_username: sipUsername,
-      sip_password: sipPassword,
+      sip_password: sipPassword || undefined,
       caller_number: callerNumber,
       connection_id: connectionId,
     });

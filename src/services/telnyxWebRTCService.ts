@@ -1,6 +1,38 @@
 import { TelnyxRTC } from '@telnyx/webrtc';
 import { getAuthoritativeFromNumber, TELNYX_CONSTANTS } from '../config/telnyxConfig';
 
+function extractTelnyxError(error: any): { message: string; code: string } {
+  if (!error) {
+    return { message: 'WebRTC connection failed', code: 'N/A' };
+  }
+  if (typeof error === 'string') {
+    return { message: error, code: 'N/A' };
+  }
+
+  const code = String(
+    error.code ||
+    error.error?.code ||
+    error.causeCode ||
+    error.error?.causeCode ||
+    error.sipCode ||
+    error.sip_code ||
+    'N/A'
+  );
+
+  const rawMsg =
+    error.error?.message ||
+    error.error?.detail ||
+    error.error?.reason ||
+    error.message ||
+    error.detail ||
+    error.reason ||
+    (typeof error.error === 'string' ? error.error : null);
+
+  const message = rawMsg || (code !== 'N/A' ? `WebRTC error (code: ${code})` : 'Telnyx WebRTC authentication or signaling error');
+
+  return { message, code };
+}
+
 export const TelnyxWebRTCService = {
   // ── State ────────────────────────────────────────────────────────────────
   client:               null as TelnyxRTC | null,
@@ -15,8 +47,11 @@ export const TelnyxWebRTCService = {
   audioRef:             null as HTMLAudioElement | null,
   diagnosticCallback:   null as ((update: any) => void) | null,
   ringbackInterval:     null as ReturnType<typeof setInterval> | null,
+  ringbackCtx:          null as any,
   cachedCallerNumber:   null as string | null,
   cachedConnectionId:   null as string | null,
+  cachedCredentials:    null as any | null,
+  cachedLoginToken:     null as string | null,
 
   // ── Diagnostic callback ──────────────────────────────────────────────────
   setDiagnosticCallback(cb: (update: any) => void) {
@@ -63,7 +98,6 @@ export const TelnyxWebRTCService = {
   // ── Attach remote audio stream to <audio> element ───────────────────────
   attachRemoteStream(call: any) {
     try {
-      // SDK v2 exposes the stream on multiple possible properties
       const stream: MediaStream | undefined =
         call.remoteStream ??
         call.options?.remoteStream ??
@@ -87,7 +121,10 @@ export const TelnyxWebRTCService = {
       this.audioRef.volume    = 1.0;
 
       this.audioRef.play()
-        .then(() => console.log('[MCA-AUDIO] Remote audio playing successfully'))
+        .then(() => {
+          console.log('[MCA-AUDIO] Remote audio playing successfully');
+          this.diagnosticCallback?.({ stage: 'call:media-connected' });
+        })
         .catch((e) => {
           console.warn('[MCA-AUDIO] play() blocked by autoplay policy, will retry on next click:', e.message);
           const retry = () => {
@@ -101,59 +138,108 @@ export const TelnyxWebRTCService = {
     }
   },
 
-  // ── Token fetch ──────────────────────────────────────────────────────────
+  // ── Token fetch & validation ─────────────────────────────────────────────
   async getValidToken() {
-    const bufferMs = 30_000;
-    if (Date.now() > this.tokenExpiry - bufferMs) {
-      console.log('[MCA-A] Fetching SIP credentials from server...');
-
-      const response = await fetch(`/api/telephony/webrtc/token?t=${Date.now()}`, {
-        method: 'GET',
-        cache:  'no-store',
-        headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
-      });
-
-      console.log('[MCA-B] Token response:', response.status, response.ok);
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        this.diagnosticCallback?.({ tokenStatus: 'failed' });
-        throw new Error(`Credentials fetch failed: ${err.details || response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log('[MCA-C] Token keys:', Object.keys(data || {}));
-      console.log('[MCA-D] sip_username:', !!data.sip_username, ' sip_password:', !!data.sip_password);
-
-      if (!data.sip_username || !data.sip_password) {
-        this.diagnosticCallback?.({ tokenStatus: 'failed' });
-        throw new Error(`Empty SIP credentials. Keys received: ${Object.keys(data).join(', ')}`);
-      }
-
-      if (data.caller_number) {
-        this.cachedCallerNumber = data.caller_number;
-      }
-      if (data.connection_id) {
-        this.cachedConnectionId = data.connection_id;
-      }
-
-      this.tokenExpiry = Date.now() + 23 * 60 * 60 * 1000;
-
-      console.log('[MCA-E] SIP credentials OK for:', data.sip_username, 'caller_number:', data.caller_number);
-      this.diagnosticCallback?.({
-        tokenStatus:  'fresh',
-        tokenFetched: new Date().toLocaleTimeString(),
-        tokenExpires: new Date(this.tokenExpiry).toLocaleTimeString(),
-      });
-
-      return { 
-        sip_username: data.sip_username, 
-        sip_password: data.sip_password,
-        caller_number: data.caller_number,
-        connection_id: data.connection_id,
-      };
+    const bufferMs = 60_000;
+    if (this.cachedCredentials && Date.now() < this.tokenExpiry - bufferMs) {
+      return this.cachedCredentials;
     }
-    return null; // still within valid window
+
+    console.log('[MCA-A] Fetching WebRTC SIP credentials / login token from server...');
+    this.diagnosticCallback?.({
+      stage: 'token:requested',
+      tokenStatus: 'fetching',
+    });
+
+    const response = await fetch(`/api/telephony/webrtc/token?t=${Date.now()}`, {
+      method: 'GET',
+      cache:  'no-store',
+      headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
+    });
+
+    console.log('[MCA-B] Token response:', response.status, response.ok);
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      const errMsg = err.details || err.error || response.statusText || 'Failed to fetch WebRTC credentials';
+      this.diagnosticCallback?.({
+        stage: 'token:failed',
+        tokenStatus: 'failed',
+        error: errMsg,
+        code: String(response.status),
+      });
+      throw new Error(`Credentials fetch failed: ${errMsg}`);
+    }
+
+    const data = await response.json();
+    console.log('[MCA-C] Token payload keys:', Object.keys(data || {}));
+
+    this.diagnosticCallback?.({
+      stage: 'token:received',
+      tokenStatus: 'received',
+    });
+
+    const hasToken = Boolean(data.login_token);
+    const hasSip = Boolean(data.sip_username && data.sip_password);
+
+    if (!hasToken && !hasSip) {
+      const errMsg = `Empty credentials. Keys received: ${Object.keys(data).join(', ')}`;
+      this.diagnosticCallback?.({
+        stage: 'token:failed',
+        tokenStatus: 'failed',
+        error: errMsg,
+        code: 'EMPTY_CREDS',
+      });
+      throw new Error(errMsg);
+    }
+
+    // Parse token expiry if JWT is provided
+    let calculatedExpiry = Date.now() + 23 * 60 * 60 * 1000;
+    if (data.login_token) {
+      try {
+        const parts = data.login_token.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+          if (payload.exp && typeof payload.exp === 'number') {
+            calculatedExpiry = payload.exp * 1000;
+          }
+        }
+      } catch (_) {}
+    }
+    this.tokenExpiry = calculatedExpiry;
+
+    if (data.caller_number) {
+      this.cachedCallerNumber = data.caller_number;
+    }
+    if (data.connection_id) {
+      this.cachedConnectionId = data.connection_id;
+    }
+
+    const fetchDate = new Date();
+    const expDate = new Date(this.tokenExpiry);
+    const hoursRemaining = Math.max(0, Math.round((this.tokenExpiry - Date.now()) / (3600 * 1000)));
+    const tokenFetchedStr = `${fetchDate.toLocaleTimeString()} (${fetchDate.toUTCString().slice(17, 22)} UTC)`;
+    const tokenExpiresStr = `${expDate.toLocaleTimeString()} (${hoursRemaining}h valid until ${expDate.toLocaleDateString()})`;
+
+    this.diagnosticCallback?.({
+      stage: 'token:validated',
+      tokenStatus: 'fresh',
+      tokenFetched: tokenFetchedStr,
+      tokenExpires: tokenExpiresStr,
+    });
+
+    const creds = {
+      login_token: data.login_token,
+      sip_username: data.sip_username,
+      sip_password: data.sip_password,
+      caller_number: data.caller_number,
+      connection_id: data.connection_id,
+    };
+    this.cachedCredentials = creds;
+    this.cachedLoginToken = data.login_token || null;
+
+    console.log('[MCA-E] WebRTC credentials validated OK for:', creds.sip_username || 'JWT token', 'caller:', creds.caller_number);
+    return creds;
   },
 
   // ── Client initialisation ────────────────────────────────────────────────
@@ -161,7 +247,6 @@ export const TelnyxWebRTCService = {
     if (audioRef) this.audioRef = audioRef;
 
     const creds = await this.getValidToken();
-    if (!creds) return this.client; // credentials still valid, reuse existing client
 
     // Tear down any stale client
     if (this.client) {
@@ -177,24 +262,45 @@ export const TelnyxWebRTCService = {
 
     try {
       console.log('[MCA-F] Creating TelnyxRTC client, audioRef present:', !!this.audioRef);
+      this.diagnosticCallback?.({
+        stage: 'webrtc:client-initialized',
+      });
 
-      this.client = new TelnyxRTC({
-        login:    creds.sip_username,
-        password: creds.sip_password,
-        logLevel: 'warn',
-      } as any);
+      const rtcOptions: any = { logLevel: 'warn' };
+      if (creds.login_token) {
+        rtcOptions.login_token = creds.login_token;
+      } else {
+        rtcOptions.login = creds.sip_username;
+        rtcOptions.password = creds.sip_password;
+      }
+
+      this.client = new TelnyxRTC(rtcOptions);
 
       // ── Socket events ──────────────────────────────────────────────────
       this.client.on('telnyx.socket.open', () => {
         console.log('[MCA-H] WebSocket opened');
-        this.diagnosticCallback?.({ wssStatus: 'connected' });
+        this.diagnosticCallback?.({
+          stage: 'webrtc:wss:connected',
+          wssStatus: 'connected',
+        });
+        this.diagnosticCallback?.({
+          stage: 'sip:registering',
+        });
       });
 
       this.client.on('telnyx.socket.error', (error: any) => {
-        console.error('[MCA-TELNYX] Socket error:', JSON.stringify(error));
-        this.diagnosticCallback?.({ wssStatus: 'failed' });
+        const { message, code } = extractTelnyxError(error);
+        console.error('[MCA-TELNYX] Socket error:', message, code);
+        this.diagnosticCallback?.({
+          stage: 'webrtc:wss:failed',
+          wssStatus: 'failed',
+          error: message,
+          code,
+        });
         if (this.rejectReady) {
-          this.rejectReady(new Error('WebSocket error: ' + JSON.stringify(error)));
+          const err = new Error(`WebSocket error: ${message}`);
+          (err as any).code = code;
+          this.rejectReady(err);
           this.rejectReady = null;
         }
       });
@@ -207,7 +313,12 @@ export const TelnyxWebRTCService = {
       // ── Registration events ────────────────────────────────────────────
       this.client.on('telnyx.ready', () => {
         console.log('[MCA-I] SIP registration complete — telnyx.ready fired');
-        this.diagnosticCallback?.({ sipRegistered: 'yes' });
+        this.diagnosticCallback?.({
+          stage: 'sip:registered',
+          sipRegistered: 'yes',
+          error: '',
+          code: 'N/A',
+        });
         if (this.resolveReady) {
           this.resolveReady();
           this.resolveReady = null;
@@ -215,10 +326,19 @@ export const TelnyxWebRTCService = {
       });
 
       this.client.on('telnyx.error', (error: any) => {
-        console.error('[MCA-TELNYX] SDK error:', error);
-        this.diagnosticCallback?.({ wssStatus: 'failed', sipRegistered: 'failed' });
+        const { message, code } = extractTelnyxError(error);
+        console.error('[MCA-TELNYX] SDK error:', message, code);
+        this.diagnosticCallback?.({
+          stage: 'sip:registration-failed',
+          wssStatus: 'failed',
+          sipRegistered: 'failed',
+          error: message,
+          code,
+        });
         if (this.rejectReady) {
-          this.rejectReady(error);
+          const err = new Error(message);
+          (err as any).code = code;
+          this.rejectReady(err);
           this.rejectReady = null;
         }
       });
@@ -245,20 +365,20 @@ export const TelnyxWebRTCService = {
         const ringingStates  = ['new', 'requesting', 'ringing', 'recovering'];
 
         if (activeStates.includes(state)) {
-          // Call answered — stop ringback and attach remote audio
           this.stopRingback();
           this.attachRemoteStream(notification.call);
+          this.diagnosticCallback?.({ stage: 'call:answered' });
+          this.diagnosticCallback?.({ stage: 'call:media-connected' });
           if (this.stateChangeCallback) this.stateChangeCallback('active');
 
         } else if (ringingStates.includes(state)) {
-          // Remote phone ringing — play ringback tone
           if (state === 'ringing' || state === 'requesting') {
             this.startRingback();
+            this.diagnosticCallback?.({ stage: 'call:ringing' });
           }
           if (this.stateChangeCallback) this.stateChangeCallback(state);
 
         } else if (terminalStates.includes(state)) {
-          // Call ended — clean up everything
           this.stopRingback();
           if (this.audioRef) {
             this.audioRef.srcObject = null;
@@ -273,6 +393,7 @@ export const TelnyxWebRTCService = {
           console.log('[MCA-HANGUP]', { state, cause, causeCode, sipCode, sipReason });
 
           this.diagnosticCallback?.({
+            stage:        'call:completed',
             hangupCause:  cause     || 'unknown',
             hangupCode:   sipCode   ? String(sipCode) : causeCode ? String(causeCode) : 'N/A',
             hangupReason: sipReason || cause || 'No reason provided',
@@ -288,13 +409,24 @@ export const TelnyxWebRTCService = {
       });
 
       console.log('[MCA-G] Calling client.connect()');
+      this.diagnosticCallback?.({ stage: 'webrtc:wss:connecting' });
       await this.client.connect();
       return this.client;
 
-    } catch (error) {
-      console.error('[MCA-TELNYX] Init error:', error);
+    } catch (error: any) {
+      const { message, code } = extractTelnyxError(error);
+      console.error('[MCA-TELNYX] Init error:', message, code);
+      this.diagnosticCallback?.({
+        stage: 'webrtc:wss:failed',
+        wssStatus: 'failed',
+        sipRegistered: 'failed',
+        error: message,
+        code,
+      });
       this.isInitialized = false;
-      throw error;
+      const err = new Error(message);
+      (err as any).code = code;
+      throw err;
     }
   },
 
@@ -327,6 +459,11 @@ export const TelnyxWebRTCService = {
     if (!/^\+[1-9]\d{6,14}$/.test(normalizedDest)) {
       const err = `Invalid destination number "${destinationNumber}". Expected valid E.164 format (e.g. ${TELNYX_CONSTANTS.FROM_NUMBER}).`;
       console.error('[MCA-TELNYX] ' + err);
+      this.diagnosticCallback?.({
+        stage: 'call:failed',
+        error: err,
+        code: 'INVALID_NUMBER',
+      });
       throw new Error(err);
     }
 
@@ -348,18 +485,34 @@ export const TelnyxWebRTCService = {
     }
 
     console.log('[MCA-K] makeCall(), sanitized dest:', normalizedDest, 'caller:', normalizedCaller);
+    this.diagnosticCallback?.({ stage: 'call:initiating' });
 
     if (!this.client) await this.init(audioRef);
 
     // Wait for SIP registration before placing the call
     if (this.readyPromise) {
       console.log('[MCA-TELNYX] Awaiting telnyx.ready...');
-      await Promise.race([
-        this.readyPromise,
-        new Promise<void>((_, reject) =>
-          setTimeout(() => reject(new Error('Registration timed out')), 30_000)
-        ),
-      ]);
+      try {
+        await Promise.race([
+          this.readyPromise,
+          new Promise<void>((_, reject) =>
+            setTimeout(() => {
+              const err = new Error('Registration timed out (30s)');
+              (err as any).code = 'REGISTRATION_TIMEOUT';
+              reject(err);
+            }, 30_000)
+          ),
+        ]);
+      } catch (regErr: any) {
+        const { message, code } = extractTelnyxError(regErr);
+        this.diagnosticCallback?.({
+          stage: 'sip:registration-failed',
+          sipRegistered: 'failed',
+          error: message,
+          code,
+        });
+        throw regErr;
+      }
     }
 
     this.stateChangeCallback = onStateChange;
@@ -369,13 +522,24 @@ export const TelnyxWebRTCService = {
       callerNumber: normalizedCaller,
     });
 
-    this.currentCall = await this.client!.newCall({
-      destinationNumber: normalizedDest,
-      callerNumber: normalizedCaller,
-    });
+    try {
+      this.currentCall = await this.client!.newCall({
+        destinationNumber: normalizedDest,
+        callerNumber: normalizedCaller,
+      });
 
-    console.log('[MCA-NEWCALL] call object returned:', !!this.currentCall);
-    return this.currentCall;
+      console.log('[MCA-NEWCALL] call object returned:', !!this.currentCall);
+      return this.currentCall;
+    } catch (callErr: any) {
+      const { message, code } = extractTelnyxError(callErr);
+      console.error('[MCA-NEWCALL] Failed to create call:', message, code);
+      this.diagnosticCallback?.({
+        stage: 'call:failed',
+        error: message,
+        code,
+      });
+      throw callErr;
+    }
   },
 
   // ── Call controls ────────────────────────────────────────────────────────
@@ -395,13 +559,11 @@ export const TelnyxWebRTCService = {
 
     if (this.currentCall) {
       try { 
-          // Check if call object has a state that allows hangup, 
-          // or at least wrap in a try-catch to ignore 'CALL DOES NOT EXIST'
-          if (this.currentCall.state !== 'hangup' && this.currentCall.state !== 'destroy') {
-              await this.currentCall.hangup(); 
-          }
+        if (this.currentCall.state !== 'hangup' && this.currentCall.state !== 'destroy') {
+          await this.currentCall.hangup(); 
+        }
       } catch (e: any) {
-          console.warn('[MCA-TELNYX] Non-fatal hangup error:', e.message);
+        console.warn('[MCA-TELNYX] Non-fatal hangup error:', e.message);
       }
       this.currentCall = null;
     }
