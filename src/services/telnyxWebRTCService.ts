@@ -28,7 +28,10 @@ function extractTelnyxError(error: any): { message: string; code: string } {
     error.reason ||
     (typeof error.error === 'string' ? error.error : null);
 
-  const message = rawMsg || (code !== 'N/A' ? `WebRTC error (code: ${code})` : 'Telnyx WebRTC authentication or signaling error');
+  let message = rawMsg || (code !== 'N/A' ? `WebRTC error (code: ${code})` : 'Telnyx WebRTC authentication or signaling error');
+  if (code === '46001' || message.toLowerCase().includes('auth')) {
+    message = 'Authentication failed (Code 46001): Telnyx rejected SIP credentials for mcasip on connection 3080159476620199847';
+  }
 
   return { message, code };
 }
@@ -291,6 +294,7 @@ export const TelnyxWebRTCService = {
       this.client.on('telnyx.socket.error', (error: any) => {
         const { message, code } = extractTelnyxError(error);
         console.error('[MCA-TELNYX] Socket error:', message, code);
+        this.stopRingback();
         this.diagnosticCallback?.({
           stage: 'webrtc:wss:failed',
           wssStatus: 'failed',
@@ -307,6 +311,7 @@ export const TelnyxWebRTCService = {
 
       this.client.on('telnyx.socket.close', () => {
         console.warn('[MCA-TELNYX] Socket closed');
+        this.stopRingback();
         this.diagnosticCallback?.({ wssStatus: 'closed' });
       });
 
@@ -328,6 +333,7 @@ export const TelnyxWebRTCService = {
       this.client.on('telnyx.error', (error: any) => {
         const { message, code } = extractTelnyxError(error);
         console.error('[MCA-TELNYX] SDK error:', message, code);
+        this.stopRingback();
         this.diagnosticCallback?.({
           stage: 'sip:registration-failed',
           wssStatus: 'failed',

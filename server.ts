@@ -15,7 +15,7 @@ import {
   TELNYX_CONSTANTS,
 } from './src/config/telnyxConfig.js';
 
-dotenv.config();
+dotenv.config({ override: true });
 
 // Normalize Neon / PostgreSQL connection strings across environments
 if (!process.env.POSTGRES_URL && process.env.DATABASE_URL) {

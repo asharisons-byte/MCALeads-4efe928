@@ -527,8 +527,28 @@ export const DialerModal: React.FC<DialerModalProps> = ({
       return;
     } catch (e: any) {
       const errMsg = e?.message || (typeof e === 'string' ? e : 'WebRTC connection failed');
-      const errCode = e?.code || 'WEBRTC_ERROR';
-      console.error('[MCA WebRTC ERROR] Fallback triggered:', errMsg, errCode);
+      const errCode = String(e?.code || 'WEBRTC_ERROR');
+      console.error('[MCA WebRTC ERROR]:', errMsg, errCode);
+      TelnyxWebRTCService.stopRingback();
+      setIsWebRTCConnected(false);
+
+      const isAuthError = errCode === '46001' || errMsg.includes('46001') || errMsg.toLowerCase().includes('auth');
+
+      if (isAuthError) {
+        addDiagnostic({ 
+          stage: 'sip:registration-failed', 
+          callingMode: 'WebRTC (VoIP)',
+          error: errMsg, 
+          code: '46001',
+          wssStatus: 'failed',
+          sipRegistered: 'failed',
+        });
+        setWebRTCStatus('Auth Failed (46001)');
+        setCallState('FAILED');
+        addLog(`❌ WebRTC Authentication failed (Code 46001): Telnyx rejected SIP credentials for mcasip on connection 3080159476620199847. Check SIP password or WebRTC token.`, 'error');
+        return;
+      }
+
       addDiagnostic({ 
         stage: 'webrtc:wss:failed', 
         callingMode: 'PSTN Fallback Mode',
@@ -538,9 +558,7 @@ export const DialerModal: React.FC<DialerModalProps> = ({
         sipRegistered: 'failed',
       });
       setWebRTCStatus(`PSTN Fallback (${errMsg})`);
-      setIsWebRTCConnected(false);
       
-      // If this is an immediate hangup or registration error, wait briefly to show diagnostic before fallback
       const isImmediateHangup = errMsg.includes('hangup') || errMsg.includes('Registration timed out');
       await new Promise(r => setTimeout(r, isImmediateHangup ? 2000 : 1000));
     }
