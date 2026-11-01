@@ -1,5 +1,10 @@
 import { TelnyxRTC } from '@telnyx/webrtc';
-import { getAuthoritativeFromNumber, TELNYX_CONSTANTS } from '../config/telnyxConfig';
+import {
+  getAuthoritativeFromNumber,
+  getAuthoritativeConnectionId,
+  getAuthoritativeSipUsername,
+  TELNYX_CONSTANTS,
+} from '../config/telnyxConfig';
 
 function extractTelnyxError(error: any): { message: string; code: string } {
   if (!error) {
@@ -30,7 +35,10 @@ function extractTelnyxError(error: any): { message: string; code: string } {
 
   let message = rawMsg || (code !== 'N/A' ? `WebRTC error (code: ${code})` : 'Telnyx WebRTC authentication or signaling error');
   if (code === '46001' || message.toLowerCase().includes('auth')) {
-    message = 'Authentication failed (Code 46001): Telnyx rejected SIP credentials for mcasip on connection 3080159476620199847';
+    const connId = getAuthoritativeConnectionId();
+    const username = getAuthoritativeSipUsername();
+    message = `Authentication failed (Code 46001): Telnyx rejected SIP credentials for ${username} on connection ${connId}. SIP password may be from previous connection (3080159476620199847 or 3050571859167806808). The new connection (${connId}) requires the SIP password configured for connection ${connId} in the Telnyx Portal.`;
+    console.warn(`[MCA-WEBRTC-AUTH-WARNING] SIP password may be from previous connection (3080159476620199847 or 3050571859167806808). The new connection (${connId}) requires the SIP password configured for connection ${connId} in the Telnyx Portal.`);
   }
 
   return { message, code };
@@ -269,11 +277,21 @@ export const TelnyxWebRTCService = {
         stage: 'webrtc:client-initialized',
       });
 
+      const isJwtToken = Boolean(creds.login_token && creds.login_token.startsWith('eyJ') && creds.login_token.split('.').length === 3);
+      const activeConnectionId = creds.connection_id || getAuthoritativeConnectionId();
+      const activeSipUsername = creds.sip_username || getAuthoritativeSipUsername();
+      const hasPassword = Boolean(creds.sip_password);
+      const passwordLength = creds.sip_password ? creds.sip_password.length : 0;
+
+      console.log(`[MCA-WEBRTC-AUTH] Initiating WebRTC for Connection ID: ${activeConnectionId}`);
+      console.log(`[MCA-WEBRTC-AUTH] SIP Username: ${activeSipUsername}`);
+      console.log(`[MCA-WEBRTC-AUTH] Auth Method: ${isJwtToken ? 'WebRTC Login Token (JWT)' : `Direct SIP Credentials (password set: ${hasPassword}, length: ${passwordLength})`}`);
+
       const rtcOptions: any = { logLevel: 'warn' };
-      if (creds.login_token) {
+      if (isJwtToken) {
         rtcOptions.login_token = creds.login_token;
       } else {
-        rtcOptions.login = creds.sip_username;
+        rtcOptions.login = activeSipUsername;
         rtcOptions.password = creds.sip_password;
       }
 

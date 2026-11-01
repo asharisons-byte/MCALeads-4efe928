@@ -52,7 +52,11 @@ import {
 import { TelnyxWebRTCService } from '../services/telnyxWebRTCService';
 import { addActivity, updateLead } from '../services/leadService';
 import { validateAndNormalizePhone } from '../services/messagingService';
-import { getAuthoritativeFromNumber } from '../config/telnyxConfig';
+import {
+  getAuthoritativeFromNumber,
+  getAuthoritativeConnectionId,
+  getAuthoritativeSipUsername,
+} from '../config/telnyxConfig';
 
 interface DialerModalProps {
   isOpen: boolean;
@@ -145,6 +149,8 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     tokenExpires: string;
     wssStatus: string;
     sipRegistered: string;
+    connectionId: string;
+    sipUsername: string;
     hangupCause: string;
     hangupCode: string;
     hangupReason: string;
@@ -162,6 +168,8 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     tokenExpires: string;
     wssStatus: string;
     sipRegistered: string;
+    connectionId: string;
+    sipUsername: string;
     hangupCause: string;
     hangupCode: string;
     hangupReason: string;
@@ -182,6 +190,8 @@ export const DialerModal: React.FC<DialerModalProps> = ({
       tokenExpires: updates.tokenExpires || prev?.tokenExpires || 'N/A',
       wssStatus: updates.wssStatus || prev?.wssStatus || 'unknown',
       sipRegistered: updates.sipRegistered || prev?.sipRegistered || 'unknown',
+      connectionId: updates.connectionId || prev?.connectionId || getAuthoritativeConnectionId(),
+      sipUsername: updates.sipUsername || prev?.sipUsername || getAuthoritativeSipUsername(),
       hangupCause: updates.hangupCause !== undefined ? updates.hangupCause : (prev?.hangupCause || ''),
       hangupCode: updates.hangupCode !== undefined ? updates.hangupCode : (prev?.hangupCode || ''),
       hangupReason: updates.hangupReason !== undefined ? updates.hangupReason : (prev?.hangupReason || ''),
@@ -545,7 +555,7 @@ export const DialerModal: React.FC<DialerModalProps> = ({
         });
         setWebRTCStatus('Auth Failed (46001)');
         setCallState('FAILED');
-        addLog(`❌ WebRTC Authentication failed (Code 46001): Telnyx rejected SIP credentials for mcasip on connection 3080159476620199847. Check SIP password or WebRTC token.`, 'error');
+        addLog(`❌ WebRTC Authentication failed (Code 46001): Telnyx rejected SIP credentials for ${getAuthoritativeSipUsername()} on connection ${getAuthoritativeConnectionId()}. Check SIP password or WebRTC token.`, 'error');
         return;
       }
 
@@ -874,6 +884,8 @@ ${callScript.closing}
               <p>Token Expires: <span className="text-white">{diagnosticInfo.tokenExpires}</span></p>
               <p>WSS Connected: <span className="text-white">{diagnosticInfo.wssStatus}</span></p>
               <p>SIP Registered: <span className="text-white">{diagnosticInfo.sipRegistered}</span></p>
+              <p>SIP User: <span className="text-white">{diagnosticInfo.sipUsername}</span></p>
+              <p>Connection ID: <span className="text-white">{diagnosticInfo.connectionId}</span></p>
               {diagnosticInfo.hangupCause && (
                 <>
                   <p>Hangup Cause: <span className="text-red-400">{diagnosticInfo.hangupCause}</span></p>

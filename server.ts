@@ -12,6 +12,8 @@ import {
   getAuthoritativeSipUsername,
   getAuthoritativeMessagingProfileId,
   getAuthoritativeVoiceApiAppId,
+  getAuthoritativeWebRtcToken,
+  getAuthoritativeOutboundVoiceProfile,
   TELNYX_CONSTANTS,
 } from './src/config/telnyxConfig.js';
 
@@ -2840,7 +2842,7 @@ app.get('/api/telephony/webrtc/token', async (req, res) => {
     const sipPassword = process.env.TELNYX_WEBRTC_SIP_PASSWORD || process.env.TELNYX_SIP_PASSWORD;
     const callerNumber = getAuthoritativeFromNumber();
     const connectionId = getAuthoritativeConnectionId();
-    let loginToken = process.env.TELNYX_WEBRTC_TOKEN || process.env.TELNYX_LOGIN_TOKEN;
+    let loginToken = getAuthoritativeWebRtcToken();
 
     // If login_token is not configured directly but TELNYX_API_KEY is present, attempt dynamic generation
     if (!loginToken && process.env.TELNYX_API_KEY) {
@@ -2938,6 +2940,7 @@ app.get('/api/telnyx/health', (req, res) => {
         connectionName: TELNYX_CONSTANTS.SIP_CONNECTION_NAME,
         connectionId,
         sipUsername,
+        outboundVoiceProfile: getAuthoritativeOutboundVoiceProfile(),
         messagingProfileId,
         voiceApiApplicationName: TELNYX_CONSTANTS.VOICE_API_APPLICATION_NAME,
         voiceApiApplicationId: voiceApiAppId,
