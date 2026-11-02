@@ -73,6 +73,7 @@ export function App() {
   const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [currentUserRole, setCurrentUserRole] = useState<string>('');
+  const [accessDenied, setAccessDenied] = useState<{ denied: boolean; details?: string }>({ denied: false });
   const [leads, setLeads] = useState<Lead[]>([]);
   const [importModalOpen, setImportModalOpen] = useState(false);
   const [importInitialMode, setImportInitialMode] = useState<'upload' | 'sheets' | 'paste' | 'preset'>('upload');
@@ -162,8 +163,21 @@ export function App() {
           const res = await fetch('/api/users/me', {
             headers: { Authorization: `Bearer ${token}` },
           });
+          if (res.status === 403) {
+            const data = await res.json().catch(() => ({}));
+            if (data.code === 'NO_INVITE' || data.error === 'Access denied') {
+              setAccessDenied({
+                denied: true,
+                details: data.details || 'Your account has not been set up for this application. Contact your administrator at contact@marketingcharmagency.com for an invitation.',
+              });
+              setCurrentUserRole('');
+              setAuthLoading(false);
+              return;
+            }
+          }
           if (res.ok) {
             const data = await res.json();
+            setAccessDenied({ denied: false });
             setCurrentUserRole(normalizeAppRole(data.role) || '');
           }
         } catch (e) {
@@ -171,6 +185,7 @@ export function App() {
         }
       } else {
         setCurrentUserRole('');
+        setAccessDenied({ denied: false });
       }
       setAuthLoading(false);
     });
@@ -196,7 +211,7 @@ export function App() {
 
   // Data Loading Effect
   useEffect(() => {
-    if (!firebaseUser) return;
+    if (!firebaseUser || accessDenied.denied) return;
     async function initData() {
       const loadedLeads = await getLeads();
       setLeads(loadedLeads);
@@ -217,7 +232,7 @@ export function App() {
       }
     }
     initData();
-  }, [firebaseUser]);
+  }, [firebaseUser, accessDenied.denied]);
 
   useLayoutEffect(() => {
     const container = document.querySelector('.hud-main-content');
@@ -237,6 +252,40 @@ export function App() {
     return (
       <div className="flex h-screen items-center justify-center bg-[#050608] text-slate-100">
         <p className="font-mono text-xs uppercase tracking-[0.12em] text-emerald-400 animate-pulse">Loading MCA Lead Suite…</p>
+      </div>
+    );
+  }
+
+  if (accessDenied.denied) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-[#050608] text-slate-100 p-4">
+        <div className="w-full max-w-md bg-[#0d0f17] border border-white/10 border-t-2 border-t-rose-500 p-8 text-center space-y-6 shadow-2xl">
+          <div className="mx-auto w-12 h-12 border border-rose-500/40 flex items-center justify-center font-mono font-bold text-rose-400 bg-rose-500/10">
+            !
+          </div>
+          <div className="space-y-3">
+            <h1 className="text-2xl font-bold tracking-tight text-white">Access Denied</h1>
+            <p className="font-mono text-xs text-slate-300 leading-relaxed">
+              Your account has not been set up for this application. Contact your administrator at{' '}
+              <a
+                href="mailto:contact@marketingcharmagency.com"
+                className="text-emerald-400 hover:text-emerald-300 underline font-medium"
+              >
+                contact@marketingcharmagency.com
+              </a>{' '}
+              for an invitation.
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              await auth.signOut();
+              setAccessDenied({ denied: false });
+            }}
+            className="w-full px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-mono text-xs font-bold uppercase tracking-[0.08em] transition-colors cursor-pointer"
+          >
+            Sign Out
+          </button>
+        </div>
       </div>
     );
   }

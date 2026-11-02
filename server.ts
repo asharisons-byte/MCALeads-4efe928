@@ -2872,8 +2872,16 @@ app.get('/api/telephony/webrtc/token', async (req, res) => {
             if (tokenRes.ok) {
               const tokenText = await tokenRes.text();
               loginToken = tokenText.replace(/^"|"$/g, '').trim();
-              console.log('[TOKEN] Dynamically generated Telnyx WebRTC login_token');
+              console.log('[TOKEN] Dynamically generated Telnyx WebRTC login_token for connection:', connectionId);
+            } else {
+              console.warn(`[TOKEN] Telephony credential token fetch failed (${tokenRes.status})`);
             }
+          }
+        } else {
+          const errBody = await credRes.text().catch(() => '');
+          console.warn(`[TOKEN] Telephony credential creation failed (HTTP ${credRes.status}) for connection ${connectionId}: ${errBody.slice(0, 150)}`);
+          if (credRes.status === 422 || credRes.status === 404 || credRes.status === 401) {
+            console.warn(`[TOKEN-DIAGNOSTIC] Note: TELNYX_API_KEY does not have access to connection ${connectionId}. Verify the API key in environment belongs to the Telnyx account containing connection ${connectionId}.`);
           }
         }
       } catch (genErr: any) {
@@ -2881,7 +2889,8 @@ app.get('/api/telephony/webrtc/token', async (req, res) => {
       }
     }
 
-    console.log('[TOKEN-B] SIP_USERNAME:', sipUsername);
+    const authMethod = loginToken ? 'login_token' : (sipPassword ? 'sip_credentials' : 'none');
+    console.log('[TOKEN-B] SIP_USERNAME:', sipUsername, 'AUTH_METHOD:', authMethod);
     console.log('[TOKEN-C] SIP_PASSWORD present:', !!sipPassword, 'LOGIN_TOKEN present:', !!loginToken);
 
     if (!sipPassword && !loginToken) {
@@ -2892,7 +2901,7 @@ app.get('/api/telephony/webrtc/token', async (req, res) => {
       });
     }
 
-    console.log('[TOKEN] Serving credentials for account:', sipUsername);
+    console.log('[TOKEN] Serving credentials for account:', sipUsername, 'on connection:', connectionId, 'using method:', authMethod);
 
     res.set({
       'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
@@ -2903,11 +2912,13 @@ app.get('/api/telephony/webrtc/token', async (req, res) => {
     });
 
     res.json({
+      auth_method: authMethod,
       login_token: loginToken || undefined,
       sip_username: sipUsername,
       sip_password: sipPassword || undefined,
       caller_number: callerNumber,
       connection_id: connectionId,
+      token_available: Boolean(loginToken),
     });
 
   } catch (error: any) {

@@ -145,6 +145,7 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     time: string;
     pstnResult: string;
     tokenStatus: string;
+    authMethod: string;
     tokenFetched: string;
     tokenExpires: string;
     wssStatus: string;
@@ -164,6 +165,7 @@ export const DialerModal: React.FC<DialerModalProps> = ({
     code: string;
     pstnResult: string;
     tokenStatus: string;
+    authMethod: string;
     tokenFetched: string;
     tokenExpires: string;
     wssStatus: string;
@@ -186,6 +188,7 @@ export const DialerModal: React.FC<DialerModalProps> = ({
       time,
       pstnResult: updates.pstnResult || prev?.pstnResult || '',
       tokenStatus: updates.tokenStatus || prev?.tokenStatus || 'unknown',
+      authMethod: updates.authMethod || prev?.authMethod || 'unknown',
       tokenFetched: updates.tokenFetched || prev?.tokenFetched || 'N/A',
       tokenExpires: updates.tokenExpires || prev?.tokenExpires || 'N/A',
       wssStatus: updates.wssStatus || prev?.wssStatus || 'unknown',
@@ -879,6 +882,7 @@ ${callScript.closing}
               <p>Error: <span className="text-white">{diagnosticInfo.lastError || 'N/A'}</span></p>
               <p>Code: <span className="text-white">{diagnosticInfo.code || 'N/A'}</span></p>
               <p>Time: <span className="text-white">{diagnosticInfo.time}</span></p>
+              <p>Auth Method: <span className="text-white font-semibold">{diagnosticInfo.authMethod || 'N/A'}</span></p>
               <p>Token Status: <span className="text-white">{diagnosticInfo.tokenStatus}</span></p>
               <p>Token Fetched: <span className="text-white">{diagnosticInfo.tokenFetched}</span></p>
               <p>Token Expires: <span className="text-white">{diagnosticInfo.tokenExpires}</span></p>

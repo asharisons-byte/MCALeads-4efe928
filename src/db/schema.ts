@@ -39,9 +39,9 @@ export const users = pgTable('users', {
   displayName: text('display_name').notNull(),
   email: text('email').notNull().unique(),
   phone: text('phone'),
-  role: text('role').notNull().default('Admin'), // Admin, Manager, Sales, Account Manager, User
+  role: text('role').notNull().default('User'), // Admin, Manager, Sales, Account Manager, User
   avatarUrl: text('avatar_url'),
-  status: text('status').notNull().default('active'), // active, invited, suspended
+  status: text('status').notNull().default('suspended'), // active, invited, suspended
   lastLoginAt: timestamp('last_login_at'),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

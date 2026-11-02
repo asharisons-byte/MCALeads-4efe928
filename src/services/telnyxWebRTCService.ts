@@ -190,11 +190,16 @@ export const TelnyxWebRTCService = {
       tokenStatus: 'received',
     });
 
-    const hasToken = Boolean(data.login_token);
+    const isJwtToken = Boolean(
+      data.login_token &&
+      typeof data.login_token === 'string' &&
+      data.login_token.startsWith('eyJ') &&
+      data.login_token.split('.').length === 3
+    );
     const hasSip = Boolean(data.sip_username && data.sip_password);
 
-    if (!hasToken && !hasSip) {
-      const errMsg = `Empty credentials. Keys received: ${Object.keys(data).join(', ')}`;
+    if (!isJwtToken && !hasSip) {
+      const errMsg = `Empty or invalid credentials. Need valid WebRTC JWT token or SIP username/password. Keys received: ${Object.keys(data).join(', ')}`;
       this.diagnosticCallback?.({
         stage: 'token:failed',
         tokenStatus: 'failed',
@@ -204,20 +209,38 @@ export const TelnyxWebRTCService = {
       throw new Error(errMsg);
     }
 
-    // Parse token expiry if JWT is provided
-    let calculatedExpiry = Date.now() + 23 * 60 * 60 * 1000;
-    if (data.login_token) {
+    let calculatedExpiry = 0;
+    let tokenFetchedStr = 'N/A (SIP credentials mode)';
+    let tokenExpiresStr = 'N/A (SIP credentials mode)';
+    let tokenStatus = 'none (using SIP credentials)';
+    const authMethod = isJwtToken
+      ? 'WebRTC Login Token (JWT)'
+      : `Direct SIP Credentials (${data.sip_username || 'mcasip'})`;
+
+    if (isJwtToken) {
       try {
         const parts = data.login_token.split('.');
-        if (parts.length === 3) {
-          const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-          if (payload.exp && typeof payload.exp === 'number') {
-            calculatedExpiry = payload.exp * 1000;
-          }
+        const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+        if (payload.exp && typeof payload.exp === 'number') {
+          calculatedExpiry = payload.exp * 1000;
+        } else {
+          calculatedExpiry = Date.now() + 23 * 60 * 60 * 1000;
         }
-      } catch (_) {}
+      } catch (_) {
+        calculatedExpiry = Date.now() + 23 * 60 * 60 * 1000;
+      }
+      this.tokenExpiry = calculatedExpiry;
+
+      const fetchDate = new Date();
+      const expDate = new Date(this.tokenExpiry);
+      const hoursRemaining = Math.max(0, Math.round((this.tokenExpiry - Date.now()) / (3600 * 1000)));
+      tokenFetchedStr = `${fetchDate.toLocaleTimeString()} (${fetchDate.toUTCString().slice(17, 22)} UTC)`;
+      tokenExpiresStr = `${expDate.toLocaleTimeString()} (${hoursRemaining}h valid until ${expDate.toLocaleDateString()})`;
+      tokenStatus = 'fresh (JWT token)';
+    } else {
+      // In SIP credentials mode, cache credentials for 1 hour
+      this.tokenExpiry = Date.now() + 60 * 60 * 1000;
     }
-    this.tokenExpiry = calculatedExpiry;
 
     if (data.caller_number) {
       this.cachedCallerNumber = data.caller_number;
@@ -226,30 +249,28 @@ export const TelnyxWebRTCService = {
       this.cachedConnectionId = data.connection_id;
     }
 
-    const fetchDate = new Date();
-    const expDate = new Date(this.tokenExpiry);
-    const hoursRemaining = Math.max(0, Math.round((this.tokenExpiry - Date.now()) / (3600 * 1000)));
-    const tokenFetchedStr = `${fetchDate.toLocaleTimeString()} (${fetchDate.toUTCString().slice(17, 22)} UTC)`;
-    const tokenExpiresStr = `${expDate.toLocaleTimeString()} (${hoursRemaining}h valid until ${expDate.toLocaleDateString()})`;
-
     this.diagnosticCallback?.({
       stage: 'token:validated',
-      tokenStatus: 'fresh',
+      authMethod,
+      tokenStatus,
       tokenFetched: tokenFetchedStr,
       tokenExpires: tokenExpiresStr,
+      connectionId: data.connection_id || getAuthoritativeConnectionId(),
+      sipUsername: data.sip_username || getAuthoritativeSipUsername(),
     });
 
     const creds = {
-      login_token: data.login_token,
+      auth_method: isJwtToken ? 'login_token' : 'sip_credentials',
+      login_token: isJwtToken ? data.login_token : undefined,
       sip_username: data.sip_username,
       sip_password: data.sip_password,
       caller_number: data.caller_number,
       connection_id: data.connection_id,
     };
     this.cachedCredentials = creds;
-    this.cachedLoginToken = data.login_token || null;
+    this.cachedLoginToken = isJwtToken ? data.login_token : null;
 
-    console.log('[MCA-E] WebRTC credentials validated OK for:', creds.sip_username || 'JWT token', 'caller:', creds.caller_number);
+    console.log(`[MCA-E] WebRTC credentials validated: AuthMethod=${authMethod}, Caller=${creds.caller_number}, ConnectionID=${creds.connection_id}`);
     return creds;
   },
 

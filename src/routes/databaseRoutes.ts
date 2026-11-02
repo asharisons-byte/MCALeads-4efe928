@@ -34,8 +34,8 @@ import {
 
 const router = express.Router();
 
-// 1. User Info (New Endpoint)
-router.get('/users/me', requireAuth, async (req: AuthRequest, res: Response) => {
+// 1. User Info Endpoint
+router.get(['/users/me', '/db/users/me'], requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     if (!db) return res.status(503).json({ error: 'Database not configured' });
     const firebaseUid = req.user?.uid;
@@ -66,23 +66,11 @@ router.get('/users/me', requireAuth, async (req: AuthRequest, res: Response) => 
     }
 
     if (result.length === 0) {
-      // Auto-provision user on first login
-      const orgs = await db.select({ id: schema.organizations.id }).from(schema.organizations).limit(1);
-      const organizationId = orgs[0]?.id;
-      
-      const nameParts = (req.user?.name || '').split(' ');
-      
-      await db.insert(schema.users).values({
-        uid: firebaseUid,
-        email: req.user?.email?.toLowerCase() || '',
-        displayName: req.user?.name || req.user?.email || 'New User',
-        firstName: nameParts[0] || null,
-        lastName: nameParts.length > 1 ? nameParts.slice(1).join(' ') : null,
-        role: 'Admin', // default legacy role
-        status: 'active',
-        organizationId,
+      return res.status(403).json({
+        error: 'Access denied',
+        details: 'Your account has not been set up. Contact your administrator for an invitation.',
+        code: 'NO_INVITE',
       });
-      return res.json({ role: 'Admin', provisioned: true });
     }
 
     return res.json({ role: result[0].role, userId: result[0].id });
@@ -867,7 +855,7 @@ router.post('/users/invite', requireAuth, async (req: AuthRequest, res: Response
 });
 
 // GET /api/users/invite/accept?token=xxx - Accept an invite
-router.get('/users/invite/accept', async (req: Request, res: Response) => {
+router.get(['/users/invite/accept', '/db/users/invite/accept'], async (req: Request, res: Response) => {
   try {
     const { token } = req.query;
 
@@ -887,14 +875,14 @@ router.get('/users/invite/accept', async (req: Request, res: Response) => {
       .limit(1);
 
     if (userResult.length === 0) {
-      return res.status(400).json({ error: 'Invalid or expired invite token' });
+      return res.status(410).json({ error: 'Invite token is invalid or has expired' });
     }
 
     const user = userResult[0];
 
     // Check if invite has expired
     if (user.inviteExpiresAt && new Date(user.inviteExpiresAt) < new Date()) {
-      return res.status(400).json({ error: 'Invite token has expired' });
+      return res.status(410).json({ error: 'Invite token has expired' });
     }
 
     return res.json({
@@ -910,7 +898,7 @@ router.get('/users/invite/accept', async (req: Request, res: Response) => {
 });
 
 // POST /api/users/invite/complete - Complete invite with Firebase UID
-router.post('/users/invite/complete', async (req: Request, res: Response) => {
+router.post(['/users/invite/complete', '/db/users/invite/complete'], async (req: Request, res: Response) => {
   try {
     const { token, firebaseUid } = req.body;
 
@@ -930,14 +918,14 @@ router.post('/users/invite/complete', async (req: Request, res: Response) => {
       .limit(1);
 
     if (userResult.length === 0) {
-      return res.status(400).json({ error: 'Invalid or expired invite token' });
+      return res.status(410).json({ error: 'Invite token is invalid or has expired' });
     }
 
     const user = userResult[0];
 
     // Check if invite has expired
     if (user.inviteExpiresAt && new Date(user.inviteExpiresAt) < new Date()) {
-      return res.status(400).json({ error: 'Invite token has expired' });
+      return res.status(410).json({ error: 'Invite token has expired' });
     }
 
     // Update user with Firebase UID and activate
